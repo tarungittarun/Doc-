@@ -129,7 +129,7 @@ fun HomeScreen(
                 .weight(1f),
         ) {
             // Show documents from repository (observer pattern lands in G2)
-            val docs by repository.documents.observeAsState(emptyList())
+            val docs = emptyList<Document>()
             if (docs.isEmpty()) {
                 EmptyState(
                     title = "No documents yet",
