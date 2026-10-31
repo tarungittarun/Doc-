@@ -47,3 +47,9 @@ Format:
 - Next: trigger CI via push/PR to verify workflows; when SDK available locally, complete T-G1-001..T-G1-005, close G1, proceed to G2.
 
 
+## Session S-004 — 31 Oct 2026 (CI/CD aligned to TicTic android-ci pattern)
+- Phase: G1 · Tasks touched: T-G1-003 (CI workflows rewritten)
+- Commits: 9d3fa18 (align CI workflows with TicTic android-ci pattern)
+- Tests: python3 tools/onedoc/traceability.py --check --strict -> exit 0 (GREEN, 90 features all bound)
+- Blockers opened/closed: Local SDK/Java still unavailable for emulator builds. CI workflows now use android-actions/setup-android + Gradle installation on GitHub runners following the TicTic android-ci.yml pattern (sh gradlew, continue-on-error+tee, GitHub annotation error surfacing, persistent sideload signing key, Gradle caching, fetch-depth: 0, upload-artifact with if: always()).
+- Next: trigger CI via push/PR to verify workflows; when SDK available locally, complete T-G1-001..T-G1-005, close G1, proceed to G2 (T-G2-001 core-model).
