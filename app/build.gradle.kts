@@ -20,11 +20,11 @@ android {
     }
 
     signingConfigs {
-        debug { /* debug keystore provided by AGP */ }
+        named("debug") { /* debug keystore provided by AGP */ }
     }
 
     buildTypes {
-        release {
+        named("release") {
             isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
