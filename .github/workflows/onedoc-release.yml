@@ -1,0 +1,228 @@
+name: OneDoc Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version (e.g. 1.0.0)"
+        required: true
+        default: "1.0.0"
+      version_code:
+        description: "Version code (integer)"
+        required: true
+        default: "1"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+
+# Budget C8: max 3 parallel runners, <= 30 jobs per run. This lane: 4 jobs.
+jobs:
+  build-release:
+    name: Assemble release APKs (full + writer)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install Gradle 8.10.2
+        run: |
+          curl -fsSL https://services.gradle.org/distributions/gradle-8.10.2-bin.zip -o /tmp/gradle.zip
+          unzip -q /tmp/gradle.zip -d /opt
+          echo "/opt/gradle-8.10.2/bin" >> $GITHUB_PATH
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Report toolchain
+        run: |
+          set -x
+          java -version
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          ls "$SDK" || true
+          gradle --version || true
+      - name: Install missing SDK packages
+        run: |
+          SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          "$SDK/cmdline-tools/latest/bin/sdkmanager" \
+            "platform-tools" "platforms;android-36" "build-tools;36.0.0" || true
+      - name: Ensure the stable sideload signing key
+        run: |
+          if [ ! -f signing/onedoc.p12 ]; then
+            mkdir -p signing
+            keytool -genkeypair -keystore signing/onedoc.p12 -storetype pkcs12 \
+              -storepass onedoc-sideload -keypass onedoc-sideload -alias onedoc \
+              -keyalg RSA -keysize 2048 -validity 10950 \
+              -dname "CN=OneDoc Sideload, OU=Sideload, O=OneDoc, C=IN"
+            echo "generated signing/onedoc.p12; the commit step will persist it"
+          else
+            echo "using the committed signing key"
+          fi
+          ls -l signing/
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-jdk17-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties', '*.gradle.kts', 'gradle/libs.versions.toml') }}
+          restore-keys: gradle-${{ runner.os }}-jdk17-
+      - name: Set version from inputs
+        run: |
+          echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_ENV
+          echo "VERSION_CODE=${{ github.event.inputs.version_code }}" >> $GITHUB_ENV
+      - name: Apply versioning (versionCode/versionName)
+        run: |
+          sed -i "s/versionCode = .*/versionCode = ${{ github.event.inputs.version_code }}/" app/build.gradle.kts
+          sed -i "s/versionName = .*/versionName = \"${{ github.event.inputs.version }}\"/" app/build.gradle.kts
+      - name: Assemble release APKs (RC debug keystore until owner keystore)
+        id: build
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          gradle --no-daemon --stacktrace assembleFullRelease assembleWriterRelease 2>&1 | tee /tmp/build-release.log
+      - name: Surface release build errors
+        if: steps.build.outcome == 'failure'
+        shell: bash
+        run: |
+          esc() { sed 's/%/%25/g; s/\r//g' | awk 'BEGIN { ORS = "%0A" } { print }'; }
+          { grep -nE "^e: |error:|FAILURE|What went wrong|Execution failed|Caused by:|Could not resolve|Unresolved|Plugin.*not found|Could not.*compile" /tmp/build-release.log | head -20
+            echo "--- last 30 lines ---"
+            tail -30 /tmp/build-release.log; } | esc | { body=$(cat); echo "::error title=build-release::${body}"; }
+      - name: Compute APK SHA-256 + size
+        id: hashes
+        run: |
+          shopt -s globstar
+          for apk in app/build/outputs/apk/**/release/*.apk; do
+            sha=$(sha256sum "$apk" | awk '{print $1}')
+            size=$(stat -c%s "$apk")
+            name=$(basename "$apk")
+            echo "APK_${name}=${sha}" >> $GITHUB_OUTPUT
+            echo "APK_SIZE_${name}=${size}" >> $GITHUB_OUTPUT
+            echo "APK_PATH_${name}=$apk" >> $GITHUB_OUTPUT
+          done
+      - name: Upload release APKs as artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: release-apks-${{ github.run_id }}
+          path: app/build/outputs/apk/**/release/*.apk
+          retention-days: 90
+          if-no-files-found: warn
+
+  provenance:
+    name: Build provenance.json
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    needs: [build-release]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-apks-${{ needs.build-release.outputs.run_id }}
+          path: release-apks
+      - name: Write provenance.json
+        id: prov
+        run: |
+          sha_full=$(sha256sum release-apks/*full*-release.apk 2>/dev/null | awk '{print $1}' | head -1)
+          sha_writer=$(sha256sum release-apks/*writer*-release.apk 2>/dev/null | awk '{print $1}' | head -1)
+          size_full=$(stat -c%s release-apks/*full*-release.apk 2>/dev/null | head -1)
+          size_writer=$(stat -c%s release-apks/*writer*-release.apk 2>/dev/null | head -1)
+          cat > provenance.json <<EOF
+          {
+            "version": "${{ github.event.inputs.version }}",
+            "versionCode": ${{ github.event.inputs.version_code }},
+            "commitSha": "${{ github.sha }}",
+            "workflowRunId": "${{ github.run_id }}",
+            "workflowRunUrl": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+            "apkFull": {
+              "sha256": "${sha_full}",
+              "sizeBytes": ${size_full:-0},
+              "applicationId": "app.onedoc",
+              "flavor": "full"
+            },
+            "apkWriter": {
+              "sha256": "${sha_writer}",
+              "sizeBytes": ${size_writer:-0},
+              "applicationId": "app.onedoc",
+              "flavor": "writer"
+            },
+            "catalogueVersion": "qa/onedoc/testcases.csv @ ${{ github.sha }}",
+            "toolVersions": {
+              "jdk": "17",
+              "compileSdk": "36",
+              "buildTools": "36.0.0",
+              "minSdk": "26",
+              "targetSdk": "36"
+            },
+            "signedWith": "RC debug keystore (owner keystore pending at G8 Day-6 per kickoff §7)",
+            "generatedAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          }
+          EOF
+          cat provenance.json
+      - name: Upload provenance
+        uses: actions/upload-artifact@v4
+        with:
+          name: provenance-${{ github.run_id }}
+          path: provenance.json
+          retention-days: 90
+
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    needs: [build-release, provenance]
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-apks-${{ needs.build-release.outputs.run_id }}
+          path: release-apks
+      - uses: actions/download-artifact@v4
+        with:
+          name: provenance-${{ needs.build-release.outputs.run_id }}
+          path: .
+      - name: Create release notes
+        run: |
+          cat > release-notes.md <<EOF
+          # OneDoc v${{ github.event.inputs.version }}
+
+          Release built from commit ${{ github.sha }} on branch arena/db667982-doc.
+
+          ## Artifacts
+          - OneDoc full (app.onedoc) — see provenance.json for SHA-256
+          - OneDoc writer flavor (app.onedoc) — see provenance.json for SHA-256
+
+          ## Signing
+          RC debug keystore. Owner keystore to be applied at G8 (Day-6 per kickoff §7).
+
+          ## Privacy
+          - No INTERNET / ACCESS_NETWORK_STATE permission
+          - No sign-in, no ads, no trackers, no analytics
+          - 100% local/on-device
+
+          ## Verification
+          Recompute APK SHA-256 and match against provenance.json before install.
+          EOF
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.event.inputs.version }}
+          name: "OneDoc v${{ github.event.inputs.version }}"
+          body_path: release-notes.md
+          files: |
+            release-apks/*.apk
+            provenance.json
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

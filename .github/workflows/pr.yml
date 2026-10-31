@@ -1,0 +1,61 @@
+name: OneDoc PR lane (fast lane)
+
+on:
+  push:
+    branches: ["arena/db667982-doc"]
+  pull_request:
+    branches: ["arena/db667982-doc"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Budget C8: max 3 parallel runners, <= 30 jobs per run. This lane: 3 jobs.
+jobs:
+  traceability:
+    name: Traceability --check --strict
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install tool deps
+        run: python3 -m pip -q install pyyaml
+      - name: Run traceability check (strict)
+        run: python3 tools/onedoc/traceability.py --check --strict
+
+  static-gates:
+    name: Static gates (manifest)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    needs: [traceability]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assert NO internet permission in manifest
+        run: |
+          if grep -qi 'android.permission.INTERNET\|ACCESS_NETWORK_STATE' app/src/main/AndroidManifest.xml; then
+            echo "::error::FAIL: internet permission present" >&2; exit 1
+          fi
+          echo "PASS: no internet permission"
+
+  verify-pr-lane:
+    name: PR lane green (<= 12 min)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    needs: [traceability, static-gates]
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          statuses="${{ join(needs.*.result, ',') }}"
+          echo "Job statuses: $statuses"
+          if echo "$statuses" | grep -q 'failure\|cancelled'; then
+            echo "::error::PR lane not green" >&2
+            exit 1
+          fi
+          echo "PASS: PR lane green"

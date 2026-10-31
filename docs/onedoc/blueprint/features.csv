@@ -1,0 +1,91 @@
+feature_id,priority,title,test_bindings
+F-001,P0,Document create (new blank doc),TC-EDIT-001
+F-002,P0,Document open from library,TC-EDIT-002
+F-003,P0,Document auto-save on every keystroke,TC-EDIT-003
+F-004,P0,Document rename,TC-EDIT-004
+F-005,P0,Document delete (to trash),TC-LIB-001
+F-006,P0,Document restore from trash,TC-LIB-002
+F-007,P0,Document permanent delete (shred),TC-LIB-003
+F-008,P0,Document star / unstar,TC-LIB-004
+F-009,P0,Document version list,TC-LIB-005
+F-010,P0,Document restore to a prior version,TC-LIB-006
+F-011,P0,Paragraph block insert,TC-EDIT-005
+F-012,P0,Heading block (H1-H6),TC-EDIT-006
+F-013,P0,Bullet list block,TC-EDIT-007
+F-014,P0,Numbered list block,TC-EDIT-008
+F-015,P0,Code block,TC-EDIT-009
+F-016,P0,Blockquote block,TC-EDIT-010
+F-017,P0,Image block,TC-IMG-001
+F-018,P0,Table block,TC-TBL-001
+F-019,P0,TOC block,TC-TOC-001
+F-020,P0,Footnote block,TC-FN-001
+F-021,P0,Bold mark,TC-EDIT-011
+F-022,P0,Italic mark,TC-EDIT-012
+F-023,P0,Underline mark,TC-EDIT-013
+F-024,P0,Strikethrough mark,TC-EDIT-014
+F-025,P0,Link mark,TC-EDIT-015
+F-026,P0,Code inline mark,TC-EDIT-016
+F-027,P0,Highlight mark,TC-EDIT-017
+F-028,P0,IME-safe input (composition),TC-IME-001
+F-029,P0,Selection expand/collapse,TC-SEL-001
+F-030,P0,Honest undo (no silent mutation),TC-EDIT-018
+F-031,P0,Library full-text search,TC-SRC-001
+F-032,P0,Library sort (recency/title),TC-LIB-007
+F-033,P0,Library filter (starred/trashed),TC-LIB-008
+F-034,P0,First-run privacy card (once),TC-SEC-001
+F-035,P0,Settings: theme toggle light/dark,TC-SYS-001
+F-036,P2,Settings: font size scale,TC-SYS-002
+F-037,P2,Settings: reduced motion,TC-SYS-003
+F-038,P2,Settings: locale (en/hi/mr),TC-SYS-004
+F-039,P2,Templates: 12 built-in templates,TC-TPL-001
+F-040,P2,Template apply to new doc,TC-TPL-002
+F-041,P0,Find & replace with pre-edit versioning,TC-FR-001
+F-042,P0,Find & replace replace-all,TC-FR-002
+F-043,P0,Table insert rows/cols,TC-TBL-002
+F-044,P0,Table delete rows/cols,TC-TBL-003
+F-045,P0,Image insert from gallery/camera,TC-IMG-002
+F-046,P2,Image resize / crop,TC-IMG-003
+F-047,P2,Image alt text,TC-IMG-004
+F-048,P0,TOC auto-generate from headings,TC-TOC-002
+F-049,P2,TOC update on edit,TC-TOC-003
+F-050,P2,Footnote render inline,TC-FN-002
+F-051,P0,Reader mode (distraction-free),TC-RDR-001
+F-052,P0,Reader mode text-to-speech (read-aloud),TC-TTS-001
+F-053,P0,TTS pause/resume/stop,TC-TTS-002
+F-054,P2,TTS voice select,TC-TTS-003
+F-055,P2,TTS rate/pitch adjust,TC-TTS-004
+F-056,P2,Export to PDF,TC-FMT-PDF-001
+F-057,P0,Export to Markdown,TC-FMT-MD-001
+F-058,P0,Export to HTML,TC-FMT-HTML-001
+F-059,P0,Export to TXT,TC-FMT-TXT-001
+F-060,P0,Export to native .odoc,TC-FMT-ODOC-001
+F-061,P2,Import PDF with declared fidelity,TC-FMT-PDF-002
+F-062,P2,Import DOCX with declared fidelity,TC-FMT-DOCX-001
+F-063,P2,Import Markdown,TC-FMT-MD-002
+F-064,P2,Import HTML,TC-FMT-HTML-002
+F-065,P2,Import TXT,TC-FMT-TXT-002
+F-066,P2,Import .odoc,TC-FMT-ODOC-002
+F-067,P2,Fidelity level declared on every conversion,TC-FMT-001
+F-068,P2,Conversion note on lossy export,TC-FMT-002
+F-069,P0,Refuse ambiguous conversion (never guess),TC-FMT-003
+F-070,P0,On-device AI: scan-to-doc OCR,TC-AI-OCR-001
+F-071,P0,On-device AI: dictation (ASR),TC-AI-ASR-001
+F-072,P0,On-device AI: writing assistant Summarize,TC-AI-WR-001
+F-073,P0,On-device AI: writing assistant Rewrite,TC-AI-WR-002
+F-074,P0,On-device AI: writing assistant Continue,TC-AI-WR-003
+F-075,P0,On-device AI: writing assistant Fix,TC-AI-WR-004
+F-076,P0,AI output via preview card + explicit insert (Law L10),TC-AI-L10-001
+F-077,P0,AI fallback ladder (tier A/B/C),TC-AI-TIER-001
+F-078,P0,Missing AI pack degrades gracefully (no crash, no fetch),TC-AI-PACK-001
+F-079,P2,Semantic search (embeddings MiniLM-L6),TC-AI-SEM-001
+F-080,P2,Device tier detection (A/B/C),TC-AI-TIER-002
+F-081,P0,No INTERNET permission in manifest,TC-SEC-P-001
+F-082,P0,Zero network sockets at runtime,TC-SEC-P-002
+F-083,P0,No ads / trackers / analytics,TC-SEC-P-003
+F-084,P0,Build provenance row (commit SHA + time),TC-SYS-005
+F-085,P0,APK size <= 25 MB,TC-ENV-001
+F-086,P0,Cold start < 1.2 s,TC-ENV-002
+F-087,P0,Typing P95 < 50 ms,TC-ENV-003
+F-088,P0,Search < 300 ms,TC-ENV-004
+F-089,P0,minSdk 26 (Android 8.0+) support,TC-ENV-005
+F-090,P0,Phones + tablets, portrait + landscape,TC-ENV-006
