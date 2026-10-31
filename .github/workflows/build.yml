@@ -82,7 +82,10 @@ jobs:
         shell: bash
         run: |
           esc() { sed 's/%/%25/g; s/\r//g; s/\n/%0A/g'; }
-          { grep -nE "^e: |error:|FAILURE|What went wrong|Execution failed|Caused by:|Could not resolve|Unresolved reference" /tmp/build.log | head -20; echo "=== TAIL ==="; tail -20 /tmp/build.log; } | while IFS= read -r line; do echo "::error::$(echo "$line" | esc)"; done
+          # Find "What went wrong" and print it + following 25 lines
+          awk '/What went wrong/,0' /tmp/build.log | head -30 | while IFS= read -r line; do echo "::error::$(echo "$line" | esc)"; done
+          echo "::error::=== LAST 25 LINES ==="
+          tail -25 /tmp/build.log | while IFS= read -r line; do echo "::error::$(echo "$line" | esc)"; done
       - name: Fail if build failed
         if: steps.build-debug-step.outcome == 'failure'
         run: exit 1
@@ -149,7 +152,9 @@ jobs:
         shell: bash
         run: |
           esc() { sed 's/%/%25/g; s/\r//g; s/\n/%0A/g'; }
-          { grep -nE "^e: |error:|FAILURE|What went wrong|Execution failed|Caused by:|Could not resolve|Unresolved reference" /tmp/build-release.log | head -20; echo "=== TAIL ==="; tail -20 /tmp/build-release.log; } | while IFS= read -r line; do echo "::error::$(echo "$line" | esc)"; done
+          awk '/What went wrong/,0' /tmp/build-release.log | head -30 | while IFS= read -r line; do echo "::error::$(echo "$line" | esc)"; done
+          echo "::error::=== LAST 25 LINES ==="
+          tail -25 /tmp/build-release.log | while IFS= read -r line; do echo "::error::$(echo "$line" | esc)"; done
       - name: Fail if release build failed
         if: steps.build-release-step.outcome == 'failure'
         run: exit 1
