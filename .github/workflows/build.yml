@@ -76,12 +76,12 @@ jobs:
         run: |
           set -o pipefail
           echo "=== Gradle version ==="
-          which gradle
-          gradle --version
+          { which gradle; gradle --version; } | tee /tmp/build-debug.log
           echo "=== Before build ==="
           ls -la app/build/ 2>/dev/null || echo "No app/build dir"
-          gradle assembleFullDebug > /tmp/build-debug.log 2>&1 || true
-          echo "EXIT_CODE=$?"
+          echo "=== Build ==="
+          gradle --console=plain assembleFullDebug >> /tmp/build-debug.log 2>&1 || true
+          echo "GRADLE_EXIT_CODE=$?" | tee -a /tmp/build-debug.log || true
           echo "=== After build ==="
           ls -la app/build/outputs/apk/ 2>/dev/null || echo "No apk dir"
           find app -name "*.apk" -type f 2>/dev/null || echo "No APKs found anywhere"
@@ -89,7 +89,8 @@ jobs:
         shell: bash
         run: |
           esc() { sed 's/%/%25/g; s/\r//g; s/\n/%0A/g'; }
-          { echo "=== BUILD LOG (first 100 lines) ==="; head -100 /tmp/build-debug.log 2>/dev/null || echo "No build log file"; echo "=== DAEMON LOG ==="; cat /home/runner/.gradle/daemon/8.10.2/daemon-*.out.log 2>/dev/null | head -60 || echo "No daemon log"; echo "=== APK SEARCH ==="; find app/build -name "*.apk" -type f 2>/dev/null || echo "No APKs found"; } | while IFS= read -r line; do echo "::error::$(echo "$line" | esc)"; done
+          BODY=$( { echo "=== BUILD LOG ==="; cat /tmp/build-debug.log 2>/dev/null || echo "(no build log)"; echo "=== DAEMON LOG (tail 40) ==="; tail -40 /home/runner/.gradle/daemon/8.10.2/daemon-*.out.log 2>/dev/null || echo "(no daemon log)"; echo "=== APK SEARCH ==="; find app/build -name "*.apk" -type f 2>/dev/null || echo "No APKs found"; } )
+          printf '::error::%s\n' "$(printf '%s' "$BODY" | esc)"
       - name: Fail if build failed
         if: steps.build-debug-step.outcome == 'failure'
         run: exit 1
@@ -168,7 +169,8 @@ jobs:
         shell: bash
         run: |
           esc() { sed 's/%/%25/g; s/\r//g; s/\n/%0A/g'; }
-          { echo "=== BUILD LOG (first 100 lines) ==="; head -100 /tmp/build-release.log 2>/dev/null || echo "No build log file"; echo "=== DAEMON LOG ==="; cat /home/runner/.gradle/daemon/8.10.2/daemon-*.out.log 2>/dev/null | head -60 || echo "No daemon log"; echo "=== APK SEARCH ==="; find app/build -name "*.apk" -type f 2>/dev/null || echo "No APKs found"; } | while IFS= read -r line; do echo "::error::$(echo "$line" | esc)"; done
+          BODY=$( { echo "=== BUILD LOG ==="; cat /tmp/build-release.log 2>/dev/null || echo "(no build log)"; echo "=== DAEMON LOG (tail 40) ==="; tail -40 /home/runner/.gradle/daemon/8.10.2/daemon-*.out.log 2>/dev/null || echo "(no daemon log)"; echo "=== APK SEARCH ==="; find app/build -name "*.apk" -type f 2>/dev/null || echo "No APKs found"; } )
+          printf '::error::%s\n' "$(printf '%s' "$BODY" | esc)"
       - name: Fail if release build failed
         if: steps.build-release-step.outcome == 'failure'
         run: exit 1
