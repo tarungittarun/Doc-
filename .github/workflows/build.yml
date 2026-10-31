@@ -76,7 +76,8 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          gradle --no-daemon --stacktrace assembleFullDebug assembleWriterDebug 2>&1 | tee /tmp/build.log
+          gradle --no-daemon --stacktrace assembleFullDebug assembleWriterDebug > /tmp/build.log 2>&1 || true
+          cat /tmp/build.log
       - name: Surface debug build errors
         if: steps.build-debug-step.outcome == 'failure'
         shell: bash
