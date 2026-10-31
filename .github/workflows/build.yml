@@ -74,18 +74,15 @@ jobs:
         id: build-debug-step
         shell: bash
         run: |
-          set -o pipefail
           esc() { sed 's/%/%25/g; s/\r//g; s/\n/%0A/g; s/:/%3A/g'; }
           echo "::notice::DEBUG: which=$(which gradle 2>&1 | esc)"
           echo "::notice::DEBUG: java=$(java -version 2>&1 | head -1 | esc)"
-          echo "::notice::DEBUG: gradle help output:"
-          GRADLE_HELP=$(gradle help --console=plain 2>&1) || true
-          echo "::notice::DEBUG: HELP=$(printf '%s' "$GRADLE_HELP" | head -15 | esc)"
-          echo "::notice::DEBUG: Running gradle assembleFullDebug..."
-          GRADLE_EXIT=0
-          GRADLE_OUT=$(gradle --no-daemon --info assembleFullDebug 2>&1) || GRADLE_EXIT=$?
-          echo "::notice::DEBUG: GRADLE_EXIT_CODE=$GRADLE_EXIT"
-          echo "::notice::DEBUG: FULL_OUTPUT=$(printf '%s' "$GRADLE_OUT" | esc)"
+          echo "::notice::DEBUG: Running gradle --stacktrace assembleFullDebug..."
+          gradle --no-daemon --stacktrace --info assembleFullDebug > /tmp/gradle-debug.out 2>&1 || GRADLE_EXIT=$?
+          echo "::notice::DEBUG: GRADLE_EXIT_CODE=${GRADLE_EXIT:-0}"
+          echo "::notice::DEBUG: OUTPUT_FILE_SIZE=$(wc -c < /tmp/gradle-debug.out 2>/dev/null || echo 0)"
+          echo "::notice::DEBUG: OUTPUT_HEAD=$(head -30 /tmp/gradle-debug.out 2>/dev/null | esc)"
+          echo "::notice::debug: OUTPUT_TAIL=$(tail -30 /tmp/gradle-debug.out 2>/dev/null | esc)"
           APKS=$(find app -name "*.apk" -type f 2>/dev/null || true)
           if [ -n "$APKS" ]; then
             echo "::notice::DEBUG APKS: $(printf '%s' "$APKS" | tr '\n' ' ')"
@@ -159,18 +156,15 @@ jobs:
         id: build-release-step
         shell: bash
         run: |
-          set -o pipefail
           esc() { sed 's/%/%25/g; s/\r//g; s/\n/%0A/g; s/:/%3A/g'; }
           echo "::notice::RELEASE: which=$(which gradle 2>&1 | esc)"
           echo "::notice::RELEASE: java=$(java -version 2>&1 | head -1 | esc)"
-          echo "::notice::RELEASE: gradle help output:"
-          GRADLE_HELP=$(gradle help --console=plain 2>&1) || true
-          echo "::notice::RELEASE: HELP=$(printf '%s' "$GRADLE_HELP" | head -15 | esc)"
-          echo "::notice::RELEASE: Running gradle assembleFullRelease..."
-          GRADLE_EXIT=0
-          GRADLE_OUT=$(gradle --no-daemon --stacktrace --info assembleFullRelease 2>&1) || GRADLE_EXIT=$?
-          echo "::notice::RELEASE: GRADLE_EXIT_CODE=$GRADLE_EXIT"
-          echo "::notice::RELEASE: FULL_OUTPUT=$(printf '%s' "$GRADLE_OUT" | esc)"
+          echo "::notice::RELEASE: Running gradle --stacktrace assembleFullRelease..."
+          gradle --no-daemon --stacktrace --info assembleFullRelease > /tmp/gradle-release.out 2>&1 || GRADLE_EXIT=$?
+          echo "::notice::RELEASE: GRADLE_EXIT_CODE=${GRADLE_EXIT:-0}"
+          echo "::notice::RELEASE: OUTPUT_FILE_SIZE=$(wc -c < /tmp/gradle-release.out 2>/dev/null || echo 0)"
+          echo "::notice::RELEASE: OUTPUT_HEAD=$(head -30 /tmp/gradle-release.out 2>/dev/null | esc)"
+          echo "::notice::debug: OUTPUT_TAIL=$(tail -30 /tmp/gradle-release.out 2>/dev/null | esc)"
           APKS=$(find app -name "*.apk" -type f 2>/dev/null || true)
           if [ -n "$APKS" ]; then
             echo "::notice::RELEASE APKS: $(printf '%s' "$APKS" | tr '\n' ' ')"
