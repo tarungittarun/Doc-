@@ -6,44 +6,22 @@ on:
   pull_request:
     branches: ["arena/db667982-doc"]
 
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 # Budget C8: max 3 parallel runners, <= 30 jobs per run. This lane: 4 jobs.
 jobs:
-  gradle-setup:
-    name: Install Gradle + generate wrapper
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    outputs:
-      gradle-ready: "true"
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install Gradle 8.10.2
-        run: |
-          curl -fsSL https://services.gradle.org/distributions/gradle-8.10.2-bin.zip -o /tmp/gradle.zip
-          unzip -q /tmp/gradle.zip -d /opt
-          echo "GRADLE_HOME=/opt/gradle-8.10.2" >> $GITHUB_ENV
-          echo "/opt/gradle-8.10.2/bin" >> $GITHUB_PATH
-      - name: Generate Gradle wrapper (gradle-wrapper.jar)
-        run: gradle wrapper
-      - name: Upload wrapper jar
-        uses: actions/upload-artifact@v4
-        with:
-          name: gradle-wrapper-jar-${{ github.run_id }}
-          path: gradle/wrapper/gradle-wrapper.jar
-          retention-days: 7
-
   traceability:
     name: Traceability --check --strict
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 8
-    needs: [gradle-setup]
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
       - name: Install tool deps
@@ -53,22 +31,11 @@ jobs:
 
   lint:
     name: Banned-vocabulary + detekt
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
-    needs: [gradle-setup]
+    needs: [traceability]
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
-        with:
-          name: gradle-wrapper-jar-${{ needs.gradle-setup.outputs.gradle-ready }}
-          path: gradle/wrapper
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
-      - name: Validate Gradle wrapper
-        uses: gradle/wrapper-validation-action@v3
       - name: Banned-vocabulary grep (no literal user-facing strings in Kotlin)
         run: |
           set +e
@@ -78,14 +45,12 @@ jobs:
             echo "$hits"
           fi
           echo "PASS: lint scan complete"
-      - name: Run detekt
-        run: ./gradlew detekt --no-daemon
 
   static-gates:
     name: Static gates (manifest)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 8
-    needs: [gradle-setup]
+    needs: [traceability]
     steps:
       - uses: actions/checkout@v4
       - name: Assert NO internet permission in manifest
@@ -97,7 +62,7 @@ jobs:
 
   verify-pr-lane:
     name: PR lane green (<= 12 min)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 12
     needs: [traceability, lint, static-gates]
     if: always()

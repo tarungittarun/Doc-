@@ -1,0 +1,273 @@
+name: OneDoc Android CI
+
+# Build signal for OneDoc. This is the ONLY way the project is compiled and
+# packaged: the review workspace has no JDK or Android SDK and cannot reach
+# services.gradle.org or dl.google.com.
+on:
+  push:
+    branches: ["arena/db667982-doc"]
+  pull_request:
+    branches: ["arena/db667982-doc"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Budget C8: max 3 parallel runners, <= 30 jobs per run. This lane: 6 jobs.
+jobs:
+  traceability:
+    name: Traceability --check --strict
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install tool deps
+        run: python3 -m pip -q install pyyaml
+      - name: Run traceability check (strict)
+        run: python3 tools/onedoc/traceability.py --check --strict
+
+  detekt:
+    name: Detekt static analysis
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    needs: [traceability]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Validate Gradle wrapper
+        uses: gradle/wrapper-validation-action@v3
+      - name: Run detekt
+        id: detekt
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          sh gradlew --no-daemon --stacktrace detekt 2>&1 | tee /tmp/detekt.log
+      - name: Surface detekt errors as annotations
+        if: steps.detekt.outcome == 'failure'
+        shell: bash
+        run: |
+          esc() { sed 's/%/%25/g; s/\r//g' | awk 'BEGIN { ORS = "%0A" } { print }'; }
+          { grep -nE "error:|FAILURE|What went wrong|Execution failed" /tmp/detekt.log | head -25
+            echo "--- last 40 lines ---"
+            tail -40 /tmp/detekt.log; } | esc | { body=$(cat); echo "::error title=detekt::${body}"; }
+          exit 1
+
+  build-debug:
+    name: Assemble debug APKs (full + writer)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    needs: [traceability]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Report toolchain
+        run: |
+          set -x
+          java -version
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          ls "$SDK" || true
+          ls "$SDK/platforms" || true
+          ls "$SDK/build-tools" || true
+          sh gradlew --version || true
+      - name: Install missing SDK packages
+        run: |
+          SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          "$SDK/cmdline-tools/latest/bin/sdkmanager" \
+            "platform-tools" "platforms;android-36" "build-tools;36.0.0" \
+            "system-images;android-26;google_apis;x86_64" || true
+      - name: Ensure the stable sideload signing key
+        run: |
+          if [ ! -f signing/onedoc.p12 ]; then
+            mkdir -p signing
+            keytool -genkeypair -keystore signing/onedoc.p12 -storetype pkcs12 \
+              -storepass onedoc-sideload -keypass onedoc-sideload -alias onedoc \
+              -keyalg RSA -keysize 2048 -validity 10950 \
+              -dname "CN=OneDoc Sideload, OU=Sideload, O=OneDoc, C=IN"
+            echo "generated signing/onedoc.p12; the commit step will persist it"
+          else
+            echo "using the committed signing key"
+          fi
+          ls -l signing/
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-jdk17-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties', '*.gradle.kts', 'gradle/libs.versions.toml') }}
+          restore-keys: gradle-${{ runner.os }}-jdk17-
+      - name: Build debug APK
+        id: build
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          sh gradlew --no-daemon --stacktrace assembleFullDebug assembleWriterDebug 2>&1 | tee /tmp/build.log
+      - name: Surface build errors as annotations
+        if: steps.build.outcome == 'failure'
+        shell: bash
+        run: |
+          esc() { sed 's/%/%25/g; s/\r//g' | awk 'BEGIN { ORS = "%0A" } { print }'; }
+          { grep -nE "^e: |error:|FAILURE|What went wrong|Execution failed|Caused by:|Could not resolve|No space left|Daemon" /tmp/build.log | head -25
+            echo "--- last 40 lines ---"
+            tail -40 /tmp/build.log; } | esc | { body=$(cat); echo "::error title=build::${body}"; }
+          exit 1
+      - name: Upload debug APKs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: onedoc-debug-apks
+          path: '**/build/outputs/apk/**/*.apk'
+          if-no-files-found: warn
+
+  build-release:
+    name: Assemble release APKs (full + writer)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    needs: [build-debug]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Report toolchain
+        run: |
+          set -x
+          java -version
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          ls "$SDK" || true
+          sh gradlew --version || true
+      - name: Install missing SDK packages
+        run: |
+          SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          "$SDK/cmdline-tools/latest/bin/sdkmanager" \
+            "platform-tools" "platforms;android-36" "build-tools;36.0.0" || true
+      - name: Ensure the stable sideload signing key
+        run: |
+          if [ ! -f signing/onedoc.p12 ]; then
+            mkdir -p signing
+            keytool -genkeypair -keystore signing/onedoc.p12 -storetype pkcs12 \
+              -storepass onedoc-sideload -keypass onedoc-sideload -alias onedoc \
+              -keyalg RSA -keysize 2048 -validity 10950 \
+              -dname "CN=OneDoc Sideload, OU=Sideload, O=OneDoc, C=IN"
+            echo "generated signing/onedoc.p12; the commit step will persist it"
+          else
+            echo "using the committed signing key"
+          fi
+          ls -l signing/
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-jdk17-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties', '*.gradle.kts', 'gradle/libs.versions.toml') }}
+          restore-keys: gradle-${{ runner.os }}-jdk17-
+      - name: Build release APK
+        id: build
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          sh gradlew --no-daemon --stacktrace assembleFullRelease assembleWriterRelease 2>&1 | tee /tmp/build-release.log
+      - name: Surface build errors as annotations
+        if: steps.build.outcome == 'failure'
+        shell: bash
+        run: |
+          esc() { sed 's/%/%25/g; s/\r//g' | awk 'BEGIN { ORS = "%0A" } { print }'; }
+          { grep -nE "^e: |error:|FAILURE|What went wrong|Execution failed|Caused by:|Could not resolve|No space left|Daemon" /tmp/build-release.log | head -25
+            echo "--- last 40 lines ---"
+            tail -40 /tmp/build-release.log; } | esc | { body=$(cat); echo "::error title=build-release::${body}"; }
+          exit 1
+      - name: Compute APK SHA-256 + size
+        if: always()
+        run: |
+          for apk in app/build/outputs/apk/**/release/*.apk; do
+            echo "=== $apk ==="
+            sha256sum "$apk"
+            ls -l "$apk"
+          done
+      - name: Upload release APKs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: onedoc-release-apks
+          path: app/build/outputs/apk/**/release/*.apk
+          retention-days: 30
+          if-no-files-found: warn
+
+  static-gates:
+    name: Static gates (manifest + size)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    needs: [build-release]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: onedoc-release-apks
+          path: release-apks
+      - name: Assert NO internet permission in manifest
+        run: |
+          set -e
+          if grep -rqi 'android.permission.INTERNET\|ACCESS_NETWORK_STATE' app/src/main/AndroidManifest.xml; then
+            echo "::error::FAIL: internet permission present in manifest" >&2; exit 1
+          fi
+          echo "PASS: no internet permission in manifest"
+      - name: Assert APK size <= 25 MB
+        run: |
+          set -e
+          for apk in release-apks/**/*.apk; do
+            size=$(stat -c%s "$apk")
+            mb=$(( size / 1048576 ))
+            echo "$apk = ${mb} MB"
+            if [ "$size" -gt 26214400 ]; then
+              echo "::error::FAIL: $apk exceeds 25 MB" >&2; exit 1
+            fi
+          done
+          echo "PASS: all release APKs <= 25 MB"
+
+  verify-ci-lane:
+    name: CI lane green
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    needs: [traceability, detekt, build-debug, build-release, static-gates]
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          statuses="${{ join(needs.*.result, ',') }}"
+          echo "Job statuses: $statuses"
+          if echo "$statuses" | grep -q 'failure\|cancelled'; then
+            echo "::error::CI lane not green — a required job failed or was cancelled" >&2
+            exit 1
+          fi
+          echo "PASS: CI lane green"
