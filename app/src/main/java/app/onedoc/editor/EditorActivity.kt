@@ -56,6 +56,9 @@ class EditorActivity : ComponentActivity() {
 fun EditorScreen(documentId: String, isNew: Boolean) {
     val color = MaterialTheme.colorScheme
 
+    // Undo/redo manager (G4 — Law L3: keystroke loss impossible under process kill)
+    val undoManager = remember { UndoManager() }
+
     // Document state held in composition so edits persist across recomposition.
     // Load from repository by documentId lands in G2+.
     val doc by remember { mutableStateOf(
@@ -74,15 +77,25 @@ fun EditorScreen(documentId: String, isNew: Boolean) {
         )
     )}
 
+    // Initialize undo manager with the initial document state
+    // (record only once on first composition)
+    var initialized by remember { mutableStateOf(false) }
+    if (!initialized) {
+        undoManager.record(doc)
+        initialized = true
+    }
+
     fun updateBlock(updatedBlock: Block) {
         val newBlocks = doc.blocks.map { b ->
             if (b.id == updatedBlock.id) updatedBlock else b
         }
-        doc = doc.copy(
+        val newDoc = doc.copy(
             blocks = newBlocks,
             updatedAt = System.currentTimeMillis(),
             version = doc.version + 1,
         )
+        doc = newDoc
+        undoManager.record(newDoc)
     }
 
     fun addBlockAfter(blockId: String, newBlock: Block) {
@@ -92,11 +105,23 @@ fun EditorScreen(documentId: String, isNew: Boolean) {
         } else {
             doc.blocks + newBlock
         }
-        doc = doc.copy(
+        val newDoc = doc.copy(
             blocks = newBlocks,
             updatedAt = System.currentTimeMillis(),
             version = doc.version + 1,
         )
+        doc = newDoc
+        undoManager.record(newDoc)
+    }
+
+    fun handleUndo() {
+        val previous = undoManager.undo()
+        doc = previous
+    }
+
+    fun handleRedo() {
+        val next = undoManager.redo()
+        doc = next
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -114,6 +139,27 @@ fun EditorScreen(documentId: String, isNew: Boolean) {
             colors = TextFieldDefaults.colors(),
         )
         Divider()
+
+        // Undo / Redo toolbar
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 4.dp),
+            horizontalArrangement = Arrangement.End,
+        ) {
+            IconButton(
+                onClick = handleUndo,
+                enabled = undoManager.canUndo,
+            ) {
+                Icon(imageVector = Icons.Default.Undo, contentDescription = "Undo")
+            }
+            IconButton(
+                onClick = handleRedo,
+                enabled = undoManager.canRedo,
+            ) {
+                Icon(imageVector = Icons.Default.Redo, contentDescription = "Redo")
+            }
+        }
 
         // Content area — block list
         LazyColumn(
