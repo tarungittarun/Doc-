@@ -1,0 +1,97 @@
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+}
+
+android {
+    namespace = "app.onedoc"
+    compileSdk = 36
+
+    defaultConfig {
+        applicationId = "app.onedoc"
+        minSdk = 26
+        targetSdk = 36
+        versionCode = 1
+        versionName = "1.0.0"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // BuildConfig provenance (populated by build script / CI)
+        buildConfigField("String", "PROVENANCE_SHA", "\"dev-local\"")
+        buildConfigField("long", "BUILD_TIME", "0")
+    }
+
+    signingConfigs {
+        debug { /* debug keystore provided by AGP */ }
+    }
+
+    buildTypes {
+        release {
+            isMinifyEnabled = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
+            // Release signing: owner keystore supplied at G8 (RC keystore until then).
+        }
+    }
+
+    flavorDimensions += "tier"
+    productFlavors {
+        create("full") {
+            dimension = "tier"
+            applicationId = "app.onedoc"
+        }
+        create("writer") {
+            dimension = "tier"
+            applicationId = "app.onedoc"
+        }
+    }
+
+    sourceSets {
+        val fullMain by getting
+        fullMain.java.srcDirs("src/full/java")
+        val writerMain by getting
+        writerMain.java.srcDirs("src/writer/java")
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion = libs.versions.composeCompiler.get()
+    }
+    buildFeatures {
+        compose = true
+        buildConfig = true
+    }
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
+    }
+}
+
+dependencies {
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.compose.ui)
+    implementation(libs.compose.graphics)
+    implementation(libs.compose.material)
+    implementation(libs.compose.tooling)
+    debugImplementation(libs.compose.tooling.preview)
+
+    implementation(libs.room.runtime)
+    implementation(libs.room.ktx)
+    implementation(libs.datastore.preferences)
+    implementation(libs.koin.core)
+    implementation(libs.koin.android)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.androidx.test.core)
+    testImplementation(libs.robolectric)
+}

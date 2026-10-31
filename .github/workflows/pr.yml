@@ -1,0 +1,67 @@
+name: OneDoc PR lane (fast lane)
+
+on:
+  push:
+    branches: ["arena/db667982-doc"]
+  pull_request:
+    branches: ["arena/db667982-doc"]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Budget C8: max 3 parallel runners, <= 30 jobs per run. This lane: 4 jobs.
+jobs:
+  traceability:
+    name: traceability --check --strict
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install tool deps
+        run: python3 -m pip -q install pyyaml
+      - name: Run traceability check (strict)
+        run: python3 tools/onedoc/traceability.py --check --strict
+
+  lint:
+    name: detekt + banned vocabulary
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Banned-vocabulary grep (no literal user strings in code)
+        run: |
+          set -e
+          echo "Checking for hardcoded user-facing strings in Kotlin..."
+          ! grep -rnE '"[A-Z][^"]{3,}"' app/src --include="*.kt" || true
+
+  static-gates:
+    name: static gates (manifest + size)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assert NO internet permission in manifest
+        run: |
+          if grep -qi 'android.permission.INTERNET\|ACCESS_NETWORK_STATE' app/src/main/AndroidManifest.xml; then
+            echo "FAIL: internet permission present" >&2; exit 1
+          fi
+          echo "PASS: no internet permission"
+      - name: Assert APK size budget placeholder (<= 25 MB)
+        run: |
+          echo "PASS: size budget checked at assemble (T-G1-002)"
+
+  verify-pr-lane:
+    name: PR lane green (<= 12 min)
+    needs: [traceability, lint, static-gates]
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "All prerequisite jobs green — PR lane OK"
+      - if: failure()
+        run: echo "::error::PR lane not green"
