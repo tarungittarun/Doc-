@@ -161,7 +161,6 @@ jobs:
           echo "=== Built Release APKs ==="
           find app/build/outputs/apk -name "*.apk" -type f 2>/dev/null || echo "No APKs found"
           ls -la app/build/outputs/apk/*/release/*.apk 2>/dev/null || true
-
       - name: "Static gate: no internet permission"
         run: |
           if grep -qE 'android.permission.INTERNET|ACCESS_NETWORK_STATE' app/src/main/AndroidManifest.xml; then
