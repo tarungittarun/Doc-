@@ -9,10 +9,7 @@ import app.onedoc.data.DocumentDao
 import app.onedoc.data.DocumentEntity
 import app.onedoc.model.Document
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class DocumentRepository(private val database: AppDatabase, private val scope: CoroutineScope) {
     private val dao: DocumentDao = database.documentDao()
@@ -21,7 +18,7 @@ class DocumentRepository(private val database: AppDatabase, private val scope: C
     val documents: LiveData<List<Document>> = _documents
 
     init {
-        refresh()
+        scope.launch { refresh() }
     }
 
     suspend fun refresh() {
