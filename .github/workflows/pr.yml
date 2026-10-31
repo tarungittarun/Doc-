@@ -13,36 +13,12 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# Budget C8: max 3 parallel runners, <= 30 jobs per run. This lane: 5 jobs.
+# Budget C8: max 3 parallel runners, <= 30 jobs per run. This lane: 4 jobs.
 jobs:
-  gradle-setup:
-    name: Install Gradle + generate wrapper
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    outputs:
-      gradle-ready: "true"
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install Gradle 8.10.2
-        run: |
-          curl -fsSL https://services.gradle.org/distributions/gradle-8.10.2-bin.zip -o /tmp/gradle.zip
-          unzip -q /tmp/gradle.zip -d /opt
-          echo "GRADLE_HOME=/opt/gradle-8.10.2" >> $GITHUB_ENV
-          echo "/opt/gradle-8.10.2/bin" >> $GITHUB_PATH
-      - name: Generate Gradle wrapper (gradle-wrapper.jar)
-        run: gradle wrapper
-      - name: Upload wrapper jar
-        uses: actions/upload-artifact@v4
-        with:
-          name: gradle-wrapper-jar-${{ github.run_id }}
-          path: gradle/wrapper/gradle-wrapper.jar
-          retention-days: 7
-
   traceability:
     name: Traceability --check --strict
     runs-on: ubuntu-24.04
     timeout-minutes: 8
-    needs: [gradle-setup]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -57,13 +33,14 @@ jobs:
     name: Banned-vocabulary + detekt
     runs-on: ubuntu-24.04
     timeout-minutes: 10
-    needs: [gradle-setup]
+    needs: [traceability]
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
-        with:
-          name: gradle-wrapper-jar-${{ needs.gradle-setup.outputs.gradle-ready }}
-          path: gradle/wrapper
+      - name: Install Gradle 8.10.2
+        run: |
+          curl -fsSL https://services.gradle.org/distributions/gradle-8.10.2-bin.zip -o /tmp/gradle.zip
+          unzip -q /tmp/gradle.zip -d /opt
+          echo "/opt/gradle-8.10.2/bin" >> $GITHUB_PATH
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -84,7 +61,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          sh gradlew --no-daemon --stacktrace detekt 2>&1 | tee /tmp/detekt.log
+          gradle --no-daemon --stacktrace detekt 2>&1 | tee /tmp/detekt.log
       - name: Surface detekt errors as annotations
         if: steps.detekt.outcome == 'failure'
         shell: bash
@@ -99,7 +76,7 @@ jobs:
     name: Static gates (manifest)
     runs-on: ubuntu-24.04
     timeout-minutes: 8
-    needs: [gradle-setup]
+    needs: [traceability]
     steps:
       - uses: actions/checkout@v4
       - name: Assert NO internet permission in manifest

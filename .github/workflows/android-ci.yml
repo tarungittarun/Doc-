@@ -1,8 +1,7 @@
 name: OneDoc Android CI
 
-# Build signal for OneDoc. This is the ONLY way the project is compiled and
-# packaged: the review workspace has no JDK or Android SDK and cannot reach
-# services.gradle.org or dl.google.com.
+# Build signal for OneDoc. Runs on GitHub-hosted runners (the review workspace
+# has no JDK/Android SDK and cannot reach services.gradle.org or dl.google.com).
 on:
   push:
     branches: ["arena/db667982-doc"]
@@ -17,36 +16,12 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# Budget C8: max 3 parallel runners, <= 30 jobs per run. This lane: 7 jobs.
+# Budget C8: max 3 parallel runners, <= 30 jobs per run. This lane: 6 jobs.
 jobs:
-  gradle-setup:
-    name: Install Gradle + generate wrapper
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    outputs:
-      gradle-ready: "true"
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install Gradle 8.10.2
-        run: |
-          curl -fsSL https://services.gradle.org/distributions/gradle-8.10.2-bin.zip -o /tmp/gradle.zip
-          unzip -q /tmp/gradle.zip -d /opt
-          echo "GRADLE_HOME=/opt/gradle-8.10.2" >> $GITHUB_ENV
-          echo "/opt/gradle-8.10.2/bin" >> $GITHUB_PATH
-      - name: Generate Gradle wrapper (gradle-wrapper.jar)
-        run: gradle wrapper
-      - name: Upload wrapper jar
-        uses: actions/upload-artifact@v4
-        with:
-          name: gradle-wrapper-jar-${{ github.run_id }}
-          path: gradle/wrapper/gradle-wrapper.jar
-          retention-days: 7
-
   traceability:
     name: Traceability --check --strict
     runs-on: ubuntu-24.04
     timeout-minutes: 8
-    needs: [gradle-setup]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -61,13 +36,14 @@ jobs:
     name: Detekt static analysis
     runs-on: ubuntu-24.04
     timeout-minutes: 10
-    needs: [gradle-setup]
+    needs: [traceability]
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
-        with:
-          name: gradle-wrapper-jar-${{ needs.gradle-setup.outputs.gradle-ready }}
-          path: gradle/wrapper
+      - name: Install Gradle 8.10.2
+        run: |
+          curl -fsSL https://services.gradle.org/distributions/gradle-8.10.2-bin.zip -o /tmp/gradle.zip
+          unzip -q /tmp/gradle.zip -d /opt
+          echo "/opt/gradle-8.10.2/bin" >> $GITHUB_PATH
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -79,7 +55,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          sh gradlew --no-daemon --stacktrace detekt 2>&1 | tee /tmp/detekt.log
+          gradle --no-daemon --stacktrace detekt 2>&1 | tee /tmp/detekt.log
       - name: Surface detekt errors as annotations
         if: steps.detekt.outcome == 'failure'
         shell: bash
@@ -94,15 +70,16 @@ jobs:
     name: Assemble debug APKs (full + writer)
     runs-on: ubuntu-24.04
     timeout-minutes: 20
-    needs: [gradle-setup]
+    needs: [traceability]
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions/download-artifact@v4
-        with:
-          name: gradle-wrapper-jar-${{ needs.gradle-setup.outputs.gradle-ready }}
-          path: gradle/wrapper
+      - name: Install Gradle 8.10.2
+        run: |
+          curl -fsSL https://services.gradle.org/distributions/gradle-8.10.2-bin.zip -o /tmp/gradle.zip
+          unzip -q /tmp/gradle.zip -d /opt
+          echo "/opt/gradle-8.10.2/bin" >> $GITHUB_PATH
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -118,7 +95,7 @@ jobs:
           ls "$SDK" || true
           ls "$SDK/platforms" || true
           ls "$SDK/build-tools" || true
-          sh gradlew --version || true
+          gradle --version || true
       - name: Install missing SDK packages
         run: |
           SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
@@ -153,7 +130,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          sh gradlew --no-daemon --stacktrace assembleFullDebug assembleWriterDebug 2>&1 | tee /tmp/build.log
+          gradle --no-daemon --stacktrace assembleFullDebug assembleWriterDebug 2>&1 | tee /tmp/build.log
       - name: Surface build errors as annotations
         if: steps.build.outcome == 'failure'
         shell: bash
@@ -180,10 +157,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions/download-artifact@v4
-        with:
-          name: gradle-wrapper-jar-${{ needs.build-debug.outputs.gradle-ready }}
-          path: gradle/wrapper
+      - name: Install Gradle 8.10.2
+        run: |
+          curl -fsSL https://services.gradle.org/distributions/gradle-8.10.2-bin.zip -o /tmp/gradle.zip
+          unzip -q /tmp/gradle.zip -d /opt
+          echo "/opt/gradle-8.10.2/bin" >> $GITHUB_PATH
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -197,7 +175,7 @@ jobs:
           echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
           SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
           ls "$SDK" || true
-          sh gradlew --version || true
+          gradle --version || true
       - name: Install missing SDK packages
         run: |
           SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
@@ -231,7 +209,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          sh gradlew --no-daemon --stacktrace assembleFullRelease assembleWriterRelease 2>&1 | tee /tmp/build-release.log
+          gradle --no-daemon --stacktrace assembleFullRelease assembleWriterRelease 2>&1 | tee /tmp/build-release.log
       - name: Surface build errors as annotations
         if: steps.build.outcome == 'failure'
         shell: bash

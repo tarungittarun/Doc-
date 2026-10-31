@@ -18,44 +18,21 @@ permissions:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
 
-# Budget C8: max 3 parallel runners, <= 30 jobs per run. This lane: 5 jobs.
+# Budget C8: max 3 parallel runners, <= 30 jobs per run. This lane: 4 jobs.
 jobs:
-  gradle-setup:
-    name: Install Gradle + generate wrapper
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    outputs:
-      gradle-ready: "true"
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install Gradle 8.10.2
-        run: |
-          curl -fsSL https://services.gradle.org/distributions/gradle-8.10.2-bin.zip -o /tmp/gradle.zip
-          unzip -q /tmp/gradle.zip -d /opt
-          echo "GRADLE_HOME=/opt/gradle-8.10.2" >> $GITHUB_ENV
-          echo "/opt/gradle-8.10.2/bin" >> $GITHUB_PATH
-      - name: Generate Gradle wrapper (gradle-wrapper.jar)
-        run: gradle wrapper
-      - name: Upload wrapper jar
-        uses: actions/upload-artifact@v4
-        with:
-          name: gradle-wrapper-jar-${{ github.run_id }}
-          path: gradle/wrapper/gradle-wrapper.jar
-          retention-days: 7
-
   build-release:
     name: Assemble release APKs (full + writer)
     runs-on: ubuntu-24.04
     timeout-minutes: 20
-    needs: [gradle-setup]
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions/download-artifact@v4
-        with:
-          name: gradle-wrapper-jar-${{ needs.gradle-setup.outputs.gradle-ready }}
-          path: gradle/wrapper
+      - name: Install Gradle 8.10.2
+        run: |
+          curl -fsSL https://services.gradle.org/distributions/gradle-8.10.2-bin.zip -o /tmp/gradle.zip
+          unzip -q /tmp/gradle.zip -d /opt
+          echo "/opt/gradle-8.10.2/bin" >> $GITHUB_PATH
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -69,7 +46,7 @@ jobs:
           echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
           SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
           ls "$SDK" || true
-          sh gradlew --version || true
+          gradle --version || true
       - name: Install missing SDK packages
         run: |
           SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
@@ -111,7 +88,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          sh gradlew --no-daemon --stacktrace assembleFullRelease assembleWriterRelease 2>&1 | tee /tmp/build-release.log
+          gradle --no-daemon --stacktrace assembleFullRelease assembleWriterRelease 2>&1 | tee /tmp/build-release.log
       - name: Surface build errors as annotations
         if: steps.build.outcome == 'failure'
         shell: bash
