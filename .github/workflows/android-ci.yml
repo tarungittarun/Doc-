@@ -91,10 +91,20 @@ jobs:
           key: gradle-${{ runner.os }}-jdk17-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties', '*.gradle.kts', 'gradle/libs.versions.toml') }}
           restore-keys: gradle-${{ runner.os }}-jdk17-
       - name: Build debug APK
+        id: build
+        continue-on-error: true
         shell: bash
         run: |
           set -o pipefail
           gradle --no-daemon --stacktrace assembleFullDebug assembleWriterDebug 2>&1 | tee /tmp/build.log
+      - name: Surface build errors
+        if: steps.build.outcome == 'failure'
+        shell: bash
+        run: |
+          esc() { sed 's/%/%25/g; s/\r//g' | awk 'BEGIN { ORS = "%0A" } { print }'; }
+          { grep -nE "^e: |error:|FAILURE|What went wrong|Execution failed|Caused by:|Could not resolve|Unresolved" /tmp/build.log | head -30
+            echo "--- last 40 lines ---"
+            tail -40 /tmp/build.log; } | esc | { body=$(cat); echo "::error title=build-debug::${body}"; }
       - name: Upload debug APKs
         uses: actions/upload-artifact@v4
         if: always()
@@ -167,10 +177,20 @@ jobs:
           key: gradle-${{ runner.os }}-jdk17-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties', '*.gradle.kts', 'gradle/libs.versions.toml') }}
           restore-keys: gradle-${{ runner.os }}-jdk17-
       - name: Build release APK
+        id: build-release
+        continue-on-error: true
         shell: bash
         run: |
           set -o pipefail
           gradle --no-daemon --stacktrace assembleFullRelease assembleWriterRelease 2>&1 | tee /tmp/build-release.log
+      - name: Surface release build errors
+        if: steps.build-release.outcome == 'failure'
+        shell: bash
+        run: |
+          esc() { sed 's/%/%25/g; s/\r//g' | awk 'BEGIN { ORS = "%0A" } { print }'; }
+          { grep -nE "^e: |error:|FAILURE|What went wrong|Execution failed|Caused by:|Could not resolve|Unresolved" /tmp/build-release.log | head -30
+            echo "--- last 40 lines ---"
+            tail -40 /tmp/build-release.log; } | esc | { body=$(cat); echo "::error title=build-release::${body}"; }
       - name: Upload release APKs
         uses: actions/upload-artifact@v4
         if: always()
