@@ -71,37 +71,15 @@ jobs:
           key: gradle-${{ runner.os }}-jdk17-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties', '*.gradle.kts', 'gradle/libs.versions.toml') }}
           restore-keys: gradle-${{ runner.os }}-jdk17-
       - name: Build debug APK
-        id: build-debug-step
-        continue-on-error: true
         shell: bash
         run: |
           set -o pipefail
           echo "=== Before build ==="
           ls -la app/build/outputs/ 2>/dev/null || echo "No build outputs dir"
-          gradle --no-daemon --stacktrace assembleFullDebug assembleWriterDebug > /tmp/build.log 2>&1 || true
+          gradle --no-daemon --stacktrace assembleFullDebug 2>&1
           echo "=== After build ==="
           ls -la app/build/outputs/apk/ 2>/dev/null || echo "No apk dir"
           find app/build -name "*.apk" -type f 2>/dev/null || echo "No APKs found anywhere"
-          cat /tmp/build.log
-      - name: Surface debug build output
-        shell: bash
-        run: |
-          { echo "=== BUILD LOG ==="; cat /tmp/build.log; echo "=== APK SEARCH ==="; find app/build -name "*.apk" -type f 2>/dev/null || echo "No APKs found"; } | while IFS= read -r line; do echo "::error::$(echo "$line" | sed 's/%/%25/g; s/\r//g; s/\n/%0A/g')"; done
-      - name: Surface debug build errors
-        if: steps.build-debug-step.outcome == 'failure'
-        shell: bash
-        run: |
-          esc() { sed 's/%/%25/g; s/\r//g; s/\n/%0A/g'; }
-          echo "::error::=== FULL BUILD LOG (first 60 lines) ==="
-          head -60 /tmp/build.log | while IFS= read -r line; do echo "::error::$(echo "$line" | esc)"; done
-          echo "::error::=== BUILD LOG (lines 60-120) ==="
-          sed -n '60,120p' /tmp/build.log | while IFS= read -r line; do echo "::error::$(echo "$line" | esc)"; done
-          echo "::error::=== BUILD LOG (last 40 lines) ==="
-          tail -40 /tmp/build.log | while IFS= read -r line; do echo "::error::$(echo "$line" | esc)"; done
-      - name: Fail if build failed
-        if: steps.build-debug-step.outcome == 'failure'
-        run: exit 1
-
       - name: Upload debug APKs
         uses: actions/upload-artifact@v4
         if: always()
@@ -153,26 +131,15 @@ jobs:
           key: gradle-${{ runner.os }}-jdk17-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties', '*.gradle.kts', 'gradle/libs.versions.toml') }}
           restore-keys: gradle-${{ runner.os }}-jdk17-
       - name: Build release APK
-        id: build-release-step
-        continue-on-error: true
         shell: bash
         run: |
           set -o pipefail
           echo "=== Before release build ==="
           ls -la app/build/outputs/ 2>/dev/null || echo "No build outputs dir"
-          gradle --no-daemon --stacktrace assembleFullRelease > /tmp/build-release.log 2>&1 || true
+          gradle --no-daemon --stacktrace assembleFullRelease 2>&1
           echo "=== After release build ==="
           ls -la app/build/outputs/apk/ 2>/dev/null || echo "No apk dir"
           find app/build -name "*.apk" -type f 2>/dev/null || echo "No APKs found anywhere"
-          cat /tmp/build-release.log
-      - name: Surface release build output
-        shell: bash
-        run: |
-          { echo "=== BUILD LOG ==="; cat /tmp/build-release.log; echo "=== APK SEARCH ==="; find app/build -name "*.apk" -type f 2>/dev/null || echo "No APKs found"; } | while IFS= read -r line; do echo "::error::$(echo "$line" | sed 's/%/%25/g; s/\r//g; s/\n/%0A/g')"; done
-      - name: Fail if release build failed
-        if: steps.build-release-step.outcome == 'failure'
-        run: exit 1
-
       - name: "Static gate: no internet permission"
         run: |
           if grep -qE 'android.permission.INTERNET|ACCESS_NETWORK_STATE' app/src/main/AndroidManifest.xml; then
