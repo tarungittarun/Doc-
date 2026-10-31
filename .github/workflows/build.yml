@@ -75,31 +75,22 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          echo "=== Gradle version ==="
-          which gradle
-          gradle --version
-          echo "=== JAVA_HOME ==="
-          echo "$JAVA_HOME"
-          java -version
-          echo "=== Available Gradle tasks ==="
-          gradle tasks --all --console=plain 2>&1 | grep -E "Task :|assemble|install" | head -60 || true
-          echo "=== Before build ==="
-          ls -la app/build/ 2>/dev/null || echo "No app/build dir"
-          echo "=== Build ==="
+          esc() { sed 's/%/%25/g; s/\r//g; s/\n/%0A/g; s/:/%3A/g'; }
+          echo "::notice::DEBUG: which=$(which gradle 2>&1 | esc)"
+          echo "::notice::DEBUG: java=$(java -version 2>&1 | head -1 | esc)"
+          echo "::notice::DEBUG: task_count=$(gradle tasks --all --console=plain 2>&1 | grep -c '^Task ' || echo 0)"
+          echo "::notice::DEBUG: assemble_tasks=$(gradle tasks --all --console=plain 2>&1 | grep -E 'Task :.*assemble' | head -10 | esc)"
+          echo "::notice::DEBUG: Running gradle assembleFullDebug..."
           GRADLE_EXIT=0
-          gradle --no-daemon --info --rerun-tasks --no-build-cache assembleFullDebug 2>&1 || GRADLE_EXIT=$?
-          echo "GRADLE_EXIT_CODE=$GRADLE_EXIT"
-          echo "=== After build ==="
-          ls -la app/build/outputs/apk/ 2>/dev/null || echo "No apk dir"
+          GRADLE_OUT=$(gradle --no-daemon --info --rerun-tasks --no-build-cache assembleFullDebug 2>&1) || GRADLE_EXIT=$?
+          echo "::notice::DEBUG: GRADLE_EXIT_CODE=$GRADLE_EXIT"
+          echo "::notice::DEBUG: GRADLE_OUTPUT=$(printf '%s' "$GRADLE_OUT" | head -20 | esc)"
           APKS=$(find app -name "*.apk" -type f 2>/dev/null || true)
           if [ -n "$APKS" ]; then
-            echo "APKS FOUND:"
-            echo "$APKS"
+            echo "::notice::DEBUG APKS: $(printf '%s' "$APKS" | tr '\n' ' ')"
           else
-            echo "No APKs found anywhere"
+            echo "::error::DEBUG BUILD: NO APKS FOUND"
           fi
-          echo "GRADLE_EXIT_CODE=$GRADLE_EXIT" >> $GITHUB_STEP_SUMMARY
-          echo "$APKS" >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "No APKs" >> $GITHUB_STEP_SUMMARY
       - name: Annotate debug build result (always)
         shell: bash
         run: |
@@ -168,31 +159,22 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          echo "=== Gradle version ==="
-          which gradle
-          gradle --version
-          echo "=== JAVA_HOME ==="
-          echo "$JAVA_HOME"
-          java -version
-          echo "=== Available Gradle tasks ==="
-          gradle tasks --all --console=plain 2>&1 | grep -E "Task :|assemble|install" | head -60 || true
-          echo "=== Before release build ==="
-          ls -la app/build/outputs/ 2>/dev/null || echo "No build outputs dir"
-          echo "=== Build ==="
+          esc() { sed 's/%/%25/g; s/\r//g; s/\n/%0A/g; s/:/%3A/g'; }
+          echo "::notice::RELEASE: which=$(which gradle 2>&1 | esc)"
+          echo "::notice::RELEASE: java=$(java -version 2>&1 | head -1 | esc)"
+          echo "::notice::RELEASE: task_count=$(gradle tasks --all --console=plain 2>&1 | grep -c '^Task ' || echo 0)"
+          echo "::notice::RELEASE: assemble_tasks=$(gradle tasks --all --console=plain 2>&1 | grep -E 'Task :.*assemble' | head -10 | esc)"
+          echo "::notice::RELEASE: Running gradle assembleFullRelease..."
           GRADLE_EXIT=0
-          gradle --no-daemon --stacktrace --info --rerun-tasks --no-build-cache assembleFullRelease 2>&1 || GRADLE_EXIT=$?
-          echo "GRADLE_EXIT_CODE=$GRADLE_EXIT"
-          echo "=== After release build ==="
-          ls -la app/build/outputs/apk/ 2>/dev/null || echo "No apk dir"
+          GRADLE_OUT=$(gradle --no-daemon --stacktrace --info --rerun-tasks --no-build-cache assembleFullRelease 2>&1) || GRADLE_EXIT=$?
+          echo "::notice::RELEASE: GRADLE_EXIT_CODE=$GRADLE_EXIT"
+          echo "::notice::RELEASE: GRADLE_OUTPUT=$(printf '%s' "$GRADLE_OUT" | head -20 | esc)"
           APKS=$(find app -name "*.apk" -type f 2>/dev/null || true)
           if [ -n "$APKS" ]; then
-            echo "APKS FOUND:"
-            echo "$APKS"
+            echo "::notice::RELEASE APKS: $(printf '%s' "$APKS" | tr '\n' ' ')"
           else
-            echo "No APKs found anywhere"
+            echo "::error::RELEASE BUILD: NO APKS FOUND"
           fi
-          echo "GRADLE_EXIT_CODE=$GRADLE_EXIT" >> $GITHUB_STEP_SUMMARY
-          echo "$APKS" >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "No APKs" >> $GITHUB_STEP_SUMMARY
       - name: Annotate release build result (always)
         shell: bash
         run: |
