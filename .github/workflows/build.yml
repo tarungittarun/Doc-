@@ -71,10 +71,22 @@ jobs:
           key: gradle-${{ runner.os }}-jdk17-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties', '*.gradle.kts', 'gradle/libs.versions.toml') }}
           restore-keys: gradle-${{ runner.os }}-jdk17-
       - name: Build debug APK
+        id: build-debug-step
+        continue-on-error: true
         shell: bash
         run: |
           set -o pipefail
-          gradle --no-daemon --stacktrace assembleFullDebug assembleWriterDebug
+          gradle --no-daemon --stacktrace assembleFullDebug assembleWriterDebug 2>&1 | tee /tmp/build.log
+      - name: Surface debug build errors
+        if: steps.build-debug-step.outcome == 'failure'
+        shell: bash
+        run: |
+          { grep -nE "^e: |error:|FAILURE|What went wrong|Execution failed|Caused by:|Could not resolve|Unresolved reference" /tmp/build.log | head -30; echo "--- TAIL ---"; tail -30 /tmp/build.log; } > /tmp/build-errors.txt
+          cat /tmp/build-errors.txt
+      - name: Fail if build failed
+        if: steps.build-debug-step.outcome == 'failure'
+        run: exit 1
+
       - name: Upload debug APKs
         uses: actions/upload-artifact@v4
         if: always()
@@ -126,10 +138,21 @@ jobs:
           key: gradle-${{ runner.os }}-jdk17-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties', '*.gradle.kts', 'gradle/libs.versions.toml') }}
           restore-keys: gradle-${{ runner.os }}-jdk17-
       - name: Build release APK
+        id: build-release-step
+        continue-on-error: true
         shell: bash
         run: |
           set -o pipefail
-          gradle --no-daemon --stacktrace assembleFullRelease assembleWriterRelease
+          gradle --no-daemon --stacktrace assembleFullRelease assembleWriterRelease 2>&1 | tee /tmp/build-release.log
+      - name: Surface release build errors
+        if: steps.build-release-step.outcome == 'failure'
+        shell: bash
+        run: |
+          { grep -nE "^e: |error:|FAILURE|What went wrong|Execution failed|Caused by:|Could not resolve|Unresolved reference" /tmp/build-release.log | head -30; echo "--- TAIL ---"; tail -30 /tmp/build-release.log; } > /tmp/build-release-errors.txt
+          cat /tmp/build-release-errors.txt
+      - name: Fail if release build failed
+        if: steps.build-release-step.outcome == 'failure'
+        run: exit 1
       - name: "Static gate: no internet permission"
         run: |
           if grep -qE 'android.permission.INTERNET|ACCESS_NETWORK_STATE' app/src/main/AndroidManifest.xml; then
