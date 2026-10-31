@@ -30,7 +30,7 @@ jobs:
         run: python3 tools/onedoc/traceability.py --check --strict
 
   static-gates:
-    name: Assemble debug APKs
+    name: Static gates (manifest)
     runs-on: ubuntu-24.04
     timeout-minutes: 8
     needs: [traceability]
@@ -44,10 +44,10 @@ jobs:
           echo "PASS: no internet permission"
 
   verify-pr-lane:
-    name: CI lane green
+    name: PR lane green (<= 12 min)
     runs-on: ubuntu-24.04
     timeout-minutes: 12
-    needs: [traceability, build-debug, build-release]
+    needs: [traceability, static-gates]
     if: always()
     steps:
       - uses: actions/checkout@v4
