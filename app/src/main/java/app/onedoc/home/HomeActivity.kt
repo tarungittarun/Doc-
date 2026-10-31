@@ -98,7 +98,7 @@ fun HomeScreen(
 
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-            horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBy(8.dp),
+            horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
         ) {
             ActionChip(
                 onClick = { onCreateDocument() },
