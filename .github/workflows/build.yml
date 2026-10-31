@@ -81,9 +81,11 @@ jobs:
           echo "=== JAVA_HOME ==="
           echo "$JAVA_HOME"
           java -version
+          echo "=== Available Gradle tasks ==="
+          gradle tasks --all 2>&1 | head -50 || true
           echo "=== Before build ==="
           ls -la app/build/outputs/ 2>/dev/null || echo "No build outputs dir"
-          gradle --no-daemon --stacktrace --info assembleFullDebug > /tmp/build-debug.log 2>&1 || true
+          gradle --stacktrace --info assembleFullDebug > /tmp/build-debug.log 2>&1 || true
           echo "EXIT_CODE=$?"
           echo "=== After build ==="
           ls -la app/build/outputs/apk/ 2>/dev/null || echo "No apk dir"
@@ -158,9 +160,11 @@ jobs:
           echo "=== JAVA_HOME ==="
           echo "$JAVA_HOME"
           java -version
+          echo "=== Available Gradle tasks ==="
+          gradle tasks --all 2>&1 | head -50 || true
           echo "=== Before release build ==="
           ls -la app/build/outputs/ 2>/dev/null || echo "No build outputs dir"
-          gradle --no-daemon --stacktrace --info assembleFullRelease > /tmp/build-release.log 2>&1 || true
+          gradle --stacktrace --info assembleFullRelease > /tmp/build-release.log 2>&1 || true
           echo "EXIT_CODE=$?"
           echo "=== After release build ==="
           ls -la app/build/outputs/apk/ 2>/dev/null || echo "No apk dir"
