@@ -22,11 +22,18 @@ android {
 
     signingConfigs {
         named("debug") { /* debug keystore provided by AGP */ }
+        named("release") {
+            storeFile = file("signing/onedoc.p12")
+            storePassword = "onedoc-sideload"
+            keyPassword = "onedoc-sideload"
+            keyAlias = "onedoc"
+        }
     }
 
     buildTypes {
         named("release") {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.named("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
