@@ -191,14 +191,6 @@ jobs:
           { grep -nE "^e: |error:|FAILURE|What went wrong|Execution failed|Caused by:|Could not resolve|Unresolved|Plugin.*not found|Could not.*compile" /tmp/build-release.log | head -20
             echo "--- last 30 lines ---"
             tail -30 /tmp/build-release.log; } | esc | { body=$(cat); echo "::error title=build-release::${body}"; }
-      - name: Compute APK SHA-256 + size
-        run: |
-          shopt -s globstar
-          for apk in app/build/outputs/apk/**/release/*.apk; do
-            echo "=== $apk ==="
-            sha256sum "$apk"
-            ls -l "$apk"
-          done
       - name: Upload release APKs
         uses: actions/upload-artifact@v4
         if: always()
