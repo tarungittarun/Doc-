@@ -86,6 +86,7 @@ implementation(libs.compose.material.icons.core)
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     implementation(libs.datastore.preferences)
+implementation(libs.datastore.core)
     implementation(libs.koin.core)
     implementation(libs.koin.android)
 
