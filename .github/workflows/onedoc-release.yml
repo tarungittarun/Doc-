@@ -83,10 +83,20 @@ jobs:
           sed -i "s/versionCode = .*/versionCode = ${{ github.event.inputs.version_code }}/" app/build.gradle.kts
           sed -i "s/versionName = .*/versionName = \"${{ github.event.inputs.version }}\"/" app/build.gradle.kts
       - name: Assemble release APKs (RC debug keystore until owner keystore)
+        id: build
+        continue-on-error: true
         shell: bash
         run: |
           set -o pipefail
           gradle --no-daemon --stacktrace assembleFullRelease assembleWriterRelease 2>&1 | tee /tmp/build-release.log
+      - name: Surface release build errors
+        if: steps.build.outcome == 'failure'
+        shell: bash
+        run: |
+          esc() { sed 's/%/%25/g; s/\r//g' | awk 'BEGIN { ORS = "%0A" } { print }'; }
+          { grep -nE "^e: |error:|FAILURE|What went wrong|Execution failed|Caused by:|Could not resolve|Unresolved|Plugin.*not found|Could not.*compile" /tmp/build-release.log | head -20
+            echo "--- last 30 lines ---"
+            tail -30 /tmp/build-release.log; } | esc | { body=$(cat); echo "::error title=build-release::${body}"; }
       - name: Compute APK SHA-256 + size
         id: hashes
         run: |
