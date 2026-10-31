@@ -101,4 +101,10 @@ implementation(libs.datastore.core)
     testImplementation(libs.junit)
     testImplementation(libs.androidx.test.core)
     testImplementation(libs.robolectric)
+
+    // Android instrumented tests (G7 performance budgets)
+    androidTestImplementation(libs.junit)
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation("androidx.test:runner:1.5.2")
+    androidTestImplementation("androidx.test:rules:1.5.2")
 }
