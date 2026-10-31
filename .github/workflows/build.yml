@@ -75,9 +75,15 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
+          echo "=== Gradle version ==="
+          which gradle
+          gradle --version
+          echo "=== JAVA_HOME ==="
+          echo "$JAVA_HOME"
+          java -version
           echo "=== Before build ==="
           ls -la app/build/outputs/ 2>/dev/null || echo "No build outputs dir"
-          gradle --no-daemon --stacktrace assembleFullDebug > /tmp/build-debug.log 2>&1 || true
+          gradle --no-daemon --stacktrace --info assembleFullDebug > /tmp/build-debug.log 2>&1 || true
           echo "EXIT_CODE=$?"
           echo "=== After build ==="
           ls -la app/build/outputs/apk/ 2>/dev/null || echo "No apk dir"
@@ -146,9 +152,15 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
+          echo "=== Gradle version ==="
+          which gradle
+          gradle --version
+          echo "=== JAVA_HOME ==="
+          echo "$JAVA_HOME"
+          java -version
           echo "=== Before release build ==="
           ls -la app/build/outputs/ 2>/dev/null || echo "No build outputs dir"
-          gradle --no-daemon --stacktrace assembleFullRelease > /tmp/build-release.log 2>&1 || true
+          gradle --no-daemon --stacktrace --info assembleFullRelease > /tmp/build-release.log 2>&1 || true
           echo "EXIT_CODE=$?"
           echo "=== After release build ==="
           ls -la app/build/outputs/apk/ 2>/dev/null || echo "No apk dir"
