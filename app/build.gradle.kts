@@ -1,7 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.detekt)
 }
 
 android {
@@ -75,10 +74,6 @@ android {
     }
 }
 
-detekt {
-    config = files(rootProject.file("detekt.yml"))
-}
-
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
@@ -98,7 +93,7 @@ dependencies {
     implementation(libs.koin.android)
 
     // JSON for document serialization (§14.2, Appendix AN)
-    implementation("org.json:json:20240303")
+    implementation("org.json:json:20231013")
 
     // Coroutines
     implementation(libs.androidx.core.ktx) // already above
