@@ -78,11 +78,15 @@ jobs:
           set -o pipefail
           echo "=== Before build ==="
           ls -la app/build/outputs/ 2>/dev/null || echo "No build outputs dir"
-          gradle --no-daemon --stacktrace --info assembleFullDebug assembleWriterDebug > /tmp/build.log 2>&1 || true
+          gradle --no-daemon --stacktrace assembleFullDebug assembleWriterDebug > /tmp/build.log 2>&1 || true
           echo "=== After build ==="
           ls -la app/build/outputs/apk/ 2>/dev/null || echo "No apk dir"
           find app/build -name "*.apk" -type f 2>/dev/null || echo "No APKs found anywhere"
           cat /tmp/build.log
+      - name: Surface debug build output
+        shell: bash
+        run: |
+          { echo "=== BUILD LOG ==="; cat /tmp/build.log; echo "=== APK SEARCH ==="; find app/build -name "*.apk" -type f 2>/dev/null || echo "No APKs found"; } | while IFS= read -r line; do echo "::error::$(echo "$line" | sed 's/%/%25/g; s/\r//g; s/\n/%0A/g')"; done
       - name: Surface debug build errors
         if: steps.build-debug-step.outcome == 'failure'
         shell: bash
@@ -156,18 +160,15 @@ jobs:
           set -o pipefail
           echo "=== Before release build ==="
           ls -la app/build/outputs/ 2>/dev/null || echo "No build outputs dir"
-          gradle --no-daemon --stacktrace --info assembleFullRelease > /tmp/build-release.log 2>&1 || true
+          gradle --no-daemon --stacktrace assembleFullRelease > /tmp/build-release.log 2>&1 || true
           echo "=== After release build ==="
           ls -la app/build/outputs/apk/ 2>/dev/null || echo "No apk dir"
           find app/build -name "*.apk" -type f 2>/dev/null || echo "No APKs found anywhere"
           cat /tmp/build-release.log
-
-      - name: List built release APKs
+      - name: Surface release build output
         shell: bash
         run: |
-          echo "=== Built Release APKs ==="
-          find app/build/outputs/apk -name "*.apk" -type f 2>/dev/null || echo "No APKs found"
-          ls -la app/build/outputs/apk/*/release/*.apk 2>/dev/null || true
+          { echo "=== BUILD LOG ==="; cat /tmp/build-release.log; echo "=== APK SEARCH ==="; find app/build -name "*.apk" -type f 2>/dev/null || echo "No APKs found"; } | while IFS= read -r line; do echo "::error::$(echo "$line" | sed 's/%/%25/g; s/\r//g; s/\n/%0A/g')"; done
       - name: Fail if release build failed
         if: steps.build-release-step.outcome == 'failure'
         run: exit 1
