@@ -76,12 +76,18 @@ jobs:
         run: |
           set -o pipefail
           echo "=== Gradle version ==="
-          { which gradle; gradle --version; } | tee /tmp/build-debug.log
+          which gradle
+          gradle --version
+          echo "=== JAVA_HOME ==="
+          echo "$JAVA_HOME"
+          java -version
+          echo "=== Available Gradle tasks ==="
+          gradle tasks --all --console=plain 2>&1 | grep -E "assemble|install|Task" | head -40 || true
           echo "=== Before build ==="
           ls -la app/build/ 2>/dev/null || echo "No app/build dir"
           echo "=== Build ==="
-          gradle --console=plain assembleFullDebug >> /tmp/build-debug.log 2>&1 || true
-          echo "GRADLE_EXIT_CODE=$?" | tee -a /tmp/build-debug.log || true
+          gradle --no-daemon --info --console=plain assembleFullDebug 2>&1 | tee /tmp/build-debug.log || true
+          echo "GRADLE_EXIT_CODE=${PIPESTATUS[0]}" | tee -a /tmp/build-debug.log || true
           echo "=== After build ==="
           ls -la app/build/outputs/apk/ 2>/dev/null || echo "No apk dir"
           find app -name "*.apk" -type f 2>/dev/null || echo "No APKs found anywhere"
@@ -89,7 +95,7 @@ jobs:
         shell: bash
         run: |
           esc() { sed 's/%/%25/g; s/\r//g; s/\n/%0A/g'; }
-          BODY=$( { echo "=== BUILD LOG ==="; cat /tmp/build-debug.log 2>/dev/null || echo "(no build log)"; echo "=== DAEMON LOG (tail 40) ==="; tail -40 /home/runner/.gradle/daemon/8.10.2/daemon-*.out.log 2>/dev/null || echo "(no daemon log)"; echo "=== APK SEARCH ==="; find app/build -name "*.apk" -type f 2>/dev/null || echo "No APKs found"; } )
+          BODY=$( { echo "=== BUILD LOG ==="; cat /tmp/build-debug.log 2>/dev/null || echo "(no build log)"; echo "=== APK SEARCH ==="; find app/build -name "*.apk" -type f 2>/dev/null || echo "No APKs found"; } )
           printf '::error::%s\n' "$(printf '%s' "$BODY" | esc)"
       - name: Fail if build failed
         if: steps.build-debug-step.outcome == 'failure'
@@ -156,11 +162,12 @@ jobs:
           echo "$JAVA_HOME"
           java -version
           echo "=== Available Gradle tasks ==="
-          gradle tasks --all 2>&1 | head -50 || true
+          gradle tasks --all --console=plain 2>&1 | grep -E "assemble|install|Task" | head -40 || true
           echo "=== Before release build ==="
           ls -la app/build/outputs/ 2>/dev/null || echo "No build outputs dir"
-          gradle --stacktrace --info assembleFullRelease > /tmp/build-release.log 2>&1 || true
-          echo "EXIT_CODE=$?"
+          echo "=== Build ==="
+          gradle --no-daemon --stacktrace --info --console=plain assembleFullRelease 2>&1 | tee /tmp/build-release.log || true
+          echo "GRADLE_EXIT_CODE=${PIPESTATUS[0]}" | tee -a /tmp/build-release.log || true
           echo "=== After release build ==="
           ls -la app/build/outputs/apk/ 2>/dev/null || echo "No apk dir"
           find app/build -name "*.apk" -type f 2>/dev/null || echo "No APKs found anywhere"
@@ -169,7 +176,7 @@ jobs:
         shell: bash
         run: |
           esc() { sed 's/%/%25/g; s/\r//g; s/\n/%0A/g'; }
-          BODY=$( { echo "=== BUILD LOG ==="; cat /tmp/build-release.log 2>/dev/null || echo "(no build log)"; echo "=== DAEMON LOG (tail 40) ==="; tail -40 /home/runner/.gradle/daemon/8.10.2/daemon-*.out.log 2>/dev/null || echo "(no daemon log)"; echo "=== APK SEARCH ==="; find app/build -name "*.apk" -type f 2>/dev/null || echo "No APKs found"; } )
+          BODY=$( { echo "=== BUILD LOG ==="; cat /tmp/build-release.log 2>/dev/null || echo "(no build log)"; echo "=== APK SEARCH ==="; find app/build -name "*.apk" -type f 2>/dev/null || echo "No APKs found"; } )
           printf '::error::%s\n' "$(printf '%s' "$BODY" | esc)"
       - name: Fail if release build failed
         if: steps.build-release-step.outcome == 'failure'
