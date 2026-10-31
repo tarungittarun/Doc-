@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.preferences.Preferences
 import androidx.datastore.core.preferences.preferencesKey
-import androidx.datastore.core.preferences.RunnablePreferencesMigration
+import androidx.datastore.preferences.core.RunnablePreferencesMigration
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.editTransform
 import androidx.datastore.preferences.core.stringPreferencesKey
