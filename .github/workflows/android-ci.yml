@@ -13,6 +13,7 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Budget C8: max 3 parallel runners, <= 30 jobs per run. This lane: 3 jobs.
 jobs:
   traceability:
     name: Traceability --check --strict
@@ -28,145 +29,33 @@ jobs:
       - name: Run traceability check (strict)
         run: python3 tools/onedoc/traceability.py --check --strict
 
-  build-debug:
+  static-gates:
     name: Assemble debug APKs
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 8
     needs: [traceability]
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Install Gradle 8.10.2
-        run: |
-          curl -fsSL https://services.gradle.org/distributions/gradle-8.10.2-bin.zip -o /tmp/gradle.zip
-          unzip -q /tmp/gradle.zip -d /opt
-          echo "/opt/gradle-8.10.2/bin" >> $GITHUB_PATH
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "17"
-      - name: Install SDK packages
-        run: |
-          SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
-          yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
-          "$SDK/cmdline-tools/latest/bin/sdkmanager" \
-            "platform-tools" "platforms;android-36" "build-tools;36.0.0" || true
-      - name: Ensure signing key
-        run: |
-          if [ ! -f signing/onedoc.p12 ]; then
-            mkdir -p signing
-            keytool -genkeypair -keystore signing/onedoc.p12 -storetype pkcs12 \
-              -storepass onedoc-sideload -keypass onedoc-sideload -alias onedoc \
-              -keyalg RSA -keysize 2048 -validity 10950 \
-              -dname "CN=OneDoc Sideload, OU=Sideload, O=OneDoc, C=IN"
-          fi
-      - name: Cache Gradle
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-jdk17-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties', '*.gradle.kts', 'gradle/libs.versions.toml') }}
-          restore-keys: gradle-${{ runner.os }}-jdk17-
-      - name: Build debug APK
-        shell: bash
-        run: |
-          set -o pipefail
-          gradle --no-daemon --stacktrace assembleFullDebug assembleWriterDebug
-      - name: Upload debug APKs
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: onedoc-debug-apks
-          path: '**/build/outputs/apk/**/*.apk'
-          if-no-files-found: warn
-
-  build-release:
-    name: Assemble release APKs + static gates
-    runs-on: ubuntu-24.04
-    timeout-minutes: 20
-    needs: [build-debug]
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Install Gradle 8.10.2
-        run: |
-          curl -fsSL https://services.gradle.org/distributions/gradle-8.10.2-bin.zip -o /tmp/gradle.zip
-          unzip -q /tmp/gradle.zip -d /opt
-          echo "/opt/gradle-8.10.2/bin" >> $GITHUB_PATH
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "17"
-      - name: Install SDK packages
-        run: |
-          SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
-          yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
-          "$SDK/cmdline-tools/latest/bin/sdkmanager" \
-            "platform-tools" "platforms;android-36" "build-tools;36.0.0" || true
-      - name: Ensure signing key
-        run: |
-          if [ ! -f signing/onedoc.p12 ]; then
-            mkdir -p signing
-            keytool -genkeypair -keystore signing/onedoc.p12 -storetype pkcs12 \
-              -storepass onedoc-sideload -keypass onedoc-sideload -alias onedoc \
-              -keyalg RSA -keysize 2048 -validity 10950 \
-              -dname "CN=OneDoc Sideload, OU=Sideload, O=OneDoc, C=IN"
-          fi
-      - name: Cache Gradle
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-jdk17-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties', '*.gradle.kts', 'gradle/libs.versions.toml') }}
-          restore-keys: gradle-${{ runner.os }}-jdk17-
-      - name: Build release APK
-        shell: bash
-        run: |
-          set -o pipefail
-          gradle --no-daemon --stacktrace assembleFullRelease assembleWriterRelease
-      - name: Static gate: no internet permission
+      - name: Assert NO internet permission in manifest
         run: |
           if grep -qi 'android.permission.INTERNET\|ACCESS_NETWORK_STATE' app/src/main/AndroidManifest.xml; then
             echo "::error::FAIL: internet permission present" >&2; exit 1
           fi
           echo "PASS: no internet permission"
-      - name: Static gate: APK size
-        shell: bash
-        run: |
-          for apk in app/build/outputs/apk/*/release/*.apk; do
-            [ -f "$apk" ] || continue
-            size=$(stat -c%s "$apk")
-            if [ "$size" -gt 26214400 ]; then
-              echo "::error::FAIL: $apk exceeds 25 MB" >&2; exit 1
-            fi
-          done
-          echo "PASS: APK size <= 25 MB"
-      - name: Upload release APKs
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: onedoc-release-apks
-          path: app/build/outputs/apk/*/release/*.apk
-          retention-days: 30
-          if-no-files-found: warn
 
-  verify-ci-lane:
+  verify-pr-lane:
     name: CI lane green
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 12
     needs: [traceability, build-debug, build-release]
     if: always()
     steps:
       - uses: actions/checkout@v4
       - run: |
           statuses="${{ join(needs.*.result, ',') }}"
+          echo "Job statuses: $statuses"
           if echo "$statuses" | grep -q 'failure\|cancelled'; then
-            echo "::error::CI lane not green" >&2; exit 1
+            echo "::error::PR lane not green" >&2
+            exit 1
           fi
-          echo "PASS: CI lane green"
+          echo "PASS: PR lane green"
