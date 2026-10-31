@@ -77,8 +77,11 @@ jobs:
           esc() { sed 's/%/%25/g; s/\r//g; s/\n/%0A/g; s/:/%3A/g'; }
           echo "::notice::DEBUG: which=$(which gradle 2>&1 | esc)"
           echo "::notice::DEBUG: java=$(java -version 2>&1 | head -1 | esc)"
-          echo "::notice::DEBUG: Running gradle --stacktrace assembleFullDebug..."
-          gradle --no-daemon --stacktrace --info assembleFullDebug > /tmp/gradle-debug.out 2>&1 || GRADLE_EXIT=$?
+          echo "::notice::DEBUG: Maven repo connectivity test..."
+          curl -sI https://repo1.maven.org/maven2/ 2>&1 | head -3 || echo "mavenCentral unreachable"
+          curl -sI https://dl.google.com/android/maven2/ 2>&1 | head -3 || echo "google() unreachable"
+          echo "::notice::DEBUG: Running gradle --stacktrace --refresh-dependencies assembleFullDebug..."
+          gradle --no-daemon --stacktrace --info --refresh-dependencies assembleFullDebug > /tmp/gradle-debug.out 2>&1 || GRADLE_EXIT=$?
           echo "::notice::DEBUG: GRADLE_EXIT_CODE=${GRADLE_EXIT:-0}"
           echo "::notice::DEBUG: OUTPUT_FILE_SIZE=$(wc -c < /tmp/gradle-debug.out 2>/dev/null || echo 0)"
           echo "::notice::DEBUG: WHAT_WENT_WRONG=$(sed -n '/What went wrong/,/^$/p' /tmp/gradle-debug.out 2>/dev/null | head -5 | esc)"
@@ -162,8 +165,11 @@ jobs:
           esc() { sed 's/%/%25/g; s/\r//g; s/\n/%0A/g; s/:/%3A/g'; }
           echo "::notice::RELEASE: which=$(which gradle 2>&1 | esc)"
           echo "::notice::RELEASE: java=$(java -version 2>&1 | head -1 | esc)"
-          echo "::notice::RELEASE: Running gradle --stacktrace assembleFullRelease..."
-          gradle --no-daemon --stacktrace --info assembleFullRelease > /tmp/gradle-release.out 2>&1 || GRADLE_EXIT=$?
+          echo "::notice::RELEASE: Maven repo connectivity test..."
+          curl -sI https://repo1.maven.org/maven2/ 2>&1 | head -3 || echo "mavenCentral unreachable"
+          curl -sI https://dl.google.com/android/maven2/ 2>&1 | head -3 || echo "google() unreachable"
+          echo "::notice::RELEASE: Running gradle --stacktrace --refresh-dependencies assembleFullRelease..."
+          gradle --no-daemon --stacktrace --info --refresh-dependencies assembleFullRelease > /tmp/gradle-release.out 2>&1 || GRADLE_EXIT=$?
           echo "::notice::RELEASE: GRADLE_EXIT_CODE=${GRADLE_EXIT:-0}"
           echo "::notice::RELEASE: OUTPUT_FILE_SIZE=$(wc -c < /tmp/gradle-release.out 2>/dev/null || echo 0)"
           echo "::notice::RELEASE: WHAT_WENT_WRONG=$(sed -n '/What went wrong/,/^$/p' /tmp/gradle-release.out 2>/dev/null | head -5 | esc)"
