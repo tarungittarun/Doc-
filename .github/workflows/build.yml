@@ -144,23 +144,10 @@ jobs:
           key: gradle-${{ runner.os }}-jdk17-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties', '*.gradle.kts', 'gradle/libs.versions.toml') }}
           restore-keys: gradle-${{ runner.os }}-jdk17-
       - name: Build release APK
-        id: build-release-step
-        continue-on-error: true
         shell: bash
         run: |
           set -o pipefail
           gradle --no-daemon --stacktrace assembleFullRelease assembleWriterRelease 2>&1 | tee /tmp/build-release.log
-      - name: Surface release build errors
-        if: steps.build-release-step.outcome == 'failure'
-        shell: bash
-        run: |
-          esc() { sed 's/%/%25/g; s/\r//g; s/\n/%0A/g'; }
-          awk '/What went wrong/,0' /tmp/build-release.log | head -30 | while IFS= read -r line; do echo "::error::$(echo "$line" | esc)"; done
-          echo "::error::=== LAST 25 LINES ==="
-          tail -25 /tmp/build-release.log | while IFS= read -r line; do echo "::error::$(echo "$line" | esc)"; done
-      - name: Fail if release build failed
-        if: steps.build-release-step.outcome == 'failure'
-        run: exit 1
       - name: "Static gate: no internet permission"
         run: |
           if grep -qE 'android.permission.INTERNET|ACCESS_NETWORK_STATE' app/src/main/AndroidManifest.xml; then
