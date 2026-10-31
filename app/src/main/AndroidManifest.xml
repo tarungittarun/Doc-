@@ -42,15 +42,6 @@
 
         <activity android:name=".settings.SettingsActivity" android:exported="false" />
 
-        <provider
-            android:name="androidx.startup.InitializationProvider"
-            android:exported="false"
-            android:authorities="app.onedoc.androidx-startup">
-            <meta-data
-                android:name="app.onedoc.AppInitializer"
-                android:value="androidx.startup" />
-        </provider>
-
     </application>
 
 </manifest>
