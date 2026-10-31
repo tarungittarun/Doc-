@@ -80,7 +80,7 @@ jobs:
           gradle --version
           echo "=== Before build ==="
           ls -la app/build/ 2>/dev/null || echo "No app/build dir"
-          gradle assembleFullDebug 2>&1 || true
+          gradle assembleFullDebug > /tmp/build-debug.log 2>&1 || true
           echo "EXIT_CODE=$?"
           echo "=== After build ==="
           ls -la app/build/outputs/apk/ 2>/dev/null || echo "No apk dir"
