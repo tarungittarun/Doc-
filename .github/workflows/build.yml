@@ -88,7 +88,8 @@ jobs:
           echo "::notice::DEBUG: CAUSED_BY=$(grep -A3 'Caused by' /tmp/gradle-debug.out 2>/dev/null | head -6 | esc)"
           echo "::notice::DEBUG: RESOLVE_DETAILS=$(grep -E 'Could not (find|resolve)' /tmp/gradle-debug.out 2>/dev/null | grep -v 'Could not resolve all files' | head -15 | esc)"
           echo "::notice::DEBUG: EXCEPTIONS=$(grep -E 'Exception:|Could not|A problem occurred|Build failed' /tmp/gradle-debug.out 2>/dev/null | grep -v error_prone | head -8 | esc)"
-          echo "::notice::DEBUG: KOTLIN_ERRORS=$(tail -40 /tmp/gradle-debug.out 2>/dev/null | esc)"
+          echo "::notice::DEBUG: FAILURE_SECTION=$(sed -n '/What went wrong/,/^$/p' /tmp/gradle-debug.out 2>/dev/null | head -20 | esc)"
+          echo "::notice::DEBUG: ABOVE_ERROR=$(grep -B5 -A5 'FAILED\|error:\|e: ' /tmp/gradle-debug.out 2>/dev/null | head -30 | esc)"
           APKS=$(find app -name "*.apk" -type f 2>/dev/null || true)
           if [ -n "$APKS" ]; then
             echo "::notice::DEBUG APKS: $(printf '%s' "$APKS" | tr '\n' ' ')"
@@ -176,7 +177,8 @@ jobs:
           echo "::notice::RELEASE: CAUSED_BY=$(grep -A3 'Caused by' /tmp/gradle-release.out 2>/dev/null | head -6 | esc)"
           echo "::notice::RELEASE: RESOLVE_DETAILS=$(grep -E 'Could not (find|resolve)' /tmp/gradle-release.out 2>/dev/null | grep -v 'Could not resolve all files' | head -15 | esc)"
           echo "::notice::RELEASE: EXCEPTIONS=$(grep -E 'Exception:|Could not|A problem occurred|Build failed' /tmp/gradle-release.out 2>/dev/null | grep -v error_prone | head -8 | esc)"
-          echo "::notice::RELEASE: KOTLIN_ERRORS=$(tail -40 /tmp/gradle-release.out 2>/dev/null | esc)"
+          echo "::notice::RELEASE: FAILURE_SECTION=$(sed -n '/What went wrong/,/^$/p' /tmp/gradle-release.out 2>/dev/null | head -20 | esc)"
+          echo "::notice::RELEASE: ABOVE_ERROR=$(grep -B5 -A5 'FAILED\|error:\|e: ' /tmp/gradle-release.out 2>/dev/null | head -30 | esc)"
           APKS=$(find app -name "*.apk" -type f 2>/dev/null || true)
           if [ -n "$APKS" ]; then
             echo "::notice::RELEASE APKS: $(printf '%s' "$APKS" | tr '\n' ' ')"
