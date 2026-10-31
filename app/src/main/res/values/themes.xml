@@ -1,0 +1,13 @@
+<resources>
+    <!-- OneDoc theme tokens reference design/onedoc-figma/tokens.json (§6). -->
+    <style name="Theme.OneDoc" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="android:windowBackground">@color/onedoc_surface</item>
+        <item name="colorPrimary">@color/onedoc_primary</item>
+    </style>
+
+    <style name="Theme.OneDoc.Light" parent="Theme.OneDoc">
+    </style>
+
+    <style name="Theme.OneDoc.Dark" parent="Theme.OneDoc">
+    </style>
+</resources>
