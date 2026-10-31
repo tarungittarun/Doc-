@@ -82,6 +82,7 @@ jobs:
           echo "::notice::DEBUG: OUTPUT_SIZE=$(wc -c < /tmp/gradle-debug.out 2>/dev/null || echo 0)"
           echo "::notice::DEBUG: APP_TASKS=$(grep 'Task :app:' /tmp/gradle-debug.out 2>/dev/null | tail -10 | esc)"
           echo "::notice::DEBUG: LAST_30=$(tail -30 /tmp/gradle-debug.out 2>/dev/null | esc)"
+          echo "::notice::DEBUG: ERROR_SECTION=$(grep -iE 'error|failed|exception|what went wrong|problem|cannot|unable' /tmp/gradle-debug.out 2>/dev/null | grep -v 'Build cache is disabled' | head -15 | esc)"
           APKS=$(find app -name "*.apk" -type f 2>/dev/null || true)
           if [ -n "$APKS" ]; then
             echo "::notice::DEBUG APKS: $(printf '%s' "$APKS" | tr '\n' ' ')"
@@ -150,6 +151,7 @@ jobs:
           echo "::notice::RELEASE: OUTPUT_SIZE=$(wc -c < /tmp/gradle-release.out 2>/dev/null || echo 0)"
           echo "::notice::RELEASE: APP_TASKS=$(grep 'Task :app:' /tmp/gradle-release.out 2>/dev/null | tail -10 | esc)"
           echo "::notice::RELEASE: LAST_30=$(tail -30 /tmp/gradle-release.out 2>/dev/null | esc)"
+          echo "::notice::RELEASE: ERROR_SECTION=$(grep -iE 'error|failed|exception|what went wrong|problem|cannot|unable' /tmp/gradle-release.out 2>/dev/null | grep -v 'Build cache is disabled' | head -15 | esc)"
           APKS=$(find app -name "*.apk" -type f 2>/dev/null || true)
           if [ -n "$APKS" ]; then
             echo "::notice::RELEASE APKS: $(printf '%s' "$APKS" | tr '\n' ' ')"
