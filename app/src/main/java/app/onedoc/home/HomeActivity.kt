@@ -90,12 +90,31 @@ fun HomeScreen(
 ) {
     val color = MaterialTheme.colorScheme
 
+    // Search state (G5)
+    var searchQuery by remember { mutableStateOf("") }
+    var searchExpanded by remember { mutableStateOf(false) }
+
     Column(modifier = Modifier.fillMaxSize()) {
         AppTopBar(
             title = "OneDoc",
-            onSearchClick = {},
+            onSearchClick = { searchExpanded = !searchExpanded },
             modifier = Modifier,
         )
+
+        // Search bar (G5)
+        if (searchExpanded) {
+            TextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                label = { Text(text = "Search documents") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                colors = TextFieldDefaults.colors(),
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
         Spacer(modifier = Modifier.height(16.dp))
 
         Row(
@@ -117,28 +136,32 @@ fun HomeScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Documents",
+            text = if (searchQuery.isNotEmpty()) "Search results" else "Documents",
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(horizontal = 16.dp),
         )
 
-        // Document list — populated from repository in G2+
+        // Document list — populated from repository via LiveData observer (G2)
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 16.dp)
                 .weight(1f),
         ) {
-            // Document list — populated from repository via LiveData observer (G2)
             val docs by repository.documents.observeAsState(emptyList())
-            if (docs.isEmpty()) {
+            val filteredDocs = if (searchQuery.isNotEmpty()) {
+                docs.filter { it.title.lowercase().contains(searchQuery.lowercase()) }
+            } else {
+                docs
+            }
+            if (filteredDocs.isEmpty()) {
                 EmptyState(
-                    title = "No documents yet",
-                    description = "Tap + to create your first document.",
+                    title = if (searchQuery.isNotEmpty()) "No matching documents" else "No documents yet",
+                    description = if (searchQuery.isNotEmpty()) "Try a different search term." else "Tap + to create your first document.",
                     onCreate = onCreateDocument,
                 )
             } else {
-                docs.forEach { doc ->
+                filteredDocs.forEach { doc ->
                     DocumentListItem(
                         document = doc,
                         onClick = { onDocumentClick(doc) },
