@@ -82,10 +82,12 @@ jobs:
         shell: bash
         run: |
           esc() { sed 's/%/%25/g; s/\r//g; s/\n/%0A/g'; }
-          # Find "What went wrong" and print it + following 25 lines
-          awk '/What went wrong/,0' /tmp/build.log | head -30 | while IFS= read -r line; do echo "::error::$(echo "$line" | esc)"; done
-          echo "::error::=== LAST 25 LINES ==="
-          tail -25 /tmp/build.log | while IFS= read -r line; do echo "::error::$(echo "$line" | esc)"; done
+          # All Kotlin compile errors (e: lines)
+          grep '^e:' /tmp/build.log | head -20 | while IFS= read -r line; do echo "::error::$(echo "$line" | esc)"; done
+          # "What went wrong" section
+          awk '/What went wrong/,0' /tmp/build.log | head -15 | while IFS= read -r line; do echo "::error::$(echo "$line" | esc)"; done
+          echo "::error::=== LAST 30 LINES ==="
+          tail -30 /tmp/build.log | while IFS= read -r line; do echo "::error::$(echo "$line" | esc)"; done
       - name: Fail if build failed
         if: steps.build-debug-step.outcome == 'failure'
         run: exit 1
