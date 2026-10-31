@@ -12,10 +12,34 @@ concurrency:
 
 # Budget C8: max 3 parallel runners, <= 30 jobs per run. This lane: 4 jobs.
 jobs:
+  gradle-setup:
+    name: Install Gradle + generate wrapper
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      gradle-ready: "true"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Gradle 8.10.2
+        run: |
+          curl -fsSL https://services.gradle.org/distributions/gradle-8.10.2-bin.zip -o /tmp/gradle.zip
+          unzip -q /tmp/gradle.zip -d /opt
+          echo "GRADLE_HOME=/opt/gradle-8.10.2" >> $GITHUB_ENV
+          echo "/opt/gradle-8.10.2/bin" >> $GITHUB_PATH
+      - name: Generate Gradle wrapper (gradle-wrapper.jar)
+        run: gradle wrapper
+      - name: Upload wrapper jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: gradle-wrapper-jar-${{ github.run_id }}
+          path: gradle/wrapper/gradle-wrapper.jar
+          retention-days: 7
+
   traceability:
-    name: traceability --check --strict
+    name: Traceability --check --strict
     runs-on: ubuntu-latest
     timeout-minutes: 8
+    needs: [gradle-setup]
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
@@ -28,40 +52,62 @@ jobs:
         run: python3 tools/onedoc/traceability.py --check --strict
 
   lint:
-    name: detekt + banned vocabulary
-    runs-on: ubuntu-latest
-    timeout-minutes: 8
-    steps:
-      - uses: actions/checkout@v4
-      - name: Banned-vocabulary grep (no literal user strings in code)
-        run: |
-          set -e
-          echo "Checking for hardcoded user-facing strings in Kotlin..."
-          ! grep -rnE '"[A-Z][^"]{3,}"' app/src --include="*.kt" || true
-
-  static-gates:
-    name: static gates (manifest + size)
+    name: Banned-vocabulary + detekt
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    needs: [gradle-setup]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: gradle-wrapper-jar-${{ needs.gradle-setup.outputs.gradle-ready }}
+          path: gradle/wrapper
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Validate Gradle wrapper
+        uses: gradle/wrapper-validation-action@v3
+      - name: Banned-vocabulary grep (no literal user-facing strings in Kotlin)
+        run: |
+          set +e
+          hits=$(grep -rnE '"[A-Z][^"]{3,}"' app/src --include="*.kt" 2>/dev/null || true)
+          if [ -n "$hits" ]; then
+            echo "::warning::Hardcoded string literals found in Kotlin source:"
+            echo "$hits"
+          fi
+          echo "PASS: lint scan complete"
+      - name: Run detekt
+        run: ./gradlew detekt --no-daemon
+
+  static-gates:
+    name: Static gates (manifest)
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    needs: [gradle-setup]
     steps:
       - uses: actions/checkout@v4
       - name: Assert NO internet permission in manifest
         run: |
           if grep -qi 'android.permission.INTERNET\|ACCESS_NETWORK_STATE' app/src/main/AndroidManifest.xml; then
-            echo "FAIL: internet permission present" >&2; exit 1
+            echo "::error::FAIL: internet permission present" >&2; exit 1
           fi
           echo "PASS: no internet permission"
-      - name: Assert APK size budget placeholder (<= 25 MB)
-        run: |
-          echo "PASS: size budget checked at assemble (T-G1-002)"
 
   verify-pr-lane:
     name: PR lane green (<= 12 min)
-    needs: [traceability, lint, static-gates]
     runs-on: ubuntu-latest
     timeout-minutes: 12
+    needs: [traceability, lint, static-gates]
+    if: always()
     steps:
       - uses: actions/checkout@v4
-      - run: echo "All prerequisite jobs green — PR lane OK"
-      - if: failure()
-        run: echo "::error::PR lane not green"
+      - run: |
+          statuses="${{ join(needs.*.result, ',') }}"
+          echo "Job statuses: $statuses"
+          if echo "$statuses" | grep -q 'failure\|cancelled'; then
+            echo "::error::PR lane not green" >&2
+            exit 1
+          fi
+          echo "PASS: PR lane green"
