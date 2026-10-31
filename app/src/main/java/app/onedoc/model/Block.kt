@@ -18,10 +18,10 @@ package app.onedoc.model
  * 13. title       — document title block
  */
 sealed class Block {
-    val id: String
-    val kind: BlockKind
-    val marks: List<Mark>
-    val createdAt: Long
+    abstract val id: String
+    abstract val kind: BlockKind
+    abstract val marks: List<Mark>
+    abstract val createdAt: Long
 
     data class Paragraph(
         override val id: String,
