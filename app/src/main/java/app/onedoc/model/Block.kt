@@ -23,7 +23,7 @@ sealed class Block {
     val marks: List<Mark>
     val createdAt: Long
 
-    abstract data class Paragraph(
+    data class Paragraph(
         override val id: String,
         override val kind: BlockKind = BlockKind.Paragraph,
         val text: String,
@@ -31,7 +31,7 @@ sealed class Block {
         override val createdAt: Long = System.currentTimeMillis(),
     ) : Block()
 
-    abstract data class Heading(
+    data class Heading(
         override val id: String,
         override val kind: BlockKind = BlockKind.Heading,
         val level: Int, // 1..6
@@ -40,7 +40,7 @@ sealed class Block {
         override val createdAt: Long = System.currentTimeMillis(),
     ) : Block()
 
-    abstract data class ListItem(
+    data class ListItem(
         override val id: String,
         override val kind: BlockKind,
         val text: String,
@@ -50,7 +50,7 @@ sealed class Block {
         override val createdAt: Long = System.currentTimeMillis(),
     ) : Block()
 
-    abstract data class CodeBlock(
+    data class CodeBlock(
         override val id: String,
         override val kind: BlockKind = BlockKind.CodeBlock,
         val code: String,
@@ -58,14 +58,14 @@ sealed class Block {
         override val createdAt: Long = System.currentTimeMillis(),
     ) : Block()
 
-    abstract data class Blockquote(
+    data class Blockquote(
         override val id: String,
         override val kind: BlockKind = BlockKind.Blockquote,
         val blocks: List<Block>,
         override val createdAt: Long = System.currentTimeMillis(),
     ) : Block()
 
-    abstract data class ImageBlock(
+    data class ImageBlock(
         override val id: String,
         override val kind: BlockKind = BlockKind.Image,
         val uri: String,
@@ -75,7 +75,7 @@ sealed class Block {
         override val createdAt: Long = System.currentTimeMillis(),
     ) : Block()
 
-    abstract data class Table(
+    data class Table(
         override val id: String,
         override val kind: BlockKind = BlockKind.Table,
         val rows: Int,
@@ -84,33 +84,33 @@ sealed class Block {
         override val createdAt: Long = System.currentTimeMillis(),
     ) : Block()
 
-    abstract data class TOC(
+    data class TOC(
         override val id: String,
         override val kind: BlockKind = BlockKind.TOC,
         val maxLevel: Int = 6,
         override val createdAt: Long = System.currentTimeMillis(),
     ) : Block()
 
-    abstract data class Footnote(
+    data class Footnote(
         override val id: String,
         override val kind: BlockKind = BlockKind.Footnote,
         val text: String,
         override val createdAt: Long = System.currentTimeMillis(),
     ) : Block()
 
-    abstract data class Divider(
+    data class Divider(
         override val id: String,
         override val kind: BlockKind = BlockKind.Divider,
         override val createdAt: Long = System.currentTimeMillis(),
     ) : Block()
 
-    abstract data class PageBreak(
+    data class PageBreak(
         override val id: String,
         override val kind: BlockKind = BlockKind.PageBreak,
         override val createdAt: Long = System.currentTimeMillis(),
     ) : Block()
 
-    abstract data class Title(
+    data class Title(
         override val id: String,
         override val kind: BlockKind = BlockKind.Title,
         val text: String,
