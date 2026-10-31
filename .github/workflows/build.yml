@@ -81,8 +81,8 @@ jobs:
         if: steps.build-debug-step.outcome == 'failure'
         shell: bash
         run: |
-          { grep -nE "^e: |error:|FAILURE|What went wrong|Execution failed|Caused by:|Could not resolve|Unresolved reference" /tmp/build.log | head -30; echo "--- TAIL ---"; tail -30 /tmp/build.log; } > /tmp/build-errors.txt
-          cat /tmp/build-errors.txt
+          esc() { sed 's/%/%25/g; s/\r//g; s/\n/%0A/g'; }
+          { grep -nE "^e: |error:|FAILURE|What went wrong|Execution failed|Caused by:|Could not resolve|Unresolved reference" /tmp/build.log | head -20; echo "=== TAIL ==="; tail -20 /tmp/build.log; } | while IFS= read -r line; do echo "::error::$(echo "$line" | esc)"; done
       - name: Fail if build failed
         if: steps.build-debug-step.outcome == 'failure'
         run: exit 1
@@ -148,8 +148,8 @@ jobs:
         if: steps.build-release-step.outcome == 'failure'
         shell: bash
         run: |
-          { grep -nE "^e: |error:|FAILURE|What went wrong|Execution failed|Caused by:|Could not resolve|Unresolved reference" /tmp/build-release.log | head -30; echo "--- TAIL ---"; tail -30 /tmp/build-release.log; } > /tmp/build-release-errors.txt
-          cat /tmp/build-release-errors.txt
+          esc() { sed 's/%/%25/g; s/\r//g; s/\n/%0A/g'; }
+          { grep -nE "^e: |error:|FAILURE|What went wrong|Execution failed|Caused by:|Could not resolve|Unresolved reference" /tmp/build-release.log | head -20; echo "=== TAIL ==="; tail -20 /tmp/build-release.log; } | while IFS= read -r line; do echo "::error::$(echo "$line" | esc)"; done
       - name: Fail if release build failed
         if: steps.build-release-step.outcome == 'failure'
         run: exit 1
