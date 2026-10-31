@@ -20,7 +20,7 @@ package app.onedoc.model
 sealed class Block {
     abstract val id: String
     abstract val kind: BlockKind
-    abstract val marks: List<Mark>
+    val marks: List<Mark> = emptyList()
     abstract val createdAt: Long
 
     data class Paragraph(
