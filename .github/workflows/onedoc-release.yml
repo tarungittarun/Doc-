@@ -100,6 +100,7 @@ jobs:
       - name: Compute APK SHA-256 + size
         id: hashes
         run: |
+          shopt -s globstar
           for apk in app/build/outputs/apk/**/release/*.apk; do
             sha=$(sha256sum "$apk" | awk '{print $1}')
             size=$(stat -c%s "$apk")
