@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   traceability:
-    name: Traceability check
+    name: Traceability --check --strict
     runs-on: ubuntu-24.04
     timeout-minutes: 8
     steps:
@@ -26,11 +26,11 @@ jobs:
           python-version: "3.11"
       - name: Install tool deps
         run: python3 -m pip -q install pyyaml
-      - name: Run traceability check
+      - name: Run traceability check (strict)
         run: python3 tools/onedoc/traceability.py --check --strict
 
   build-debug:
-    name: Build debug APKs
+    name: Assemble debug APKs
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     needs: [traceability]
@@ -53,8 +53,7 @@ jobs:
           SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
           yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
           "$SDK/cmdline-tools/latest/bin/sdkmanager" \
-            "platform-tools" "platforms;android-36" "build-tools;36.0.0" \
-            "system-images;android-26;google_apis;x86_64" || true
+            "platform-tools" "platforms;android-36" "build-tools;36.0.0" || true
       - name: Ensure signing key
         run: |
           if [ ! -f signing/onedoc.p12 ]; then
@@ -76,7 +75,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          gradle --no-daemon --stacktrace assembleFullDebug assembleWriterDebug 2>&1 | tee /tmp/build.log
+          gradle --no-daemon --stacktrace assembleFullDebug assembleWriterDebug
       - name: Upload debug APKs
         uses: actions/upload-artifact@v4
         if: always()
@@ -86,7 +85,7 @@ jobs:
           if-no-files-found: warn
 
   build-release:
-    name: Build release APKs + static gates
+    name: Assemble release APKs + static gates
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     needs: [build-debug]
@@ -131,20 +130,18 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          gradle --no-daemon --stacktrace assembleFullRelease assembleWriterRelease 2>&1 | tee /tmp/build-release.log
+          gradle --no-daemon --stacktrace assembleFullRelease assembleWriterRelease
       - name: Static gate: no internet permission
         run: |
-          set -e
-          if grep -rqi 'android.permission.INTERNET\|ACCESS_NETWORK_STATE' app/src/main/AndroidManifest.xml; then
+          if grep -qi 'android.permission.INTERNET\|ACCESS_NETWORK_STATE' app/src/main/AndroidManifest.xml; then
             echo "::error::FAIL: internet permission present" >&2; exit 1
           fi
           echo "PASS: no internet permission"
       - name: Static gate: APK size
         shell: bash
         run: |
-          set -e
-          shopt -s globstar
-          for apk in app/build/outputs/apk/**/release/*.apk; do
+          for apk in app/build/outputs/apk/*/release/*.apk; do
+            [ -f "$apk" ] || continue
             size=$(stat -c%s "$apk")
             if [ "$size" -gt 26214400 ]; then
               echo "::error::FAIL: $apk exceeds 25 MB" >&2; exit 1
@@ -156,7 +153,7 @@ jobs:
         if: always()
         with:
           name: onedoc-release-apks
-          path: app/build/outputs/apk/**/release/*.apk
+          path: app/build/outputs/apk/*/release/*.apk
           retention-days: 30
           if-no-files-found: warn
 
