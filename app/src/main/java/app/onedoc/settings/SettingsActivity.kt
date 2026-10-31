@@ -150,10 +150,7 @@ private fun SettingsItem(
         leadingContent = {
             if (onClick != {}) {
                 // Show chevron for clickable items
-                Icon(
-                    imageVector = Icons.Default.KeyboardArrowRight,
-                    contentDescription = null,
-                )
+                Text(text = "›", style = MaterialTheme.typography.bodyLarge)
             } else if (checked != false) {
                 Checkbox(
                     checked = checked,

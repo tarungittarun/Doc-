@@ -151,13 +151,13 @@ fun EditorScreen(documentId: String, isNew: Boolean) {
                 onClick = handleUndo,
                 enabled = undoManager.canUndo,
             ) {
-                Icon(imageVector = Icons.Default.Undo, contentDescription = "Undo")
+                Text(text = "↶", style = MaterialTheme.typography.bodyLarge)
             }
             IconButton(
                 onClick = handleRedo,
                 enabled = undoManager.canRedo,
             ) {
-                Icon(imageVector = Icons.Default.Redo, contentDescription = "Redo")
+                Text(text = "↷", style = MaterialTheme.typography.bodyLarge)
             }
         }
 
@@ -247,7 +247,7 @@ private fun ParagraphBlock(
                 text = "",
             ))
         }) {
-            Icon(imageVector = Icons.Default.Add, contentDescription = "Add block after")
+            Text(text = "+", style = MaterialTheme.typography.bodyLarge)
         }
     }
 }
@@ -373,12 +373,7 @@ private fun ImageBlockComposable(
     var altText by remember { mutableStateOf(block.altText) }
     Column(modifier = Modifier.fillMaxWidth()) {
         if (uri.isNotEmpty()) {
-            Image(
-                imageVector = Icons.Default.Image,
-                contentDescription = altText,
-                modifier = Modifier.size(200.dp),
-                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)),
-            )
+            Text(text = "🖼", style = MaterialTheme.typography.displaySmall, modifier = Modifier.size(200.dp))
         } else {
             Box(
                 modifier = Modifier
