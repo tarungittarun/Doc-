@@ -80,8 +80,7 @@ jobs:
           gradle --no-daemon assembleFullDebug > /tmp/gradle-debug.out 2>&1 || GRADLE_EXIT=$?
           echo "::notice::DEBUG: GRADLE_EXIT_CODE=${GRADLE_EXIT:-0}"
           echo "::notice::DEBUG: OUTPUT_SIZE=$(wc -c < /tmp/gradle-debug.out 2>/dev/null || echo 0)"
-          echo "::notice::DEBUG: KOTLIN_ERRORS=$(grep -E 'e: |error:|Unresolved|FAILED|warning:' /tmp/gradle-debug.out 2>/dev/null | head -10 | esc)"
-          echo "::notice::DEBUG: FULL_OUTPUT=$(cat /tmp/gradle-debug.out 2>/dev/null | esc)"
+          echo "::notice::DEBUG: KOTLIN_ERRORS=$(grep -E 'e: |error:|Unresolved|FAILED|warning:|Caused by|What went wrong|Execution failed|A problem occurred' /tmp/gradle-debug.out 2>/dev/null | head -15 | esc)"
           APKS=$(find app -name "*.apk" -type f 2>/dev/null || true)
           if [ -n "$APKS" ]; then
             echo "::notice::DEBUG APKS: $(printf '%s' "$APKS" | tr '\n' ' ')"
@@ -148,8 +147,7 @@ jobs:
           gradle --no-daemon assembleFullRelease > /tmp/gradle-release.out 2>&1 || GRADLE_EXIT=$?
           echo "::notice::RELEASE: GRADLE_EXIT_CODE=${GRADLE_EXIT:-0}"
           echo "::notice::RELEASE: OUTPUT_SIZE=$(wc -c < /tmp/gradle-release.out 2>/dev/null || echo 0)"
-          echo "::notice::RELEASE: KOTLIN_ERRORS=$(grep -E 'e: |error:|Unresolved|FAILED|warning:' /tmp/gradle-release.out 2>/dev/null | head -10 | esc)"
-          echo "::notice::RELEASE: FULL_OUTPUT=$(cat /tmp/gradle-release.out 2>/dev/null | esc)"
+          echo "::notice::RELEASE: KOTLIN_ERRORS=$(grep -E 'e: |error:|Unresolved|FAILED|warning:|Caused by|What went wrong|Execution failed|A problem occurred' /tmp/gradle-release.out 2>/dev/null | head -15 | esc)"
           APKS=$(find app -name "*.apk" -type f 2>/dev/null || true)
           if [ -n "$APKS" ]; then
             echo "::notice::RELEASE APKS: $(printf '%s' "$APKS" | tr '\n' ' ')"
