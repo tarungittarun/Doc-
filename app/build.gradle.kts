@@ -46,13 +46,6 @@ android {
         }
     }
 
-    sourceSets {
-        val fullMain by getting
-        fullMain.java.srcDirs("src/full/java")
-        val writerMain by getting
-        writerMain.java.srcDirs("src/writer/java")
-    }
-
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
