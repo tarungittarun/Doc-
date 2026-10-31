@@ -1,0 +1,66 @@
+# OneDoc detekt configuration
+build:
+  maxIssues: 0
+  exclude:
+    - '**/build/**'
+    - '**/.gradle/**'
+    - '**/signing/**'
+
+config:
+  validation: false
+
+rules:
+  empty:
+    active: true
+  wildcardimport:
+    active: true
+  magicnumber:
+    active: false
+  longmethod:
+    active: false
+  largeclass:
+    active: false
+  commentoverpublicfunction:
+    active: false
+  toomanyfunctions:
+    active: false
+  godclass:
+    active: false
+  dataclass:
+    active: false
+  equalshashcode:
+    active: false
+  privateconstructor:
+    active: false
+  filelength:
+    active: false
+  methodlength:
+    active: false
+
+  # No hardcoded strings (DQ-1)
+  stringliteral:
+    active: true
+
+  # No hardcoded colors
+  hardcodedcolors:
+    active: true
+
+  # Naming conventions
+  naming:
+    active: true
+  classnaming:
+    active: true
+  functionnaming:
+    active: true
+  parameternaming:
+    active: true
+  variablenaming:
+    active: true
+  propertynaming:
+    active: true
+  enumnaming:
+    active: true
+  objectnaming:
+    active: true
+  packagenaming:
+    active: true
