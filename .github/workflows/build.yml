@@ -76,15 +76,13 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          gradle --no-daemon --stacktrace assembleFullDebug assembleWriterDebug > /tmp/build.log 2>&1 || true
+          echo "=== Before build ==="
+          ls -la app/build/outputs/ 2>/dev/null || echo "No build outputs dir"
+          gradle --no-daemon --stacktrace --info assembleFullDebug assembleWriterDebug > /tmp/build.log 2>&1 || true
+          echo "=== After build ==="
+          ls -la app/build/outputs/apk/ 2>/dev/null || echo "No apk dir"
+          find app/build -name "*.apk" -type f 2>/dev/null || echo "No APKs found anywhere"
           cat /tmp/build.log
-
-      - name: List built debug APKs
-        shell: bash
-        run: |
-          echo "=== Built APKs ==="
-          find app/build/outputs/apk -name "*.apk" -type f 2>/dev/null || echo "No APKs found"
-          ls -la app/build/outputs/apk/*/debug/*.apk 2>/dev/null || true
       - name: Surface debug build errors
         if: steps.build-debug-step.outcome == 'failure'
         shell: bash
@@ -156,8 +154,12 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          gradle --no-daemon --stacktrace assembleFullRelease > /tmp/build-release.log 2>&1 || true
-          echo "EXIT_CODE=$?"
+          echo "=== Before release build ==="
+          ls -la app/build/outputs/ 2>/dev/null || echo "No build outputs dir"
+          gradle --no-daemon --stacktrace --info assembleFullRelease > /tmp/build-release.log 2>&1 || true
+          echo "=== After release build ==="
+          ls -la app/build/outputs/apk/ 2>/dev/null || echo "No apk dir"
+          find app/build -name "*.apk" -type f 2>/dev/null || echo "No APKs found anywhere"
           cat /tmp/build-release.log
 
       - name: List built release APKs
