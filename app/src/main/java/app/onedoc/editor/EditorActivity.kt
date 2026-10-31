@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -76,7 +77,7 @@ fun EditorScreen(documentId: String, isNew: Boolean) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp, vertical = 8.dp),
-            colors = TextFieldDefaults.colors(containerColor = Color.Transparent),
+            colors = TextFieldDefaults.colors(),
         )
         Divider()
 
@@ -115,7 +116,7 @@ private fun ParagraphBlock(block: Block.Paragraph) {
         onValueChange = { text = it },
         modifier = Modifier.fillMaxWidth(),
         textStyle = MaterialTheme.typography.bodyLarge,
-        colors = TextFieldDefaults.colors(containerColor = Color.Transparent),
+        colors = TextFieldDefaults.colors(),
     )
 }
 
@@ -132,7 +133,7 @@ private fun HeadingBlock(block: Block.Heading) {
             3 -> MaterialTheme.typography.headlineSmall
             else -> MaterialTheme.typography.titleLarge
         },
-        colors = TextFieldDefaults.colors(containerColor = Color.Transparent),
+        colors = TextFieldDefaults.colors(),
     )
 }
 
@@ -144,7 +145,7 @@ private fun ListItemBlock(block: Block.ListItem) {
         onValueChange = { text = it },
         modifier = Modifier.fillMaxWidth(),
         textStyle = MaterialTheme.typography.bodyLarge,
-        colors = TextFieldDefaults.colors(containerColor = Color.Transparent),
+        colors = TextFieldDefaults.colors(),
     )
 }
 
@@ -156,9 +157,7 @@ private fun CodeBlock(block: Block.CodeBlock) {
         onValueChange = { text = it },
         modifier = Modifier.fillMaxWidth(),
         textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
-        colors = TextFieldDefaults.colors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-        ),
+        colors = TextFieldDefaults.colors(),
     )
 }
 
