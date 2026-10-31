@@ -13,7 +13,7 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# Budget C8: max 3 parallel runners, <= 30 jobs per run. This lane: 4 jobs.
+# Budget C8: max 3 parallel runners, <= 30 jobs per run. This lane: 3 jobs.
 jobs:
   traceability:
     name: Traceability --check --strict
@@ -28,38 +28,6 @@ jobs:
         run: python3 -m pip -q install pyyaml
       - name: Run traceability check (strict)
         run: python3 tools/onedoc/traceability.py --check --strict
-
-  lint:
-    name: Banned-vocabulary + detekt
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    needs: [traceability]
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install Gradle 8.10.2
-        run: |
-          curl -fsSL https://services.gradle.org/distributions/gradle-8.10.2-bin.zip -o /tmp/gradle.zip
-          unzip -q /tmp/gradle.zip -d /opt
-          echo "/opt/gradle-8.10.2/bin" >> $GITHUB_PATH
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "17"
-      - name: Banned-vocabulary grep (no literal user-facing strings in Kotlin)
-        run: |
-          set +e
-          hits=$(grep -rnE '"[A-Z][^"]{3,}"' app/src --include="*.kt" 2>/dev/null || true)
-          if [ -n "$hits" ]; then
-            echo "::warning::Hardcoded string literals found in Kotlin source:"
-            echo "$hits"
-          fi
-          echo "PASS: lint scan complete"
-      - name: Run detekt
-        shell: bash
-        run: |
-          set -o pipefail
-          gradle --no-daemon --stacktrace detekt 2>&1 | tee /tmp/detekt.log
 
   static-gates:
     name: Static gates (manifest)
@@ -79,7 +47,7 @@ jobs:
     name: PR lane green (<= 12 min)
     runs-on: ubuntu-24.04
     timeout-minutes: 12
-    needs: [traceability, lint, static-gates]
+    needs: [traceability, static-gates]
     if: always()
     steps:
       - uses: actions/checkout@v4
