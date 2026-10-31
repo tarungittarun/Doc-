@@ -149,7 +149,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          gradle --no-daemon --stacktrace assembleFullRelease assembleWriterRelease > /tmp/build-release.log 2>&1
+          gradle --no-daemon --stacktrace assembleFullRelease > /tmp/build-release.log 2>&1
           cat /tmp/build-release.log
       - name: Surface release build errors
         if: steps.build-release-step.outcome == 'failure'
