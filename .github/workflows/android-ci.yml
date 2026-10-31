@@ -5,7 +5,6 @@ on:
     branches: ["arena/db667982-doc"]
   pull_request:
     branches: ["arena/db667982-doc"]
-  workflow_dispatch:
 
 permissions:
   contents: write
