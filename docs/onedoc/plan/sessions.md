@@ -53,3 +53,12 @@ Format:
 - Tests: python3 tools/onedoc/traceability.py --check --strict -> exit 0 (GREEN, 90 features all bound)
 - Blockers opened/closed: Local SDK/Java still unavailable for emulator builds. CI workflows now use android-actions/setup-android + Gradle installation on GitHub runners following the TicTic android-ci.yml pattern (sh gradlew, continue-on-error+tee, GitHub annotation error surfacing, persistent sideload signing key, Gradle caching, fetch-depth: 0, upload-artifact with if: always()).
 - Next: trigger CI via push/PR to verify workflows; when SDK available locally, complete T-G1-001..T-G1-005, close G1, proceed to G2 (T-G2-001 core-model).
+
+
+## Session S-005 — 31 Oct 2026 (real OneDoc app code: model, data, editor shell)
+- Phase: G1 → G2 · Tasks touched: T-G2-001 (core-model start), T-G1-004 (real screens)
+- Commits: 9bab71a (Write real OneDoc app code)
+- Tests: DocumentModelTest (JSON round-trip, document copy semantics), traceability --check --strict -> exit 0 (GREEN)
+- Blockers opened/closed: Local SDK/Java still unavailable for compilation. CI android-ci.yml will build on GitHub runners. T-G1-001/T-G1-002 blocked locally.
+- Code written: Document/Block/Mark/Selection models (13 block kinds, 7 mark types), Json serialization, Room entity+DAO+database+TypeConverters, DocumentRepository (CRUD/trash/star/search), HomeActivity library screen, EditorActivity block editor, SettingsActivity, UI theme+components, ProGuard rules, mipmap icons, drawable vectors, backup rules
+- Next: trigger CI via push/PR, fix any build errors, complete T-G1-001..T-G1-005, close G1, proceed to G2 (Room schema v3, journal, kill-trial harness)

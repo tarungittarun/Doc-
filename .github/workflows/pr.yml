@@ -13,12 +13,36 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# Budget C8: max 3 parallel runners, <= 30 jobs per run. This lane: 4 jobs.
+# Budget C8: max 3 parallel runners, <= 30 jobs per run. This lane: 5 jobs.
 jobs:
+  gradle-setup:
+    name: Install Gradle + generate wrapper
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      gradle-ready: "true"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Gradle 8.10.2
+        run: |
+          curl -fsSL https://services.gradle.org/distributions/gradle-8.10.2-bin.zip -o /tmp/gradle.zip
+          unzip -q /tmp/gradle.zip -d /opt
+          echo "GRADLE_HOME=/opt/gradle-8.10.2" >> $GITHUB_ENV
+          echo "/opt/gradle-8.10.2/bin" >> $GITHUB_PATH
+      - name: Generate Gradle wrapper (gradle-wrapper.jar)
+        run: gradle wrapper
+      - name: Upload wrapper jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: gradle-wrapper-jar-${{ github.run_id }}
+          path: gradle/wrapper/gradle-wrapper.jar
+          retention-days: 7
+
   traceability:
     name: Traceability --check --strict
     runs-on: ubuntu-24.04
     timeout-minutes: 8
+    needs: [gradle-setup]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -33,9 +57,18 @@ jobs:
     name: Banned-vocabulary + detekt
     runs-on: ubuntu-24.04
     timeout-minutes: 10
-    needs: [traceability]
+    needs: [gradle-setup]
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: gradle-wrapper-jar-${{ needs.gradle-setup.outputs.gradle-ready }}
+          path: gradle/wrapper
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
       - name: Banned-vocabulary grep (no literal user-facing strings in Kotlin)
         run: |
           set +e
@@ -45,12 +78,28 @@ jobs:
             echo "$hits"
           fi
           echo "PASS: lint scan complete"
+      - name: Run detekt
+        id: detekt
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          sh gradlew --no-daemon --stacktrace detekt 2>&1 | tee /tmp/detekt.log
+      - name: Surface detekt errors as annotations
+        if: steps.detekt.outcome == 'failure'
+        shell: bash
+        run: |
+          esc() { sed 's/%/%25/g; s/\r//g' | awk 'BEGIN { ORS = "%0A" } { print }'; }
+          { grep -nE "error:|FAILURE|What went wrong|Execution failed" /tmp/detekt.log | head -25
+            echo "--- last 40 lines ---"
+            tail -40 /tmp/detekt.log; } | esc | { body=$(cat); echo "::error title=detekt::${body}"; }
+          exit 1
 
   static-gates:
     name: Static gates (manifest)
     runs-on: ubuntu-24.04
     timeout-minutes: 8
-    needs: [traceability]
+    needs: [gradle-setup]
     steps:
       - uses: actions/checkout@v4
       - name: Assert NO internet permission in manifest
