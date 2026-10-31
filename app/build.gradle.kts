@@ -41,10 +41,6 @@ android {
             dimension = "tier"
             applicationId = "app.onedoc"
         }
-        create("writer") {
-            dimension = "tier"
-            applicationId = "app.onedoc"
-        }
     }
 
     compileOptions {
