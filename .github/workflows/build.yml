@@ -13,7 +13,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# Budget C8: max 3 parallel runners, <= 30 jobs per run. This lane: 4 jobs.
 jobs:
   traceability:
     name: Traceability --check --strict
@@ -131,22 +130,29 @@ jobs:
         run: |
           set -o pipefail
           gradle --no-daemon --stacktrace assembleFullRelease assembleWriterRelease
-      - name: Static gate: no internet permission
+      - name: "Static gate: no internet permission"
         run: |
-          if grep -qi 'android.permission.INTERNET\|ACCESS_NETWORK_STATE' app/src/main/AndroidManifest.xml; then
-            echo "::error::FAIL: internet permission present" >&2; exit 1
+          if grep -qE 'android.permission.INTERNET|ACCESS_NETWORK_STATE' app/src/main/AndroidManifest.xml; then
+            echo "FAIL: internet permission present in manifest" >&2
+            exit 1
           fi
-          echo "PASS: no internet permission"
-      - name: Static gate: APK size
+          echo "PASS: no internet permission in manifest"
+      - name: "Static gate: APK size"
         shell: bash
         run: |
+          found=0
           for apk in app/build/outputs/apk/*/release/*.apk; do
             [ -f "$apk" ] || continue
+            found=1
             size=$(stat -c%s "$apk")
             if [ "$size" -gt 26214400 ]; then
-              echo "::error::FAIL: $apk exceeds 25 MB" >&2; exit 1
+              echo "FAIL: $apk exceeds 25 MB" >&2
+              exit 1
             fi
           done
+          if [ "$found" -eq 0 ]; then
+            echo "WARN: no release APKs found"
+          fi
           echo "PASS: APK size <= 25 MB"
       - name: Upload release APKs
         uses: actions/upload-artifact@v4
@@ -167,7 +173,9 @@ jobs:
       - uses: actions/checkout@v4
       - run: |
           statuses="${{ join(needs.*.result, ',') }}"
+          echo "Job statuses: $statuses"
           if echo "$statuses" | grep -q 'failure\|cancelled'; then
-            echo "::error::CI lane not green" >&2; exit 1
+            echo "CI lane not green" >&2
+            exit 1
           fi
           echo "PASS: CI lane green"
