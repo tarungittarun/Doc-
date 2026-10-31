@@ -83,6 +83,7 @@ jobs:
           echo "::notice::DEBUG: OUTPUT_FILE_SIZE=$(wc -c < /tmp/gradle-debug.out 2>/dev/null || echo 0)"
           echo "::notice::DEBUG: WHAT_WENT_WRONG=$(sed -n '/What went wrong/,/^$/p' /tmp/gradle-debug.out 2>/dev/null | head -5 | esc)"
           echo "::notice::DEBUG: CAUSED_BY=$(grep -A3 'Caused by' /tmp/gradle-debug.out 2>/dev/null | head -6 | esc)"
+          echo "::notice::DEBUG: RESOLVE_FAILED=$(grep -A10 'Could not resolve' /tmp/gradle-debug.out 2>/dev/null | grep -E 'Could not|version|module|artifact' | head -10 | esc)"
           echo "::notice::DEBUG: EXCEPTIONS=$(grep -E 'Exception:|Could not|A problem occurred|Build failed' /tmp/gradle-debug.out 2>/dev/null | grep -v error_prone | head -8 | esc)"
           echo "::notice::DEBUG: OUTPUT_TAIL=$(tail -20 /tmp/gradle-debug.out 2>/dev/null | esc)"
           APKS=$(find app -name "*.apk" -type f 2>/dev/null || true)
@@ -167,6 +168,7 @@ jobs:
           echo "::notice::RELEASE: OUTPUT_FILE_SIZE=$(wc -c < /tmp/gradle-release.out 2>/dev/null || echo 0)"
           echo "::notice::RELEASE: WHAT_WENT_WRONG=$(sed -n '/What went wrong/,/^$/p' /tmp/gradle-release.out 2>/dev/null | head -5 | esc)"
           echo "::notice::RELEASE: CAUSED_BY=$(grep -A3 'Caused by' /tmp/gradle-release.out 2>/dev/null | head -6 | esc)"
+          echo "::notice::RELEASE: RESOLVE_FAILED=$(grep -A10 'Could not resolve' /tmp/gradle-release.out 2>/dev/null | grep -E 'Could not|version|module|artifact' | head -10 | esc)"
           echo "::notice::RELEASE: EXCEPTIONS=$(grep -E 'Exception:|Could not|A problem occurred|Build failed' /tmp/gradle-release.out 2>/dev/null | grep -v error_prone | head -8 | esc)"
           echo "::notice::debug: OUTPUT_TAIL=$(tail -20 /tmp/gradle-release.out 2>/dev/null | esc)"
           APKS=$(find app -name "*.apk" -type f 2>/dev/null || true)
