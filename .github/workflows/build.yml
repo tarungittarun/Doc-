@@ -82,21 +82,23 @@ jobs:
           echo "$JAVA_HOME"
           java -version
           echo "=== Available Gradle tasks ==="
-          gradle tasks --all --console=plain 2>&1 | grep -E "assemble|install|Task" | head -40 || true
+          gradle tasks --all --console=plain 2>&1 | grep -E "assemble|install|Task:" | head -40 || true
           echo "=== Before build ==="
           ls -la app/build/ 2>/dev/null || echo "No app/build dir"
           echo "=== Build ==="
-          gradle --no-daemon --info --console=plain assembleFullDebug 2>&1 | tee /tmp/build-debug.log || true
-          echo "GRADLE_EXIT_CODE=${PIPESTATUS[0]}" | tee -a /tmp/build-debug.log || true
+          GRADLE_EXIT=0
+          gradle --no-daemon --info --rerun-tasks --no-build-cache assembleFullDebug 2>&1 || GRADLE_EXIT=$?
+          echo "GRADLE_EXIT_CODE=$GRADLE_EXIT"
           echo "=== After build ==="
           ls -la app/build/outputs/apk/ 2>/dev/null || echo "No apk dir"
           find app -name "*.apk" -type f 2>/dev/null || echo "No APKs found anywhere"
+          echo "GRADLE_EXIT_CODE=$GRADLE_EXIT" >> $GITHUB_STEP_SUMMARY
+          find app -name "*.apk" -type f 2>/dev/null >> $GITHUB_STEP_SUMMARY || echo "No APKs" >> $GITHUB_STEP_SUMMARY
       - name: Surface debug build output (always)
         shell: bash
         run: |
-          esc() { sed 's/%/%25/g; s/\r//g; s/\n/%0A/g'; }
-          BODY=$( { echo "=== BUILD LOG ==="; cat /tmp/build-debug.log 2>/dev/null || echo "(no build log)"; echo "=== APK SEARCH ==="; find app/build -name "*.apk" -type f 2>/dev/null || echo "No APKs found"; } )
-          printf '::error::%s\n' "$(printf '%s' "$BODY" | esc)"
+          echo "=== APK SEARCH ==="
+          find app/build -name "*.apk" -type f 2>/dev/null || echo "No APKs found"
       - name: Fail if build failed
         if: steps.build-debug-step.outcome == 'failure'
         run: exit 1
@@ -105,7 +107,7 @@ jobs:
         if: always()
         with:
           name: onedoc-debug-apks
-          path: '**/build/outputs/apk/**/*.apk'
+          path: app/build/outputs/apk/**/*.apk
           if-no-files-found: warn
 
   build-release:
@@ -162,22 +164,23 @@ jobs:
           echo "$JAVA_HOME"
           java -version
           echo "=== Available Gradle tasks ==="
-          gradle tasks --all --console=plain 2>&1 | grep -E "assemble|install|Task" | head -40 || true
+          gradle tasks --all --console=plain 2>&1 | grep -E "assemble|install|Task:" | head -40 || true
           echo "=== Before release build ==="
           ls -la app/build/outputs/ 2>/dev/null || echo "No build outputs dir"
           echo "=== Build ==="
-          gradle --no-daemon --stacktrace --info --console=plain assembleFullRelease 2>&1 | tee /tmp/build-release.log || true
-          echo "GRADLE_EXIT_CODE=${PIPESTATUS[0]}" | tee -a /tmp/build-release.log || true
+          GRADLE_EXIT=0
+          gradle --no-daemon --stacktrace --info --rerun-tasks --no-build-cache assembleFullRelease 2>&1 || GRADLE_EXIT=$?
+          echo "GRADLE_EXIT_CODE=$GRADLE_EXIT"
           echo "=== After release build ==="
           ls -la app/build/outputs/apk/ 2>/dev/null || echo "No apk dir"
           find app/build -name "*.apk" -type f 2>/dev/null || echo "No APKs found anywhere"
-          cat /tmp/build-release.log
+          echo "GRADLE_EXIT_CODE=$GRADLE_EXIT" >> $GITHUB_STEP_SUMMARY
+          find app -name "*.apk" -type f 2>/dev/null >> $GITHUB_STEP_SUMMARY || echo "No APKs" >> $GITHUB_STEP_SUMMARY
       - name: Surface release build output (always)
         shell: bash
         run: |
-          esc() { sed 's/%/%25/g; s/\r//g; s/\n/%0A/g'; }
-          BODY=$( { echo "=== BUILD LOG ==="; cat /tmp/build-release.log 2>/dev/null || echo "(no build log)"; echo "=== APK SEARCH ==="; find app/build -name "*.apk" -type f 2>/dev/null || echo "No APKs found"; } )
-          printf '::error::%s\n' "$(printf '%s' "$BODY" | esc)"
+          echo "=== APK SEARCH ==="
+          find app/build -name "*.apk" -type f 2>/dev/null || echo "No APKs found"
       - name: Fail if release build failed
         if: steps.build-release-step.outcome == 'failure'
         run: exit 1
