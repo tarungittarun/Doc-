@@ -24,7 +24,7 @@ compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeB
 compose-ui = { module = "androidx.compose.ui:ui" }
 compose-graphics = { module = "androidx.compose.ui:ui-graphics" }
 compose-material = { module = "androidx.compose.material3:material3" }
-compose-material-icons-core = { module = "androidx.compose.material3:material3-icons-core", version = "1.2.0" }
+compose-material-icons-core = { module = "androidx.compose.material3:material3-icons-core", version = "1.0.0" }
 compose-tooling = { module = "androidx.compose.ui:ui-tooling" }
 compose-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
 room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
