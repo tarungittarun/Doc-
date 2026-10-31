@@ -91,6 +91,14 @@ dependencies {
     implementation(libs.koin.core)
     implementation(libs.koin.android)
 
+    // JSON for document serialization (§14.2, Appendix AN)
+    implementation("org.json:json:20240303")
+
+    // Coroutines
+    implementation(libs.androidx.core.ktx) // already above
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
+
     testImplementation(libs.junit)
     testImplementation(libs.androidx.test.core)
     testImplementation(libs.robolectric)
