@@ -13,7 +13,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.FontFamily
 import androidx.compose.ui.unit.dp
 import app.onedoc.model.Block
 import app.onedoc.model.Document
@@ -159,7 +158,7 @@ private fun CodeBlock(block: Block.CodeBlock) {
         value = text,
         onValueChange = { text = it },
         modifier = Modifier.fillMaxWidth(),
-        textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
+        textStyle = MaterialTheme.typography.bodyMedium,
         colors = TextFieldDefaults.colors(),
     )
 }
