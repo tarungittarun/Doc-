@@ -76,8 +76,8 @@ jobs:
         run: |
           esc() { sed 's/%/%25/g; s/\r//g; s/\n/%0A/g; s/:/%3A/g'; }
           echo "::notice::DEBUG: java=$(java -version 2>&1 | head -1 | esc)"
-          echo "::notice::DEBUG: Running gradle --info assembleFullDebug..."
-          gradle --no-daemon --info assembleFullDebug > /tmp/gradle-debug.out 2>&1 || GRADLE_EXIT=$?
+          echo "::notice::DEBUG: Running gradle --no-daemon --stacktrace --info assembleFullDebug..."
+          gradle --no-daemon --stacktrace --info assembleFullDebug > /tmp/gradle-debug.out 2>&1 || GRADLE_EXIT=$?
           echo "::notice::DEBUG: GRADLE_EXIT_CODE=${GRADLE_EXIT:-0}"
           echo "::notice::DEBUG: OUTPUT_SIZE=$(wc -c < /tmp/gradle-debug.out 2>/dev/null || echo 0)"
           echo "::notice::DEBUG: APP_TASKS=$(grep 'Task :app:' /tmp/gradle-debug.out 2>/dev/null | tail -10 | esc)"
@@ -145,8 +145,8 @@ jobs:
         run: |
           esc() { sed 's/%/%25/g; s/\r//g; s/\n/%0A/g; s/:/%3A/g'; }
           echo "::notice::RELEASE: java=$(java -version 2>&1 | head -1 | esc)"
-          echo "::notice::RELEASE: Running gradle --info assembleFullRelease..."
-          gradle --no-daemon --info assembleFullRelease > /tmp/gradle-release.out 2>&1 || GRADLE_EXIT=$?
+          echo "::notice::RELEASE: Running gradle --no-daemon --stacktrace --info assembleFullRelease..."
+          gradle --no-daemon --stacktrace --info assembleFullRelease > /tmp/gradle-release.out 2>&1 || GRADLE_EXIT=$?
           echo "::notice::RELEASE: GRADLE_EXIT_CODE=${GRADLE_EXIT:-0}"
           echo "::notice::RELEASE: OUTPUT_SIZE=$(wc -c < /tmp/gradle-release.out 2>/dev/null || echo 0)"
           echo "::notice::RELEASE: APP_TASKS=$(grep 'Task :app:' /tmp/gradle-release.out 2>/dev/null | tail -10 | esc)"
