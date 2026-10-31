@@ -13,6 +13,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.FontFamily
 import androidx.compose.ui.unit.dp
 import app.onedoc.model.Block
 import app.onedoc.model.Document
@@ -166,7 +167,7 @@ private fun CodeBlock(block: Block.CodeBlock) {
 @Composable
 private fun BlockquoteBlock(block: Block.Blockquote) {
     Surface(
-        color = MaterialTheme.colorScheme.surfaceContainer,
+        color = MaterialTheme.colorScheme.surface,
         shape = MaterialTheme.shapes.medium,
         modifier = Modifier.fillMaxWidth(),
     ) {

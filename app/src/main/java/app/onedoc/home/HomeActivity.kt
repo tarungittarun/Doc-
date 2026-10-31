@@ -62,7 +62,7 @@ class HomeActivity : ComponentActivity() {
             updatedAt = System.currentTimeMillis(),
         )
         // Save via repository (G2 coroutine scope), then navigate to editor
-        androidx.lifecycle.lifecycleScope.launch {
+        lifecycleScope.launch {
             repository.createDocument(doc)
         }
         val intent = Intent(this, EditorActivity::class.java)
@@ -100,16 +100,16 @@ fun HomeScreen(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
             horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
         ) {
-            ActionChip(
+            TextButton(
                 onClick = { onCreateDocument() },
-                label = { Text(text = "New document") },
-                icon = { Icon(imageVector = Icons.Default.Add, contentDescription = null) },
-            )
-            ActionChip(
+            ) {
+                Text(text = "New document")
+            }
+            TextButton(
                 onClick = {},
-                label = { Text(text = "Starred") },
-                icon = { Icon(imageVector = Icons.Default.Star, contentDescription = null) },
-            )
+            ) {
+                Text(text = "Starred")
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
