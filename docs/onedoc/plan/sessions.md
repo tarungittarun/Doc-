@@ -39,3 +39,11 @@ Format:
 - Blockers opened/closed: T-G1-001..T-G1-005 BLOCKED (no Java/Android SDK in sandbox; no network to dl.google.com). G1 left OPEN.
 - Next: unblock T-G1-001 (owner provides JDK 17 + Android SDK 36), then assemble both debug flavors, run pr.yml, record emulator goldens, close G1, proceed to G2 (T-G2-001 core-model).
 
+## Session S-003 — 31 Oct 2026 (CI/CD via GitHub Actions)
+- Phase: G1 · Tasks touched: T-G1-003 (CI pr.yml/ci.yml/release.yml), Gradle wrapper setup
+- Commits: 25fef3a (CI/CD workflows + Gradle wrapper)
+- Tests: python3 tools/onedoc/traceability.py --check --strict -> exit 0 (GREEN, 90 features all bound)
+- Blockers opened/closed: Local SDK/Java still unavailable for emulator builds. CI workflows now use android-actions/setup-android + Gradle installation on GitHub runners, so T-G1-003 builds/tests can run in GitHub Actions. T-G1-001/T-G1-002/T-G1-004 still blocked locally (no local emulator for goldens).
+- Next: trigger CI via push/PR to verify workflows; when SDK available locally, complete T-G1-001..T-G1-005, close G1, proceed to G2.
+
+
