@@ -12,7 +12,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.observeAsState
 import kotlinx.coroutines.launch
 import app.onedoc.editor.EditorActivity
 import app.onedoc.model.Block

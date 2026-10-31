@@ -79,6 +79,7 @@ implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.2")
     implementation(libs.compose.ui)
     implementation(libs.compose.graphics)
     implementation(libs.compose.material)
+implementation(libs.compose.material.icons.core)
     implementation(libs.compose.tooling)
     debugImplementation(libs.compose.tooling.preview)
 

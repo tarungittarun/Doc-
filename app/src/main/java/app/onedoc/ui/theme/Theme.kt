@@ -8,6 +8,7 @@ import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import app.onedoc.R
 
@@ -20,7 +21,6 @@ val DarkColorScheme = darkColorScheme(
     primaryContainer = Color(0xFF1E4E8C),
     secondary = Color(0xFF81C784),
     surface = Color(0xFF121212),
-    surfaceContainer = Color(0xFF1E1E1E),
     background = Color(0xFF090909),
     error = Color(0xFFEF5350),
     onPrimary = Color(0xFF000000),
@@ -34,7 +34,6 @@ val LightColorScheme = lightColorScheme(
     primaryContainer = Color(0xFFE3F2FD),
     secondary = Color(0xFF4CAF50),
     surface = Color(0xFFFFFFFF),
-    surfaceContainer = Color(0xFFF5F5F5),
     background = Color(0xFFFAFAFA),
     error = Color(0xFFD32F2F),
     onPrimary = Color(0xFFFFFFFF),
