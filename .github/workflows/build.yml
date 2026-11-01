@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   traceability:
-    name: Traceability --check --strict
+    name: Traceability check
     runs-on: ubuntu-24.04
     timeout-minutes: 8
     steps:
@@ -25,11 +25,11 @@ jobs:
           python-version: "3.11"
       - name: Install tool deps
         run: python3 -m pip -q install pyyaml
-      - name: Run traceability check (strict)
+      - name: Run traceability check
         run: python3 tools/onedoc/traceability.py --check --strict
 
   build-debug:
-    name: Assemble debug APKs
+    name: Build debug APKs
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     needs: [traceability]
@@ -37,11 +37,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Install Gradle 8.9
+      - name: Install Gradle 8.10.2
         run: |
-          curl -fsSL https://services.gradle.org/distributions/gradle-8.9-bin.zip -o /tmp/gradle.zip
+          curl -fsSL https://services.gradle.org/distributions/gradle-8.10.2-bin.zip -o /tmp/gradle.zip
           unzip -q /tmp/gradle.zip -d /opt
-          echo "/opt/gradle-8.9/bin" >> $GITHUB_PATH
+          echo "/opt/gradle-8.10.2/bin" >> $GITHUB_PATH
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -71,29 +71,20 @@ jobs:
           key: gradle-${{ runner.os }}-jdk17-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties', '*.gradle.kts', 'gradle/libs.versions.toml') }}
           restore-keys: gradle-${{ runner.os }}-jdk17-
       - name: Build debug APK
-        id: build-debug-step
         shell: bash
         run: |
-          gradle --no-daemon --offline assembleFullDebug 2>&1 | tee /tmp/gradle-debug.out
-          GRADLE_EXIT=${PIPESTATUS[0]}
-          echo "::notice::DEBUG: GRADLE_EXIT_CODE=$GRADLE_EXIT"
-          APKS=$(find app -name "*.apk" -type f 2>/dev/null || true)
-          if [ -n "$APKS" ]; then
-            echo "::notice::DEBUG APKS: $(printf '%s' "$APKS" | tr '\n' ' ')"
-          else
-            echo "::error::DEBUG BUILD: NO APKS FOUND"
-          fi
-          exit $GRADLE_EXIT
+          set -o pipefail
+          gradle --no-daemon --stacktrace assembleFullDebug 2>&1 | tee /tmp/build.log
       - name: Upload debug APKs
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: onedoc-debug-apks
-          path: app/build/outputs/apk/**/*.apk
+          path: '**/build/outputs/apk/**/*.apk'
           if-no-files-found: warn
 
   build-release:
-    name: Assemble release APKs + static gates
+    name: Build release APKs + static gates
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     needs: [build-debug]
@@ -101,11 +92,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Install Gradle 8.9
+      - name: Install Gradle 8.10.2
         run: |
-          curl -fsSL https://services.gradle.org/distributions/gradle-8.9-bin.zip -o /tmp/gradle.zip
+          curl -fsSL https://services.gradle.org/distributions/gradle-8.10.2-bin.zip -o /tmp/gradle.zip
           unzip -q /tmp/gradle.zip -d /opt
-          echo "/opt/gradle-8.9/bin" >> $GITHUB_PATH
+          echo "/opt/gradle-8.10.2/bin" >> $GITHUB_PATH
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -135,32 +126,23 @@ jobs:
           key: gradle-${{ runner.os }}-jdk17-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties', '*.gradle.kts', 'gradle/libs.versions.toml') }}
           restore-keys: gradle-${{ runner.os }}-jdk17-
       - name: Build release APK
-        id: build-release-step
         shell: bash
         run: |
-          gradle --no-daemon --offline assembleFullRelease 2>&1 | tee /tmp/gradle-release.out
-          GRADLE_EXIT=${PIPESTATUS[0]}
-          echo "::notice::RELEASE: GRADLE_EXIT_CODE=$GRADLE_EXIT"
-          APKS=$(find app -name "*.apk" -type f 2>/dev/null || true)
-          if [ -n "$APKS" ]; then
-            echo "::notice::RELEASE APKS: $(printf '%s' "$APKS" | tr '\n' ' ')"
-          else
-            echo "::error::RELEASE BUILD: NO APKS FOUND"
-          fi
-          exit $GRADLE_EXIT
-      - name: "Static gate: no internet permission"
+          set -o pipefail
+          gradle --no-daemon --stacktrace assembleFullRelease 2>&1 | tee /tmp/build-release.log
+      - name: Static gate: no internet permission
         run: |
-          if grep -qE 'android.permission.INTERNET|ACCESS_NETWORK_STATE' app/src/main/AndroidManifest.xml; then
-            echo "FAIL: internet permission present in manifest" >&2
-            exit 1
+          set -e
+          if grep -rqi 'android.permission.INTERNET\|ACCESS_NETWORK_STATE' app/src/main/AndroidManifest.xml; then
+            echo "::error::FAIL: internet permission present" >&2; exit 1
           fi
-          echo "PASS: no internet permission in manifest"
+          echo "PASS: no internet permission"
       - name: Upload release APKs
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: onedoc-release-apks
-          path: app/build/outputs/apk/*/release/*.apk
+          path: app/build/outputs/apk/**/release/*.apk
           retention-days: 30
           if-no-files-found: warn
 
