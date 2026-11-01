@@ -166,9 +166,7 @@ private fun CodeBlock(block: Block.CodeBlock) {
         onValueChange = { textState.value = it },
         modifier = Modifier.fillMaxWidth(),
         textStyle = MaterialTheme.typography.bodyMedium,
-        colors = TextFieldDefaults.colors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        ),
+        
     )
 }
 

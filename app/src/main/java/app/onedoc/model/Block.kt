@@ -92,6 +92,7 @@ sealed class Block {
         override val id: String,
         override val kind: BlockKind = BlockKind.TOC,
         val maxLevel: Int = 6,
+        override val marks: List<Mark> = emptyList(),
         override val createdAt: Long = System.currentTimeMillis(),
     ) : Block()
 
@@ -99,18 +100,21 @@ sealed class Block {
         override val id: String,
         override val kind: BlockKind = BlockKind.Footnote,
         val text: String,
+        override val marks: List<Mark> = emptyList(),
         override val createdAt: Long = System.currentTimeMillis(),
     ) : Block()
 
     data class Divider(
         override val id: String,
         override val kind: BlockKind = BlockKind.Divider,
+        override val marks: List<Mark> = emptyList(),
         override val createdAt: Long = System.currentTimeMillis(),
     ) : Block()
 
     data class PageBreak(
         override val id: String,
         override val kind: BlockKind = BlockKind.PageBreak,
+        override val marks: List<Mark> = emptyList(),
         override val createdAt: Long = System.currentTimeMillis(),
     ) : Block()
 
