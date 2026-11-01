@@ -6,10 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.ActionChip
-import androidx.compose.material3.Icons
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -103,16 +100,16 @@ fun HomeScreen(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
             horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
         ) {
-            ActionChip(
+            Button(
                 onClick = { onCreateDocument() },
-                label = { Text(text = "New document") },
-                icon = { Icon(imageVector = Icons.Filled.Add, contentDescription = null) },
-            )
-            ActionChip(
+            ) {
+                Text(text = "New document")
+            }
+            Button(
                 onClick = {},
-                label = { Text(text = "Starred") },
-                icon = { Icon(imageVector = Icons.Filled.Star, contentDescription = null) },
-            )
+            ) {
+                Text(text = "Starred")
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -131,7 +128,7 @@ fun HomeScreen(
                 .weight(1f),
         ) {
             // Show documents from repository (observer pattern lands in G2)
-            val docs by repository.documents.observeAsState(emptyList())
+            val docs by repository.documents.asState()
             if (docs.isEmpty()) {
                 EmptyState(
                     title = "No documents yet",
