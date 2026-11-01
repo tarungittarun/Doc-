@@ -59,7 +59,14 @@ jobs:
       - name: Build debug APK
         run: gradle --no-daemon --stacktrace assembleFullDebug 2>&1 | tee /tmp/build.log
       - name: List APK output directories
-        run: find app/build -name "*.apk" -type f 2>/dev/null || echo "No APKs found"
+        run: |
+          APKS=$(find app/build -name "*.apk" -type f 2>/dev/null || true)
+          if [ -n "$APKS" ]; then
+            echo "::notice::APKS_FOUND: $APKS"
+          else
+            echo "::error::NO_APKS_FOUND"
+            find app/build -type d 2>/dev/null | head -20
+          fi
       - name: Upload debug APKs
         uses: actions/upload-artifact@v4
         if: always()
