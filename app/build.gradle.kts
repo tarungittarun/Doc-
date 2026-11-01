@@ -22,11 +22,7 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = true
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro",
-            )
+            isMinifyEnabled = false
             // Release signing: owner keystore supplied at G8 (RC keystore until then).
         }
     }
