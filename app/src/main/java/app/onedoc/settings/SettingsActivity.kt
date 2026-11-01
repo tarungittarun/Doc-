@@ -4,18 +4,21 @@ import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import app.onedoc.ui.components.AppTopBar
 import app.onedoc.ui.theme.OneDocTheme
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 /**
@@ -44,12 +47,10 @@ class SettingsActivity : ComponentActivity() {
 
 @Composable
 fun SettingsScreen(settingsDataStore: SettingsDataStore) {
-    val scope = rememberCoroutineScope()
+    val scope = remember { CoroutineScope(Dispatchers.Main) }
 
     // Load settings from DataStore via produceState (G6)
-    val settings by produceState(AppSettings()) {
-        value = settingsDataStore.settings.first()
-    }
+    val settings by settingsDataStore.settings.collectAsState(initial = AppSettings())
 
     Column(modifier = Modifier.fillMaxSize()) {
         AppTopBar(
