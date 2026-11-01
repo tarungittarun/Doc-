@@ -53,17 +53,7 @@ jobs:
           echo "::notice::GRADLE_VERSION: $(gradle --version 2>&1 | grep 'Gradle ' | head -1)"
           gradle --version
       - name: Build debug APK
-        shell: bash
-        run: |
-          set -o pipefail
-          gradle --no-daemon --stacktrace assembleFullDebug 2>&1 | tee /tmp/build.log
-          GRADLE_EXIT=${PIPESTATUS[0]}
-          echo "::notice::GRADLE_EXIT=$GRADLE_EXIT"
-          if [ $GRADLE_EXIT -ne 0 ]; then
-            echo "::error title=Gradle build failed::Exit code $GRADLE_EXIT"
-            echo "::error title=Log tail::$(tail -5 /tmp/build.log 2>/dev/null | tr '\n' '|' | sed 's/%/%25/g; s/\r//g; s/:/%3A/g')"
-          fi
-          exit $GRADLE_EXIT
+        run: gradle --no-daemon --stacktrace assembleFullDebug
       - name: Upload debug APKs
         uses: actions/upload-artifact@v4
         if: always()
@@ -95,17 +85,7 @@ jobs:
       - name: Gradle version
         run: gradle --version
       - name: Build release APK
-        shell: bash
-        run: |
-          set -o pipefail
-          gradle --no-daemon --stacktrace assembleFullRelease 2>&1 | tee /tmp/build-release.log
-          GRADLE_EXIT=${PIPESTATUS[0]}
-          echo "::notice::GRADLE_EXIT=$GRADLE_EXIT"
-          if [ $GRADLE_EXIT -ne 0 ]; then
-            echo "::error::BUILD_FAILED_EXIT=$GRADLE_EXIT"
-            echo "::error::LOG_TAIL:$(tail -5 /tmp/build-release.log 2>/dev/null | tr '\n' '|' | sed 's/%/%25/g; s/\r//g; s/:/%3A/g')"
-          fi
-          exit $GRADLE_EXIT
+        run: gradle --no-daemon --stacktrace assembleFullRelease
       - name: "Static gate: no internet permission"
         run: |
           if grep -rqi 'android.permission.INTERNET' app/src/main/AndroidManifest.xml; then echo 'FAIL: internet permission present'; exit 1; fi
