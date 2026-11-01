@@ -9,7 +9,7 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun EmptyState(
-    icon: ImageVector = Icons.Default.Description,
+    icon: ImageVector = Icons.Filled.Description,
     title: String = "No documents",
     description: String = "Create your first document to get started.",
     onCreate: () -> Unit,
@@ -25,7 +25,7 @@ fun EmptyState(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            tint = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.size(64.dp),
         )
         Spacer(modifier = Modifier.height(16.dp))
@@ -38,7 +38,7 @@ fun EmptyState(
         Text(
             text = description,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = MaterialTheme.colorScheme.onSurface,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
         )
         Spacer(modifier = Modifier.height(24.dp))

@@ -81,6 +81,7 @@ dependencies {
     implementation(libs.datastore.preferences)
     implementation(libs.koin.core)
     implementation(libs.koin.android)
+    implementation(libs.androidx.startup)
 
     // JSON for document serialization (§14.2, Appendix AN)
     implementation("org.json:json:20231013")

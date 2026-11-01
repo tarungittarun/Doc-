@@ -40,13 +40,13 @@ fun DocumentListItem(
                 Text(
                     text = "Updated ${formatTime(document.updatedAt)}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = color.onSurfaceVariant,
+                    color = color.onSurface,
                     maxLines = 1,
                 )
             }
             if (document.starred) {
                 Icon(
-                    imageVector = Icons.Default.Star,
+                    imageVector = Icons.Filled.Star,
                     contentDescription = "Starred",
                     tint = color.primary,
                 )

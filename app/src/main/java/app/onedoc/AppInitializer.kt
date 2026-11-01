@@ -1,7 +1,7 @@
 package app.onedoc
 
+import android.content.Context
 import androidx.startup.Initializer
-import androidx.startup.Startup
 import io.insertkoin.android.ext.android.inject
 import io.insertkoin.core.context.startKoin
 import io.insertkoin.core.module.module
@@ -33,4 +33,4 @@ class AppContainer internal constructor(private val context: Context) {
 }
 
 /** Minimal Context import shim kept explicit for clarity. */
-internal actual fun Context.applicationContext(): Context = this.applicationContext
+internal fun Context.applicationContext(): Context = this.applicationContext
