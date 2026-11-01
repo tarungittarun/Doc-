@@ -46,19 +46,18 @@ jobs:
           java-version: "17"
       - name: Create local.properties
         run: echo "sdk.dir=${ANDROID_HOME:-$ANDROID_SDK_ROOT}" > local.properties
+      - name: Gradle version
+        run: gradle --version
       - name: Build debug APK
         shell: bash
         run: |
           set -o pipefail
-          gradle --no-daemon --stacktrace --info assembleFullDebug 2>&1 | tee /tmp/build.log
+          gradle --no-daemon --stacktrace assembleFullDebug 2>&1 | tee /tmp/build.log
           GRADLE_EXIT=${PIPESTATUS[0]}
           echo "::notice::GRADLE_EXIT=$GRADLE_EXIT"
           if [ $GRADLE_EXIT -ne 0 ]; then
-            echo "::error::BUILD_FAILED"
-            tail -30 /tmp/build.log 2>/dev/null | while IFS= read -r line; do
-              escaped=$(echo "$line" | sed 's/%/%25/g; s/\r//g; s/\n/%0A/g; s/:/%3A/g')
-              echo "::error::LOG: $escaped"
-            done
+            echo "::error::BUILD_FAILED_EXIT=$GRADLE_EXIT"
+            echo "::error::LOG_TAIL:$(tail -5 /tmp/build.log 2>/dev/null | tr '\n' '|' | sed 's/%/%25/g; s/\r//g; s/:/%3A/g')"
           fi
           exit $GRADLE_EXIT
       - name: Upload debug APKs
@@ -87,19 +86,18 @@ jobs:
           java-version: "17"
       - name: Create local.properties
         run: echo "sdk.dir=${ANDROID_HOME:-$ANDROID_SDK_ROOT}" > local.properties
+      - name: Gradle version
+        run: gradle --version
       - name: Build release APK
         shell: bash
         run: |
           set -o pipefail
-          gradle --no-daemon --stacktrace --info assembleFullRelease 2>&1 | tee /tmp/build-release.log
+          gradle --no-daemon --stacktrace assembleFullRelease 2>&1 | tee /tmp/build-release.log
           GRADLE_EXIT=${PIPESTATUS[0]}
           echo "::notice::GRADLE_EXIT=$GRADLE_EXIT"
           if [ $GRADLE_EXIT -ne 0 ]; then
-            echo "::error::BUILD_FAILED"
-            tail -30 /tmp/build-release.log 2>/dev/null | while IFS= read -r line; do
-              escaped=$(echo "$line" | sed 's/%/%25/g; s/\r//g; s/\n/%0A/g; s/:/%3A/g')
-              echo "::error::LOG: $escaped"
-            done
+            echo "::error::BUILD_FAILED_EXIT=$GRADLE_EXIT"
+            echo "::error::LOG_TAIL:$(tail -5 /tmp/build-release.log 2>/dev/null | tr '\n' '|' | sed 's/%/%25/g; s/\r//g; s/:/%3A/g')"
           fi
           exit $GRADLE_EXIT
       - name: "Static gate: no internet permission"
