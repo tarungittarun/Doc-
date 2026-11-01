@@ -2,7 +2,6 @@ package app.onedoc.ui.theme
 
 import android.content.Context
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
@@ -55,7 +54,6 @@ fun OneDocTheme(
     MaterialTheme(
         colorScheme = colorScheme,
         typography = Typography,
-        shapes = Shapes,
         content = content
     )
 }
@@ -71,8 +69,4 @@ val Typography = Typography(
     labelMedium = TextStyle(fontSize = 14.sp),
 )
 
-val Shapes = Shapes(
-    small = CornerRadius(4.dp),
-    medium = CornerRadius(8.dp),
-    large = CornerRadius(12.dp),
-)
+
