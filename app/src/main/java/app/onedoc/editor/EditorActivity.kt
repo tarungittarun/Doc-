@@ -76,7 +76,7 @@ fun EditorScreen(documentId: String, isNew: Boolean) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp, vertical = 8.dp),
-            colors = TextFieldDefaults.colors(containerColor = color.transparent),
+            colors = TextFieldDefaults.colors(containerColor = Color.Transparent),
         )
         Divider()
 
@@ -157,7 +157,7 @@ private fun CodeBlock(block: Block.CodeBlock) {
         modifier = Modifier.fillMaxWidth(),
         textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
         colors = TextFieldDefaults.colors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
         ),
     )
 }

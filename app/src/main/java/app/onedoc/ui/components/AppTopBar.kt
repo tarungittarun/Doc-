@@ -27,7 +27,7 @@ fun AppTopBar(
     ) {
         IconButton(onClick = onMenuClick) {
             Icon(
-                imageVector = Icons.Default.Menu,
+                imageVector = Icons.Filled.Menu,
                 contentDescription = "Open navigation",
             )
         }
@@ -39,13 +39,13 @@ fun AppTopBar(
         Row {
             IconButton(onClick = onSearchClick) {
                 Icon(
-                    imageVector = Icons.Default.Search,
+                    imageVector = Icons.Filled.Search,
                     contentDescription = "Search",
                 )
             }
             IconButton(onClick = {}) {
                 Icon(
-                    imageVector = Icons.Default.MoreVert,
+                    imageVector = Icons.Filled.MoreVert,
                     contentDescription = "More options",
                 )
             }

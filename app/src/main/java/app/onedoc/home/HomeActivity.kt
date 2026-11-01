@@ -98,17 +98,17 @@ fun HomeScreen(
 
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-            horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBy(8.dp),
+            horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
         ) {
             ActionChip(
                 onClick = { onCreateDocument() },
                 label = { Text(text = "New document") },
-                icon = { Icon(imageVector = Icons.Default.Add, contentDescription = null) },
+                icon = { Icon(imageVector = Icons.Filled.Add, contentDescription = null) },
             )
             ActionChip(
                 onClick = {},
                 label = { Text(text = "Starred") },
-                icon = { Icon(imageVector = Icons.Default.Star, contentDescription = null) },
+                icon = { Icon(imageVector = Icons.Filled.Star, contentDescription = null) },
             )
         }
 
