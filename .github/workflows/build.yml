@@ -70,19 +70,22 @@ jobs:
             ~/.gradle/wrapper
           key: gradle-${{ runner.os }}-jdk17-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties', '*.gradle.kts', 'gradle/libs.versions.toml') }}
           restore-keys: gradle-${{ runner.os }}-jdk17-
+      - name: Clean Gradle cache
+        run: |
+          rm -rf ~/.gradle/caches ~/.gradle/wrapper/dists 2>/dev/null || true
+          echo "::notice::DEBUG: Gradle cache cleaned"
       - name: Build debug APK
         id: build-debug-step
         shell: bash
         run: |
           set +e
           esc() { sed 's/%/%25/g; s/\r//g; s/\n/%0A/g; s/:/%3A/g'; }
-          echo "::notice::DEBUG: Running gradle --info --stacktrace assembleFullDebug..."
-          gradle --no-daemon --info --stacktrace assembleFullDebug 2>&1 | tee /tmp/gradle-debug.out
+          echo "::notice::DEBUG: Running gradle --no-build-cache --rerun-tasks --info assembleFullDebug..."
+          gradle --no-daemon --no-build-cache --rerun-tasks --info assembleFullDebug 2>&1 | tee /tmp/gradle-debug.out
           GRADLE_EXIT=${PIPESTATUS[0]}
           echo "::notice::DEBUG: GRADLE_EXIT_CODE=$GRADLE_EXIT"
           echo "::notice::DEBUG: OUTPUT_SIZE=$(wc -c < /tmp/gradle-debug.out 2>/dev/null || echo 0)"
           echo "::notice::DEBUG: CAUSED_BY=$(grep -a 'Caused by' /tmp/gradle-debug.out 2>/dev/null | esc)"
-          echo "::notice::DEBUG: WORKER_CTX=$(grep -a -A15 'WorkExecutionException' /tmp/gradle-debug.out 2>/dev/null | head -20 | esc)"
           echo "::notice::DEBUG: TAIL_20=$(tail -20 /tmp/gradle-debug.out 2>/dev/null | esc)"
           APKS=$(find app -name "*.apk" -type f 2>/dev/null || true)
           if [ -n "$APKS" ]; then
@@ -147,13 +150,12 @@ jobs:
         run: |
           set +e
           esc() { sed 's/%/%25/g; s/\r//g; s/\n/%0A/g; s/:/%3A/g'; }
-          echo "::notice::RELEASE: Running gradle --info --stacktrace assembleFullRelease..."
-          gradle --no-daemon --info --stacktrace assembleFullRelease 2>&1 | tee /tmp/gradle-release.out
+          echo "::notice::RELEASE: Running gradle --no-build-cache --rerun-tasks --info assembleFullRelease..."
+          gradle --no-daemon --no-build-cache --rerun-tasks --info assembleFullRelease 2>&1 | tee /tmp/gradle-release.out
           GRADLE_EXIT=${PIPESTATUS[0]}
           echo "::notice::RELEASE: GRADLE_EXIT_CODE=$GRADLE_EXIT"
           echo "::notice::RELEASE: OUTPUT_SIZE=$(wc -c < /tmp/gradle-release.out 2>/dev/null || echo 0)"
           echo "::notice::RELEASE: CAUSED_BY=$(grep -a 'Caused by' /tmp/gradle-release.out 2>/dev/null | esc)"
-          echo "::notice::RELEASE: WORKER_CTX=$(grep -a -A15 'WorkExecutionException' /tmp/gradle-release.out 2>/dev/null | head -20 | esc)"
           echo "::notice::RELEASE: TAIL_20=$(tail -20 /tmp/gradle-release.out 2>/dev/null | esc)"
           APKS=$(find app -name "*.apk" -type f 2>/dev/null || true)
           if [ -n "$APKS" ]; then
