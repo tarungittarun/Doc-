@@ -43,7 +43,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: zulu
-          java-version: "17"
+          java-version: "21"
       - name: List SDK platforms
         run: echo "::notice::PLATFORMS:$(ls $ANDROID_HOME/platforms/ 2>/dev/null | tr '\n' ',' | sed 's/,$//')"
       - name: List SDK build-tools
@@ -85,7 +85,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: zulu
-          java-version: "17"
+          java-version: "21"
       - name: List SDK platforms
         run: echo "::notice::PLATFORMS:$(ls $ANDROID_HOME/platforms/ 2>/dev/null | tr '\n' ',' | sed 's/,$//')"
       - name: List SDK build-tools
