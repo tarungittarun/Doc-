@@ -1,6 +1,5 @@
 package app.onedoc.settings
 
-import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
@@ -65,12 +64,5 @@ class SettingsDataStore(private val dataStore: DataStore<Preferences>) {
             prefs[REDUCED_MOTION] = settings.reducedMotion
             prefs[LOCALE] = settings.locale
         }
-    }
-}
-
-class SettingsDataStoreFactory {
-    fun create(context: Context): SettingsDataStore {
-        val dataStore = androidx.datastore.preferences.preferencesDataStore(context, "onedoc_settings")
-        return SettingsDataStore(dataStore)
     }
 }
