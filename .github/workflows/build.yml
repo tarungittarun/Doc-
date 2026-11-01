@@ -58,12 +58,14 @@ jobs:
           restore-keys: gradle-${{ runner.os }}-jdk17-
       - name: Build debug APK
         run: gradle --no-daemon --stacktrace assembleFullDebug 2>&1 | tee /tmp/build.log
+      - name: List APK output directories
+        run: find app/build -name "*.apk" -type f 2>/dev/null || echo "No APKs found"
       - name: Upload debug APKs
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: onedoc-debug-apks
-          path: '**/build/outputs/apk/**/*.apk'
+          path: app/build/outputs/apk/**/*.apk
           if-no-files-found: warn
 
   build-release:
