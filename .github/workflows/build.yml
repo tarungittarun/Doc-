@@ -44,8 +44,15 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
+      - name: Debug environment
+        run: |
+          echo "::notice::ANDROID_HOME=${ANDROID_HOME:-not set}"
+          echo "::notice::ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT:-not set}"
+          ls /usr/lib/android-sdk 2>/dev/null || echo "::notice::No /usr/lib/android-sdk"
+          ls $ANDROID_HOME 2>/dev/null || echo "::notice::ANDROID_HOME not accessible"
+          ls $ANDROID_SDK_ROOT 2>/dev/null || echo "::notice::ANDROID_SDK_ROOT not accessible"
       - name: Install SDK packages
-        run: SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}" && yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true && "$SDK/cmdline-tools/latest/bin/sdkmanager" "platform-tools" "platforms;android-36" "build-tools;36.0.0" || true
+        run: SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}" && echo "::notice::SDK_PATH=$SDK" && ls "$SDK" 2>/dev/null || echo "::notice::SDK not found at $SDK" && yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true && "$SDK/cmdline-tools/latest/bin/sdkmanager" "platform-tools" "platforms;android-36" "build-tools;36.0.0" || true
       - name: Ensure signing key
         run: if [ ! -f signing/onedoc.p12 ]; then mkdir -p signing && keytool -genkeypair -keystore signing/onedoc.p12 -storetype pkcs12 -storepass onedoc-sideload -keypass onedoc-sideload -alias onedoc -keyalg RSA -keysize 2048 -validity 10950 -dname "CN=OneDoc Sideload, OU=Sideload, O=OneDoc, C=IN"; fi
       - name: Cache Gradle
@@ -88,8 +95,15 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
+      - name: Debug environment
+        run: |
+          echo "::notice::ANDROID_HOME=${ANDROID_HOME:-not set}"
+          echo "::notice::ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT:-not set}"
+          ls /usr/lib/android-sdk 2>/dev/null || echo "::notice::No /usr/lib/android-sdk"
+          ls $ANDROID_HOME 2>/dev/null || echo "::notice::ANDROID_HOME not accessible"
+          ls $ANDROID_SDK_ROOT 2>/dev/null || echo "::notice::ANDROID_SDK_ROOT not accessible"
       - name: Install SDK packages
-        run: SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}" && yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true && "$SDK/cmdline-tools/latest/bin/sdkmanager" "platform-tools" "platforms;android-36" "build-tools;36.0.0" || true
+        run: SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}" && echo "::notice::SDK_PATH=$SDK" && ls "$SDK" 2>/dev/null || echo "::notice::SDK not found at $SDK" && yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true && "$SDK/cmdline-tools/latest/bin/sdkmanager" "platform-tools" "platforms;android-36" "build-tools;36.0.0" || true
       - name: Ensure signing key
         run: if [ ! -f signing/onedoc.p12 ]; then mkdir -p signing && keytool -genkeypair -keystore signing/onedoc.p12 -storetype pkcs12 -storepass onedoc-sideload -keypass onedoc-sideload -alias onedoc -keyalg RSA -keysize 2048 -validity 10950 -dname "CN=OneDoc Sideload, OU=Sideload, O=OneDoc, C=IN"; fi
       - name: Cache Gradle
