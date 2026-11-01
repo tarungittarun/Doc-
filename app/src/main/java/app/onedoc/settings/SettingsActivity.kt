@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import app.onedoc.ui.components.AppTopBar
 import app.onedoc.ui.theme.OneDocTheme
+import kotlinx.coroutines.compose.rememberCoroutineScope
 import kotlinx.coroutines.launch
 
 /**
