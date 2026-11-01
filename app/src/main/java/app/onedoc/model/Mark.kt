@@ -12,7 +12,7 @@ package app.onedoc.model
  *  7. highlight
  */
 sealed class Mark {
-    abstract val type: MarkType
+    val type: MarkType
     data class Bold(override val type: MarkType = MarkType.Bold) : Mark()
     data class Italic(override val type: MarkType = MarkType.Italic) : Mark()
     data class Underline(override val type: MarkType = MarkType.Underline) : Mark()

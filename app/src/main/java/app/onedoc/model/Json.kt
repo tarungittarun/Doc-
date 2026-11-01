@@ -143,13 +143,13 @@ object Json {
                 height = obj.optInt("height", 0),
                 createdAt = createdAt,
             )
-            "table" -> {
+            "table" -> obj.apply {
                 val cellsArr = obj.getJSONArray("cells")
                 val cells = (0 until cellsArr.length()).map { i ->
                     val rowArr = cellsArr.getJSONArray(i)
                     (0 until rowArr.length()).map { j -> rowArr.getString(j) }
                 }
-                Block.Table(
+                return Block.Table(
                     id = id,
                     rows = obj.getInt("rows"),
                     cols = obj.getInt("cols"),

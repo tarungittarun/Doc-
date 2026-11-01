@@ -1,7 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    id("org.jetbrains.kotlin.plugin.compose") version "2.0.20"
 }
 
 android {
@@ -21,11 +20,11 @@ android {
     }
 
     signingConfigs {
-        named("debug") { /* debug keystore provided by AGP */ }
+        debug { /* debug keystore provided by AGP */ }
     }
 
     buildTypes {
-        named("release") {
+        release {
             isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -41,6 +40,17 @@ android {
             dimension = "tier"
             applicationId = "app.onedoc"
         }
+        create("writer") {
+            dimension = "tier"
+            applicationId = "app.onedoc"
+        }
+    }
+
+    sourceSets {
+        val fullMain by getting
+        fullMain.java.srcDirs("src/full/java")
+        val writerMain by getting
+        writerMain.java.srcDirs("src/writer/java")
     }
 
     compileOptions {
@@ -53,7 +63,6 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion = libs.versions.composeCompiler.get()
     }
-
     buildFeatures {
         compose = true
         buildConfig = true
@@ -68,11 +77,9 @@ android {
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
-implementation(libs.androidx.lifecycle.runtime.ktx)
-implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.8.2")
-implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.2")
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.8.2")
     implementation(libs.androidx.activity.compose)
-    implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
     implementation(libs.compose.graphics)
     implementation(libs.compose.material)
@@ -82,7 +89,6 @@ implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.2")
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     implementation(libs.datastore.preferences)
-implementation(libs.datastore.core)
     implementation(libs.koin.core)
     implementation(libs.koin.android)
 
@@ -97,10 +103,4 @@ implementation(libs.datastore.core)
     testImplementation(libs.junit)
     testImplementation(libs.androidx.test.core)
     testImplementation(libs.robolectric)
-
-    // Android instrumented tests (G7 performance budgets)
-    androidTestImplementation(libs.junit)
-    androidTestImplementation("androidx.test.ext:junit:1.1.5")
-    androidTestImplementation("androidx.test:runner:1.5.2")
-    androidTestImplementation("androidx.test:rules:1.5.2")
 }

@@ -13,7 +13,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.observeAsState
-import kotlinx.coroutines.launch
 import app.onedoc.editor.EditorActivity
 import app.onedoc.model.Block
 import app.onedoc.model.Document
@@ -62,10 +61,9 @@ class HomeActivity : ComponentActivity() {
             createdAt = System.currentTimeMillis(),
             updatedAt = System.currentTimeMillis(),
         )
-        // Save via repository, then refresh LiveData so the new doc appears
-        lifecycleScope.launch {
+        // Save via repository (G2 coroutine scope), then navigate to editor
+        androidx.lifecycle.lifecycleScope.launch {
             repository.createDocument(doc)
-            repository.refresh()
         }
         val intent = Intent(this, EditorActivity::class.java)
         intent.putExtra("documentId", doc.id)
@@ -90,78 +88,55 @@ fun HomeScreen(
 ) {
     val color = MaterialTheme.colorScheme
 
-    // Search state (G5)
-    var searchQuery by remember { mutableStateOf("") }
-    var searchExpanded by remember { mutableStateOf(false) }
-
     Column(modifier = Modifier.fillMaxSize()) {
         AppTopBar(
             title = "OneDoc",
-            onSearchClick = { searchExpanded = !searchExpanded },
+            onSearchClick = {},
             modifier = Modifier,
         )
-
-        // Search bar (G5)
-        if (searchExpanded) {
-            TextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                label = { Text(text = "Search documents") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                colors = TextFieldDefaults.colors(),
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-        }
-
         Spacer(modifier = Modifier.height(16.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-            horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
+            horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBy(8.dp),
         ) {
-            TextButton(
+            ActionChip(
                 onClick = { onCreateDocument() },
-            ) {
-                Text(text = "New document")
-            }
-            TextButton(
+                label = { Text(text = "New document") },
+                icon = { Icon(imageVector = Icons.Default.Add, contentDescription = null) },
+            )
+            ActionChip(
                 onClick = {},
-            ) {
-                Text(text = "Starred")
-            }
+                label = { Text(text = "Starred") },
+                icon = { Icon(imageVector = Icons.Default.Star, contentDescription = null) },
+            )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = if (searchQuery.isNotEmpty()) "Search results" else "Documents",
+            text = "Documents",
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(horizontal = 16.dp),
         )
 
-        // Document list — populated from repository via LiveData observer (G2)
+        // Document list — populated from repository in G2+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 16.dp)
                 .weight(1f),
         ) {
+            // Show documents from repository (observer pattern lands in G2)
             val docs by repository.documents.observeAsState(emptyList())
-            val filteredDocs = if (searchQuery.isNotEmpty()) {
-                docs.filter { it.title.lowercase().contains(searchQuery.lowercase()) }
-            } else {
-                docs
-            }
-            if (filteredDocs.isEmpty()) {
+            if (docs.isEmpty()) {
                 EmptyState(
-                    title = if (searchQuery.isNotEmpty()) "No matching documents" else "No documents yet",
-                    description = if (searchQuery.isNotEmpty()) "Try a different search term." else "Tap + to create your first document.",
+                    title = "No documents yet",
+                    description = "Tap + to create your first document.",
                     onCreate = onCreateDocument,
                 )
             } else {
-                filteredDocs.forEach { doc ->
+                docs.forEach { doc ->
                     DocumentListItem(
                         document = doc,
                         onClick = { onDocumentClick(doc) },

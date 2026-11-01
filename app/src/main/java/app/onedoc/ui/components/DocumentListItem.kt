@@ -45,7 +45,11 @@ fun DocumentListItem(
                 )
             }
             if (document.starred) {
-                Text(text = "★", style = MaterialTheme.typography.bodyLarge, color = color.primary)
+                Icon(
+                    imageVector = Icons.Default.Star,
+                    contentDescription = "Starred",
+                    tint = color.primary,
+                )
             }
         }
     }

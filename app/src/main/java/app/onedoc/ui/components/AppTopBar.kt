@@ -26,7 +26,10 @@ fun AppTopBar(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         IconButton(onClick = onMenuClick) {
-            Text(text = "☰", style = MaterialTheme.typography.bodyLarge)
+            Icon(
+                imageVector = Icons.Default.Menu,
+                contentDescription = "Open navigation",
+            )
         }
         Text(
             text = title,
@@ -35,10 +38,16 @@ fun AppTopBar(
         )
         Row {
             IconButton(onClick = onSearchClick) {
-                Text(text = "🔍", style = MaterialTheme.typography.bodyLarge)
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = "Search",
+                )
             }
             IconButton(onClick = {}) {
-                Text(text = "⋮", style = MaterialTheme.typography.bodyLarge)
+                Icon(
+                    imageVector = Icons.Default.MoreVert,
+                    contentDescription = "More options",
+                )
             }
         }
     }
