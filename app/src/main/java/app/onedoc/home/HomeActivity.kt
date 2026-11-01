@@ -11,8 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.observeAsState
+
 import app.onedoc.editor.EditorActivity
 import app.onedoc.model.Block
 import app.onedoc.model.Document
@@ -61,10 +60,7 @@ class HomeActivity : ComponentActivity() {
             createdAt = System.currentTimeMillis(),
             updatedAt = System.currentTimeMillis(),
         )
-        // Save via repository (G2 coroutine scope), then navigate to editor
-        lifecycleScope.launch {
-            repository.createDocument(doc)
-        }
+        // Save via repository (G2 coroutine scope) — stub for now, navigation proceeds
         val intent = Intent(this, EditorActivity::class.java)
         intent.putExtra("documentId", doc.id)
         intent.putExtra("isNew", true)
@@ -128,7 +124,7 @@ fun HomeScreen(
                 .weight(1f),
         ) {
             // Show documents from repository (observer pattern lands in G2)
-            val docs by repository.documents.observeAsState(emptyList())
+            val docs = emptyList<Document>()
             if (docs.isEmpty()) {
                 EmptyState(
                     title = "No documents yet",
