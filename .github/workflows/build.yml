@@ -76,8 +76,8 @@ jobs:
         run: |
           set +e
           esc() { sed 's/%/%25/g; s/\r//g; s/\n/%0A/g; s/:/%3A/g'; }
-          echo "::notice::DEBUG: Running gradle --info --stacktrace assembleFullDebug (no Kotlin daemon, 4096m heap)..."
-          gradle --no-daemon --info --stacktrace -Dkotlin.daemon.enabled=false -Dorg.gradle.jvmargs=-Xmx4096m assembleFullDebug 2>&1 | tee /tmp/gradle-debug.out
+          echo "::notice::DEBUG: Running gradle --info --stacktrace --no-build-cache assembleFullDebug (no Kotlin daemon, 4096m heap)..."
+          gradle --no-daemon --info --stacktrace --no-build-cache -Dkotlin.daemon.enabled=false -Dorg.gradle.jvmargs=-Xmx4096m assembleFullDebug 2>&1 | tee /tmp/gradle-debug.out
           GRADLE_EXIT=${PIPESTATUS[0]}
           echo "::notice::DEBUG: GRADLE_EXIT_CODE=$GRADLE_EXIT"
           echo "::notice::DEBUG: OUTPUT_SIZE=$(wc -c < /tmp/gradle-debug.out 2>/dev/null || echo 0)"
@@ -147,8 +147,8 @@ jobs:
         run: |
           set +e
           esc() { sed 's/%/%25/g; s/\r//g; s/\n/%0A/g; s/:/%3A/g'; }
-          echo "::notice::RELEASE: Running gradle --info --stacktrace assembleFullRelease (no Kotlin daemon, 4096m heap)..."
-          gradle --no-daemon --info --stacktrace -Dkotlin.daemon.enabled=false -Dorg.gradle.jvmargs=-Xmx4096m assembleFullRelease 2>&1 | tee /tmp/gradle-release.out
+          echo "::notice::RELEASE: Running gradle --info --stacktrace --no-build-cache assembleFullRelease (no Kotlin daemon, 4096m heap)..."
+          gradle --no-daemon --info --stacktrace --no-build-cache -Dkotlin.daemon.enabled=false -Dorg.gradle.jvmargs=-Xmx4096m assembleFullRelease 2>&1 | tee /tmp/gradle-release.out
           GRADLE_EXIT=${PIPESTATUS[0]}
           echo "::notice::RELEASE: GRADLE_EXIT_CODE=$GRADLE_EXIT"
           echo "::notice::RELEASE: OUTPUT_SIZE=$(wc -c < /tmp/gradle-release.out 2>/dev/null || echo 0)"
