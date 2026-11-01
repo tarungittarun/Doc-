@@ -5,14 +5,26 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.height
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.Divider
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Column
+import androidx.compose.material3.Spacer
+import androidx.compose.material3.ElevatedButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.style.TextAlign
 import app.onedoc.model.Block
 import app.onedoc.model.Document
 import app.onedoc.ui.theme.OneDocTheme
@@ -87,7 +99,7 @@ fun EditorScreen(documentId: String, isNew: Boolean) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 20.dp),
-            contentPadding = PaddingValues(vertical = 8.dp),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 8.dp),
         ) {
             items(doc.blocks, key = { it.id }) { block ->
                 BlockRow(block = block)
@@ -111,10 +123,10 @@ private fun BlockRow(block: Block) {
 
 @Composable
 private fun ParagraphBlock(block: Block.Paragraph) {
-    var text by remember { mutableStateOf(block.text) }
+    val textState = remember { mutableStateOf(block.text) }
     TextField(
-        value = text,
-        onValueChange = { text = it },
+        value = textState.value,
+        onValueChange = { textState.value = it },
         modifier = Modifier.fillMaxWidth(),
         textStyle = MaterialTheme.typography.bodyLarge,
         colors = TextFieldDefaults.colors(containerColor = Color.Transparent),
@@ -123,10 +135,10 @@ private fun ParagraphBlock(block: Block.Paragraph) {
 
 @Composable
 private fun HeadingBlock(block: Block.Heading) {
-    var text by remember { mutableStateOf(block.text) }
+    val textState = remember { mutableStateOf(block.text) }
     TextField(
-        value = text,
-        onValueChange = { text = it },
+        value = textState.value,
+        onValueChange = { textState.value = it },
         modifier = Modifier.fillMaxWidth(),
         textStyle = when (block.level) {
             1 -> MaterialTheme.typography.headlineLarge
@@ -140,10 +152,11 @@ private fun HeadingBlock(block: Block.Heading) {
 
 @Composable
 private fun ListItemBlock(block: Block.ListItem) {
-    var text by remember { mutableStateOf(block.text) }
+    val textState = remember { mutableStateOf(block.text) }
+    val prefix = if (block.ordered) "1. " else "•  "
     TextField(
-        value = if (block.ordered) "1. " else "•  " + text,
-        onValueChange = { text = it },
+        value = prefix + textState.value,
+        onValueChange = { textState.value = it.removePrefix(prefix) },
         modifier = Modifier.fillMaxWidth(),
         textStyle = MaterialTheme.typography.bodyLarge,
         colors = TextFieldDefaults.colors(containerColor = Color.Transparent),
@@ -152,10 +165,10 @@ private fun ListItemBlock(block: Block.ListItem) {
 
 @Composable
 private fun CodeBlock(block: Block.CodeBlock) {
-    var text by remember { mutableStateOf(block.code) }
+    val textState = remember { mutableStateOf(block.code) }
     TextField(
-        value = text,
-        onValueChange = { text = it },
+        value = textState.value,
+        onValueChange = { textState.value = it },
         modifier = Modifier.fillMaxWidth(),
         textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
         colors = TextFieldDefaults.colors(
