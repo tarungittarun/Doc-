@@ -44,13 +44,6 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
-      - name: Debug environment
-        run: |
-          echo "::notice::ANDROID_HOME=${ANDROID_HOME:-not set}"
-          echo "::notice::ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT:-not set}"
-          ls /usr/lib/android-sdk 2>/dev/null || echo "::notice::No /usr/lib/android-sdk"
-          ls $ANDROID_HOME 2>/dev/null || echo "::notice::ANDROID_HOME not accessible"
-          ls $ANDROID_SDK_ROOT 2>/dev/null || echo "::notice::ANDROID_SDK_ROOT not accessible"
       - name: Install SDK packages
         run: SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}" && echo "::notice::SDK_PATH=$SDK" && ls "$SDK" 2>/dev/null || echo "::notice::SDK not found at $SDK" && yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true && "$SDK/cmdline-tools/latest/bin/sdkmanager" "platform-tools" "platforms;android-36" "build-tools;36.0.0" || true
       - name: Ensure signing key
@@ -64,13 +57,10 @@ jobs:
           key: gradle-${{ runner.os }}-jdk17-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties', '*.gradle.kts', 'gradle/libs.versions.toml') }}
           restore-keys: gradle-${{ runner.os }}-jdk17-
       - name: Build debug APK
-        run: gradle --no-daemon --stacktrace assembleFullDebug 2>&1 | tee /tmp/build.log
-      - name: List APK output directories
+        shell: bash
         run: |
-          echo "::notice::SEARCHING_FOR_APKS"
-          find . -name "*.apk" -type f 2>/dev/null | head -20 || true
-          find app/build -type d 2>/dev/null | head -30 || true
-          echo "::notice::SEARCH_COMPLETE"
+          set -o pipefail
+          gradle --no-daemon --stacktrace assembleFullDebug 2>&1 | tee /tmp/build.log
       - name: Upload debug APKs
         uses: actions/upload-artifact@v4
         if: always()
@@ -95,13 +85,6 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
-      - name: Debug environment
-        run: |
-          echo "::notice::ANDROID_HOME=${ANDROID_HOME:-not set}"
-          echo "::notice::ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT:-not set}"
-          ls /usr/lib/android-sdk 2>/dev/null || echo "::notice::No /usr/lib/android-sdk"
-          ls $ANDROID_HOME 2>/dev/null || echo "::notice::ANDROID_HOME not accessible"
-          ls $ANDROID_SDK_ROOT 2>/dev/null || echo "::notice::ANDROID_SDK_ROOT not accessible"
       - name: Install SDK packages
         run: SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}" && echo "::notice::SDK_PATH=$SDK" && ls "$SDK" 2>/dev/null || echo "::notice::SDK not found at $SDK" && yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true && "$SDK/cmdline-tools/latest/bin/sdkmanager" "platform-tools" "platforms;android-36" "build-tools;36.0.0" || true
       - name: Ensure signing key
@@ -115,7 +98,10 @@ jobs:
           key: gradle-${{ runner.os }}-jdk17-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties', '*.gradle.kts', 'gradle/libs.versions.toml') }}
           restore-keys: gradle-${{ runner.os }}-jdk17-
       - name: Build release APK
-        run: gradle --no-daemon --stacktrace assembleFullRelease 2>&1 | tee /tmp/build-release.log
+        shell: bash
+        run: |
+          set -o pipefail
+          gradle --no-daemon --stacktrace assembleFullRelease 2>&1 | tee /tmp/build-release.log
       - name: "Static gate: no internet permission"
         run: |
           if grep -rqi 'android.permission.INTERNET' app/src/main/AndroidManifest.xml; then echo 'FAIL: internet permission present'; exit 1; fi
