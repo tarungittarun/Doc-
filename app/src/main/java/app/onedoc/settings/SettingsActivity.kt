@@ -17,7 +17,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import app.onedoc.ui.components.AppTopBar
 import app.onedoc.ui.theme.OneDocTheme
-import kotlinx.coroutines.compose.rememberCoroutineScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 /**
@@ -46,7 +47,7 @@ class SettingsActivity : ComponentActivity() {
 
 @Composable
 fun SettingsScreen(settingsDataStore: SettingsDataStore) {
-    val scope = rememberCoroutineScope()
+    val scope = remember { CoroutineScope(Dispatchers.Main) }
 
     // Load settings from DataStore via produceState (G6)
     val settings by settingsDataStore.settings.collectAsState(initial = AppSettings())
