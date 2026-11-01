@@ -34,7 +34,7 @@ fun SettingsScreen() {
             title = "Settings",
             modifier = Modifier,
         )
-        List(
+        Column(
             modifier = Modifier.fillMaxSize(),
         ) {
             SettingsItem(
