@@ -57,7 +57,7 @@ jobs:
       - name: Build debug APK
         run: |
           set +e
-          gradle --no-daemon --stacktrace --info -Dkotlin.daemon.enabled=false assembleFullDebug 2>&1 | tee /tmp/gradle-debug.log
+          gradle --no-daemon --stacktrace --max-workers=1 -Dkotlin.daemon.enabled=false assembleFullDebug 2>&1 | tee /tmp/gradle-debug.log
           GRADLE_EXIT=${PIPESTATUS[0]}
           echo "::notice::GRADLE_EXIT=$GRADLE_EXIT"
           grep -iE 'Kotlin|compile|error|fail|exception|caused|oom|memory|heap|daemon|crash|panic|signal|abort|exit' /tmp/gradle-debug.log 2>/dev/null | head -30 | while read line; do echo "::notice::GRADLE_KEY: $line"; done
@@ -99,7 +99,7 @@ jobs:
       - name: Build release APK
         run: |
           set +e
-          gradle --no-daemon --stacktrace --info -Dkotlin.daemon.enabled=false assembleFullRelease 2>&1 | tee /tmp/gradle-debug.log
+          gradle --no-daemon --stacktrace --max-workers=1 -Dkotlin.daemon.enabled=false assembleFullRelease 2>&1 | tee /tmp/gradle-debug.log
           GRADLE_EXIT=${PIPESTATUS[0]}
           echo "::notice::GRADLE_EXIT=$GRADLE_EXIT"
           grep -iE 'Kotlin|compile|error|fail|exception|caused|oom|memory|heap|daemon|crash|panic|signal|abort|exit' /tmp/gradle-debug.log 2>/dev/null | head -30 | while read line; do echo "::notice::GRADLE_KEY: $line"; done
