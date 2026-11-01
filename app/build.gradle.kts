@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    id("org.jetbrains.kotlin.plugin.compose") version "2.0.20"
 }
 
 android {
@@ -44,13 +45,6 @@ android {
             dimension = "tier"
             applicationId = "app.onedoc"
         }
-    }
-
-    sourceSets {
-        val fullMain by getting
-        fullMain.java.srcDirs("src/full/java")
-        val writerMain by getting
-        writerMain.java.srcDirs("src/writer/java")
     }
 
     compileOptions {
