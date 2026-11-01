@@ -27,18 +27,6 @@ android {
         }
     }
 
-    flavorDimensions += "tier"
-    productFlavors {
-        create("full") {
-            dimension = "tier"
-            applicationId = "app.onedoc"
-        }
-        create("writer") {
-            dimension = "tier"
-            applicationId = "app.onedoc"
-        }
-    }
-
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
