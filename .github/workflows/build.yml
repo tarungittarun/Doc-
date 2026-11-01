@@ -60,7 +60,7 @@ jobs:
           gradle --no-daemon --stacktrace --max-workers=1 -Dkotlin.daemon.enabled=false assembleFullDebug 2>&1 | tee /tmp/gradle-debug.log
           GRADLE_EXIT=${PIPESTATUS[0]}
           echo "::notice::GRADLE_EXIT=$GRADLE_EXIT"
-          grep -iE 'Kotlin|compile|error|fail|exception|caused|oom|memory|heap|daemon|crash|panic|signal|abort|exit' /tmp/gradle-debug.log 2>/dev/null | head -30 | while read line; do echo "::notice::GRADLE_KEY: $line"; done
+          grep '^e:' /tmp/gradle-debug.log 2>/dev/null | head -30 | while read line; do echo "::notice::GRADLE_KEY: $line"; done
           exit $GRADLE_EXIT
       - name: Upload debug APKs
         uses: actions/upload-artifact@v4
@@ -102,7 +102,7 @@ jobs:
           gradle --no-daemon --stacktrace --max-workers=1 -Dkotlin.daemon.enabled=false assembleFullRelease 2>&1 | tee /tmp/gradle-debug.log
           GRADLE_EXIT=${PIPESTATUS[0]}
           echo "::notice::GRADLE_EXIT=$GRADLE_EXIT"
-          grep -iE 'Kotlin|compile|error|fail|exception|caused|oom|memory|heap|daemon|crash|panic|signal|abort|exit' /tmp/gradle-debug.log 2>/dev/null | head -30 | while read line; do echo "::notice::GRADLE_KEY: $line"; done
+          grep '^e:' /tmp/gradle-debug.log 2>/dev/null | head -30 | while read line; do echo "::notice::GRADLE_KEY: $line"; done
           exit $GRADLE_EXIT
       - name: "Static gate: no internet permission"
         run: |
