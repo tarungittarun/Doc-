@@ -6,12 +6,12 @@ plugins {
 
 android {
     namespace = "app.onedoc"
-    compileSdk = 36
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "app.onedoc"
         minSdk = 26
-        targetSdk = 36
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
