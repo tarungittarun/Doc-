@@ -9,7 +9,7 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun EmptyState(
-    icon: ImageVector = Icons.Filled.Description,
+    icon: String = "📭",
     title: String = "No documents",
     description: String = "Create your first document to get started.",
     onCreate: () -> Unit,
@@ -22,10 +22,9 @@ fun EmptyState(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurface,
+        Text(
+            text = icon,
+            style = MaterialTheme.typography.displaySmall,
             modifier = Modifier.size(64.dp),
         )
         Spacer(modifier = Modifier.height(16.dp))
