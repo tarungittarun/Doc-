@@ -49,7 +49,9 @@ jobs:
       - name: Create local.properties
         run: echo "sdk.dir=${ANDROID_HOME:-$ANDROID_SDK_ROOT}" > local.properties
       - name: Gradle version
-        run: gradle --version
+        run: |
+          echo "::notice::GRADLE_VERSION: $(gradle --version 2>&1 | grep 'Gradle ' | head -1)"
+          gradle --version
       - name: Build debug APK
         shell: bash
         run: |
