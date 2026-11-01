@@ -8,9 +8,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -48,9 +48,7 @@ fun SettingsScreen(settingsDataStore: SettingsDataStore) {
     val scope = rememberCoroutineScope()
 
     // Load settings from DataStore via produceState (G6)
-    val settings by produceState(AppSettings()) {
-        value = settingsDataStore.settings.first()
-    }
+    val settings by settingsDataStore.settings.collectAsState(initial = AppSettings())
 
     Column(modifier = Modifier.fillMaxSize()) {
         AppTopBar(
