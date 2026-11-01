@@ -103,7 +103,7 @@ jobs:
           GRADLE_EXIT=${PIPESTATUS[0]}
           echo "::notice::GRADLE_EXIT=$GRADLE_EXIT"
           grep '^e:' /tmp/gradle-debug.log 2>/dev/null | head -30 | while read line; do echo "::notice::GRADLE_KEY: $line"; done
-          grep -iE 'signing|keystore|release|proguard|minify|compile|fail|error|exception|caused' /tmp/gradle-debug.log 2>/dev/null | head -30 | while read line; do echo "::notice::GRADLE_REL: $line"; done
+          tail -80 /tmp/gradle-debug.log | while read line; do echo "::notice::GRADLE_REL: $line"; done
           exit $GRADLE_EXIT
       - name: "Static gate: no internet permission"
         run: |
