@@ -20,10 +20,6 @@ android {
         buildConfigField("long", "BUILD_TIME", "0")
     }
 
-    signingConfigs {
-        debug { /* debug keystore provided by AGP */ }
-    }
-
     buildTypes {
         release {
             isMinifyEnabled = true
