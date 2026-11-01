@@ -86,6 +86,8 @@ jobs:
           echo "::notice::DEBUG: GRADLE_EXIT_CODE=$GRADLE_EXIT"
           echo "::notice::DEBUG: OUTPUT_SIZE=$(wc -c < /tmp/gradle-debug.out 2>/dev/null || echo 0)"
           echo "::notice::DEBUG: CAUSED_BY=$(grep -a 'Caused by' /tmp/gradle-debug.out 2>/dev/null | esc)"
+          echo "::notice::DEBUG: ERROR_LINES=$(grep -a -i 'error' /tmp/gradle-debug.out 2>/dev/null | head -10 | esc)"
+          echo "::notice::DEBUG: FAIL_LINES=$(grep -a -i 'fail' /tmp/gradle-debug.out 2>/dev/null | grep -v 'BUILD FAILED\|Task.*FAILED\|NO APKS' | head -10 | esc)"
           echo "::notice::DEBUG: TAIL_20=$(tail -20 /tmp/gradle-debug.out 2>/dev/null | esc)"
           APKS=$(find app -name "*.apk" -type f 2>/dev/null || true)
           if [ -n "$APKS" ]; then
@@ -156,6 +158,8 @@ jobs:
           echo "::notice::RELEASE: GRADLE_EXIT_CODE=$GRADLE_EXIT"
           echo "::notice::RELEASE: OUTPUT_SIZE=$(wc -c < /tmp/gradle-release.out 2>/dev/null || echo 0)"
           echo "::notice::RELEASE: CAUSED_BY=$(grep -a 'Caused by' /tmp/gradle-release.out 2>/dev/null | esc)"
+          echo "::notice::RELEASE: ERROR_LINES=$(grep -a -i 'error' /tmp/gradle-release.out 2>/dev/null | head -10 | esc)"
+          echo "::notice::RELEASE: FAIL_LINES=$(grep -a -i 'fail' /tmp/gradle-release.out 2>/dev/null | grep -v 'BUILD FAILED\|Task.*FAILED\|NO APKS' | head -10 | esc)"
           echo "::notice::RELEASE: TAIL_20=$(tail -20 /tmp/gradle-release.out 2>/dev/null | esc)"
           APKS=$(find app -name "*.apk" -type f 2>/dev/null || true)
           if [ -n "$APKS" ]; then
