@@ -42,7 +42,7 @@ jobs:
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
+          distribution: zulu
           java-version: "17"
       - name: List SDK platforms
         run: echo "::notice::PLATFORMS:$(ls $ANDROID_HOME/platforms/ 2>/dev/null | tr '\n' ',' | sed 's/,$//')"
@@ -84,7 +84,7 @@ jobs:
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
+          distribution: zulu
           java-version: "17"
       - name: List SDK platforms
         run: echo "::notice::PLATFORMS:$(ls $ANDROID_HOME/platforms/ 2>/dev/null | tr '\n' ',' | sed 's/,$//')"

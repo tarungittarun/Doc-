@@ -54,7 +54,7 @@ android {
         kotlinCompilerExtensionVersion = libs.versions.composeCompiler.get()
     }
     buildFeatures {
-        compose = false
+        compose = true
         buildConfig = true
     }
     packaging {
