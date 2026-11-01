@@ -72,6 +72,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.8.2")
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
+    implementation("androidx.compose.ui:ui-text")
     implementation(libs.compose.graphics)
     implementation(libs.compose.material)
     implementation(libs.compose.tooling)
