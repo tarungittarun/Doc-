@@ -44,8 +44,10 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
-      - name: Install SDK packages
-        run: SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}" && echo "::notice::SDK_PATH=$SDK" && yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true && "$SDK/cmdline-tools/latest/bin/sdkmanager" "platform-tools" "platforms;android-34" "build-tools;34.0.0" || true
+      - name: List SDK platforms
+        run: echo "::notice::PLATFORMS:$(ls $ANDROID_HOME/platforms/ 2>/dev/null | tr '\n' ',' | sed 's/,$//')"
+      - name: List SDK build-tools
+        run: echo "::notice::BUILD_TOOLS:$(ls $ANDROID_HOME/build-tools/ 2>/dev/null | tr '\n' ',' | sed 's/,$//')"
       - name: Create local.properties
         run: echo "sdk.dir=${ANDROID_HOME:-$ANDROID_SDK_ROOT}" > local.properties
       - name: Gradle version
@@ -78,12 +80,16 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
-      - name: Install SDK packages
-        run: SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}" && echo "::notice::SDK_PATH=$SDK" && yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true && "$SDK/cmdline-tools/latest/bin/sdkmanager" "platform-tools" "platforms;android-34" "build-tools;34.0.0" || true
+      - name: List SDK platforms
+        run: echo "::notice::PLATFORMS:$(ls $ANDROID_HOME/platforms/ 2>/dev/null | tr '\n' ',' | sed 's/,$//')"
+      - name: List SDK build-tools
+        run: echo "::notice::BUILD_TOOLS:$(ls $ANDROID_HOME/build-tools/ 2>/dev/null | tr '\n' ',' | sed 's/,$//')"
       - name: Create local.properties
         run: echo "sdk.dir=${ANDROID_HOME:-$ANDROID_SDK_ROOT}" > local.properties
       - name: Gradle version
-        run: gradle --version
+        run: |
+          echo "::notice::GRADLE_VERSION: $(gradle --version 2>&1 | grep 'Gradle ' | head -1)"
+          gradle --version
       - name: Build release APK
         run: gradle --no-daemon --stacktrace assembleFullRelease
       - name: "Static gate: no internet permission"
