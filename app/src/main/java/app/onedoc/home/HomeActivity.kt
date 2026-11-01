@@ -6,7 +6,10 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
+import androidx.compose.material3.ActionChip
+import androidx.compose.material3.Icons
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -62,7 +65,7 @@ class HomeActivity : ComponentActivity() {
             updatedAt = System.currentTimeMillis(),
         )
         // Save via repository (G2 coroutine scope), then navigate to editor
-        androidx.lifecycle.lifecycleScope.launch {
+        lifecycleScope.launch {
             repository.createDocument(doc)
         }
         val intent = Intent(this, EditorActivity::class.java)
