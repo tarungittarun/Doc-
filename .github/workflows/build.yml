@@ -57,7 +57,7 @@ jobs:
       - name: Build debug APK
         run: |
           set +e
-          gradle --no-daemon --stacktrace assembleFullDebug 2>&1 | tee /tmp/gradle-debug.log
+          gradle --no-daemon --stacktrace -Dkotlin.compiler.execution.strategy=in-process assembleFullDebug 2>&1 | tee /tmp/gradle-debug.log
           GRADLE_EXIT=${PIPESTATUS[0]}
           echo "::notice::GRADLE_EXIT=$GRADLE_EXIT"
           grep -iE 'error:|error |FAILED|exception|caused by|unresolved|not found|cannot|what went wrong|could not|compile|execution failed' /tmp/gradle-debug.log 2>/dev/null | head -20 | while read line; do echo "::notice::GRADLE_ERR: $line"; done
@@ -97,7 +97,7 @@ jobs:
           echo "::notice::GRADLE_VERSION: $(gradle --version 2>&1 | grep 'Gradle ' | head -1)"
           gradle --version
       - name: Build release APK
-        run: gradle --no-daemon --stacktrace assembleFullRelease
+        run: gradle --no-daemon --stacktrace -Dkotlin.compiler.execution.strategy=in-process assembleFullRelease
       - name: "Static gate: no internet permission"
         run: |
           if grep -rqi 'android.permission.INTERNET' app/src/main/AndroidManifest.xml; then echo 'FAIL: internet permission present'; exit 1; fi
