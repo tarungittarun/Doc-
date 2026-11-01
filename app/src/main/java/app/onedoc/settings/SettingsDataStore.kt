@@ -70,10 +70,7 @@ class SettingsDataStore(private val dataStore: DataStore<Preferences>) {
 
 class SettingsDataStoreFactory {
     fun create(context: Context): SettingsDataStore {
-        val dataStore = androidx.datastore.preferences.preferencesDataStore(
-            context = context,
-            name = "onedoc_settings",
-        )
+        val dataStore = androidx.datastore.preferences.preferencesDataStore(context, "onedoc_settings")
         return SettingsDataStore(dataStore)
     }
 }
