@@ -55,7 +55,13 @@ jobs:
           echo "::notice::GRADLE_VERSION: $(gradle --version 2>&1 | grep 'Gradle ' | head -1)"
           gradle --version
       - name: Build debug APK
-        run: gradle --no-daemon --stacktrace -Dkotlin.daemon.enabled=false assembleFullDebug
+        run: |
+          set +e
+          gradle --no-daemon --stacktrace --info -Dkotlin.daemon.enabled=false assembleFullDebug 2>&1 | tee /tmp/gradle-debug.log
+          GRADLE_EXIT=${PIPESTATUS[0]}
+          echo "::notice::GRADLE_EXIT=$GRADLE_EXIT"
+          tail -100 /tmp/gradle-debug.log | while read line; do echo "::notice::GRADLE_LOG: $line"; done
+          exit $GRADLE_EXIT
       - name: Upload debug APKs
         uses: actions/upload-artifact@v4
         if: always()
@@ -91,7 +97,13 @@ jobs:
           echo "::notice::GRADLE_VERSION: $(gradle --version 2>&1 | grep 'Gradle ' | head -1)"
           gradle --version
       - name: Build release APK
-        run: gradle --no-daemon --stacktrace -Dkotlin.daemon.enabled=false assembleFullRelease
+        run: |
+          set +e
+          gradle --no-daemon --stacktrace --info -Dkotlin.daemon.enabled=false assembleFullRelease 2>&1 | tee /tmp/gradle-debug.log
+          GRADLE_EXIT=${PIPESTATUS[0]}
+          echo "::notice::GRADLE_EXIT=$GRADLE_EXIT"
+          tail -100 /tmp/gradle-debug.log | while read line; do echo "::notice::GRADLE_LOG: $line"; done
+          exit $GRADLE_EXIT
       - name: "Static gate: no internet permission"
         run: |
           if grep -rqi 'android.permission.INTERNET' app/src/main/AndroidManifest.xml; then echo 'FAIL: internet permission present'; exit 1; fi
