@@ -55,7 +55,13 @@ jobs:
           echo "::notice::GRADLE_VERSION: $(gradle --version 2>&1 | grep 'Gradle ' | head -1)"
           gradle --version
       - name: Build debug APK
-        run: gradle --no-daemon --stacktrace assembleFullDebug
+        run: |
+          set +e
+          gradle --no-daemon --stacktrace assembleFullDebug 2>&1 | tee /tmp/gradle-debug.log
+          GRADLE_EXIT=${PIPESTATUS[0]}
+          echo "::notice::GRADLE_EXIT=$GRADLE_EXIT"
+          tail -30 /tmp/gradle-debug.log | while read line; do echo "::notice::GRADLE_TAIL: $line"; done
+          exit $GRADLE_EXIT
       - name: Upload debug APKs
         uses: actions/upload-artifact@v4
         if: always()
