@@ -86,7 +86,7 @@ jobs:
           echo "::notice::DEBUG: FAILED_TASK=$(grep -E 'Task :.*FAILED|> Task.*FAILED' /tmp/gradle-debug.out 2>/dev/null | head -5 | esc)"
           echo "::notice::DEBUG: CAUSED_BY=$(grep -A10 'Caused by' /tmp/gradle-debug.out 2>/dev/null | head -12 | esc)"
           echo "::notice::DEBUG: RESOLVE_FAILED=$(grep -A15 'Could not resolve all files' /tmp/gradle-debug.out 2>/dev/null | grep -v 'Could not resolve all files' | head -15 | esc)"
-          echo "::notice::DEBUG: KOTLIN_ERR=$(grep 'e:' /tmp/gradle-debug.out 2>/dev/null | head -15 | esc)"
+          echo "::notice::DEBUG: KOTLIN_ERR=$(grep -B2 -A8 'compileFullDebugKotlin' /tmp/gradle-debug.out 2>/dev/null | head -20 | esc)"
           APKS=$(find app -name "*.apk" -type f 2>/dev/null || true)
           if [ -n "$APKS" ]; then
             echo "::notice::DEBUG APKS: $(printf '%s' "$APKS" | tr '\n' ' ')"
@@ -159,7 +159,7 @@ jobs:
           echo "::notice::RELEASE: FAILED_TASK=$(grep -E 'Task :.*FAILED|> Task.*FAILED' /tmp/gradle-release.out 2>/dev/null | head -5 | esc)"
           echo "::notice::RELEASE: CAUSED_BY=$(grep -A10 'Caused by' /tmp/gradle-release.out 2>/dev/null | head -12 | esc)"
           echo "::notice::RELEASE: RESOLVE_FAILED=$(grep -A15 'Could not resolve all files' /tmp/gradle-release.out 2>/dev/null | grep -v 'Could not resolve all files' | head -15 | esc)"
-          echo "::notice::RELEASE: KOTLIN_ERR=$(grep 'e:' /tmp/gradle-release.out 2>/dev/null | head -15 | esc)"
+          echo "::notice::RELEASE: KOTLIN_ERR=$(grep -B2 -A8 'compileFullReleaseKotlin' /tmp/gradle-release.out 2>/dev/null | head -20 | esc)"
           APKS=$(find app -name "*.apk" -type f 2>/dev/null || true)
           if [ -n "$APKS" ]; then
             echo "::notice::RELEASE APKS: $(printf '%s' "$APKS" | tr '\n' ' ')"
