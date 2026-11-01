@@ -44,26 +44,22 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
-      - name: Install SDK packages
-        run: SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}" && echo "::notice::SDK_PATH=$SDK" && ls "$SDK" 2>/dev/null || echo "::notice::SDK not found at $SDK" && yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true && "$SDK/cmdline-tools/latest/bin/sdkmanager" "platform-tools" "platforms;android-36" "build-tools;36.0.0" || true
-      - name: Ensure signing key
-        run: if [ ! -f signing/onedoc.p12 ]; then mkdir -p signing && keytool -genkeypair -keystore signing/onedoc.p12 -storetype pkcs12 -storepass onedoc-sideload -keypass onedoc-sideload -alias onedoc -keyalg RSA -keysize 2048 -validity 10950 -dname "CN=OneDoc Sideload, OU=Sideload, O=OneDoc, C=IN"; fi
-      - name: Cache Gradle
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-jdk17-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties', '*.gradle.kts', 'gradle/libs.versions.toml') }}
-          restore-keys: gradle-${{ runner.os }}-jdk17-
       - name: Create local.properties
         run: echo "sdk.dir=${ANDROID_HOME:-$ANDROID_SDK_ROOT}" > local.properties
       - name: Build debug APK
         shell: bash
         run: |
           set -o pipefail
-          gradle --no-daemon --stacktrace assembleFullDebug 2>&1 | tee /tmp/build.log
+          gradle --no-daemon --stacktrace --info assembleFullDebug 2>&1 | tee /tmp/build.log
           GRADLE_EXIT=${PIPESTATUS[0]}
+          echo "::notice::GRADLE_EXIT=$GRADLE_EXIT"
+          if [ $GRADLE_EXIT -ne 0 ]; then
+            echo "::error::BUILD_FAILED"
+            tail -30 /tmp/build.log 2>/dev/null | while IFS= read -r line; do
+              escaped=$(echo "$line" | sed 's/%/%25/g; s/\r//g; s/\n/%0A/g; s/:/%3A/g')
+              echo "::error::LOG: $escaped"
+            done
+          fi
           exit $GRADLE_EXIT
       - name: Upload debug APKs
         uses: actions/upload-artifact@v4
@@ -89,26 +85,22 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
-      - name: Install SDK packages
-        run: SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}" && echo "::notice::SDK_PATH=$SDK" && ls "$SDK" 2>/dev/null || echo "::notice::SDK not found at $SDK" && yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true && "$SDK/cmdline-tools/latest/bin/sdkmanager" "platform-tools" "platforms;android-36" "build-tools;36.0.0" || true
-      - name: Ensure signing key
-        run: if [ ! -f signing/onedoc.p12 ]; then mkdir -p signing && keytool -genkeypair -keystore signing/onedoc.p12 -storetype pkcs12 -storepass onedoc-sideload -keypass onedoc-sideload -alias onedoc -keyalg RSA -keysize 2048 -validity 10950 -dname "CN=OneDoc Sideload, OU=Sideload, O=OneDoc, C=IN"; fi
-      - name: Cache Gradle
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-jdk17-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties', '*.gradle.kts', 'gradle/libs.versions.toml') }}
-          restore-keys: gradle-${{ runner.os }}-jdk17-
       - name: Create local.properties
         run: echo "sdk.dir=${ANDROID_HOME:-$ANDROID_SDK_ROOT}" > local.properties
       - name: Build release APK
         shell: bash
         run: |
           set -o pipefail
-          gradle --no-daemon --stacktrace assembleFullRelease 2>&1 | tee /tmp/build-release.log
+          gradle --no-daemon --stacktrace --info assembleFullRelease 2>&1 | tee /tmp/build-release.log
           GRADLE_EXIT=${PIPESTATUS[0]}
+          echo "::notice::GRADLE_EXIT=$GRADLE_EXIT"
+          if [ $GRADLE_EXIT -ne 0 ]; then
+            echo "::error::BUILD_FAILED"
+            tail -30 /tmp/build-release.log 2>/dev/null | while IFS= read -r line; do
+              escaped=$(echo "$line" | sed 's/%/%25/g; s/\r//g; s/\n/%0A/g; s/:/%3A/g')
+              echo "::error::LOG: $escaped"
+            done
+          fi
           exit $GRADLE_EXIT
       - name: "Static gate: no internet permission"
         run: |
