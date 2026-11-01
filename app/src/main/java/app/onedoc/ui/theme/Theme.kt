@@ -8,7 +8,6 @@ import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.FontWeight
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -61,13 +60,13 @@ fun OneDocTheme(
 }
 
 val Typography = Typography(
-    headlineLarge = TextStyle(fontSize = 32.sp, fontWeight = FontWeight.Black),
-    headlineMedium = TextStyle(fontSize = 28.sp, fontWeight = FontWeight.Bold),
-    titleLarge = TextStyle(fontSize = 22.sp, fontWeight = FontWeight.Bold),
-    titleMedium = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Medium),
+    headlineLarge = TextStyle(fontSize = 32.sp),
+    headlineMedium = TextStyle(fontSize = 28.sp),
+    titleLarge = TextStyle(fontSize = 22.sp),
+    titleMedium = TextStyle(fontSize = 18.sp),
     bodyLarge = TextStyle(fontSize = 18.sp),
     bodyMedium = TextStyle(fontSize = 16.sp),
-    labelLarge = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Medium),
+    labelLarge = TextStyle(fontSize = 16.sp),
     labelMedium = TextStyle(fontSize = 14.sp),
 )
 
