@@ -89,7 +89,6 @@ fun EditorScreen(documentId: String, isNew: Boolean) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp, vertical = 8.dp),
-            colors = TextFieldDefaults.colors(containerColor = Color.Transparent),
         )
         Divider()
 
@@ -128,7 +127,6 @@ private fun ParagraphBlock(block: Block.Paragraph) {
         onValueChange = { textState.value = it },
         modifier = Modifier.fillMaxWidth(),
         textStyle = MaterialTheme.typography.bodyLarge,
-        colors = TextFieldDefaults.colors(containerColor = Color.Transparent),
     )
 }
 
@@ -145,7 +143,6 @@ private fun HeadingBlock(block: Block.Heading) {
             3 -> MaterialTheme.typography.headlineSmall
             else -> MaterialTheme.typography.titleLarge
         },
-        colors = TextFieldDefaults.colors(containerColor = Color.Transparent),
     )
 }
 
@@ -158,7 +155,6 @@ private fun ListItemBlock(block: Block.ListItem) {
         onValueChange = { textState.value = it.removePrefix(prefix) },
         modifier = Modifier.fillMaxWidth(),
         textStyle = MaterialTheme.typography.bodyLarge,
-        colors = TextFieldDefaults.colors(containerColor = Color.Transparent),
     )
 }
 

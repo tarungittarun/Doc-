@@ -55,6 +55,7 @@ sealed class Block {
         override val kind: BlockKind = BlockKind.CodeBlock,
         val code: String,
         val language: String = "",
+        override val marks: List<Mark> = emptyList(),
         override val createdAt: Long = System.currentTimeMillis(),
     ) : Block()
 
@@ -62,6 +63,7 @@ sealed class Block {
         override val id: String,
         override val kind: BlockKind = BlockKind.Blockquote,
         val blocks: List<Block>,
+        override val marks: List<Mark> = emptyList(),
         override val createdAt: Long = System.currentTimeMillis(),
     ) : Block()
 
@@ -72,6 +74,7 @@ sealed class Block {
         val altText: String = "",
         val width: Int = 0,
         val height: Int = 0,
+        override val marks: List<Mark> = emptyList(),
         override val createdAt: Long = System.currentTimeMillis(),
     ) : Block()
 
@@ -81,6 +84,7 @@ sealed class Block {
         val rows: Int,
         val cols: Int,
         val cells: List<List<String>>,
+        override val marks: List<Mark> = emptyList(),
         override val createdAt: Long = System.currentTimeMillis(),
     ) : Block()
 
