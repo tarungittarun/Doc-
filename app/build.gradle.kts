@@ -20,10 +20,20 @@ android {
         buildConfigField("long", "BUILD_TIME", "0")
     }
 
+    signingConfigs {
+        release {
+            // Release signing keystore — supplied at G8. Debug keystore used as placeholder until then.
+            storeFile = rootProject.file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
-            // Release signing: owner keystore supplied at G8 (RC keystore until then).
+            signingConfig = signingConfigs.release
         }
     }
 

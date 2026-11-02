@@ -50,6 +50,8 @@ jobs:
         run: echo "::notice::BUILD_TOOLS:$(ls $ANDROID_HOME/build-tools/ 2>/dev/null | tr '\n' ',' | sed 's/,$//')"
       - name: Create local.properties
         run: echo "sdk.dir=${ANDROID_HOME:-$ANDROID_SDK_ROOT}" > local.properties
+      - name: Create debug keystore for release signing
+        run: keytool -genkeypair -v -keystore debug.keystore -storepass android -keypass android -alias androiddebugkey -dname "CN=Android Debug,O=Android,C=US" -keyalg RSA -keysize 2048 -validity 10000
       - name: Gradle version
         run: |
           echo "::notice::GRADLE_VERSION: $(gradle --version 2>&1 | grep 'Gradle ' | head -1)"
@@ -92,6 +94,8 @@ jobs:
         run: echo "::notice::BUILD_TOOLS:$(ls $ANDROID_HOME/build-tools/ 2>/dev/null | tr '\n' ',' | sed 's/,$//')"
       - name: Create local.properties
         run: echo "sdk.dir=${ANDROID_HOME:-$ANDROID_SDK_ROOT}" > local.properties
+      - name: Create debug keystore for release signing
+        run: keytool -genkeypair -v -keystore debug.keystore -storepass android -keypass android -alias androiddebugkey -dname "CN=Android Debug,O=Android,C=US" -keyalg RSA -keysize 2048 -validity 10000
       - name: Gradle version
         run: |
           echo "::notice::GRADLE_VERSION: $(gradle --version 2>&1 | grep 'Gradle ' | head -1)"
