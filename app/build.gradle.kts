@@ -20,22 +20,14 @@ android {
         buildConfigField("long", "BUILD_TIME", "0")
     }
 
-    signingConfigs {
-        create("release") {
-            // Release signing keystore — supplied at G8. Debug keystore used as placeholder until then.
-            storeFile = file("debug.keystore")
-            storePassword = "android"
-            keyAlias = "androiddebugkey"
-            keyPassword = "android"
-        }
-    }
-
     buildTypes {
         release {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("release")
         }
     }
+
+    // Disable Kotlin tooling metadata task (known to cause issues in some environments)
+    tasks.named("buildKotlinToolingMetadata") { enabled = false }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
