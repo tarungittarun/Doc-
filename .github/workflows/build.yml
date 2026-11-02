@@ -103,11 +103,19 @@ jobs:
       - name: Build release APK
         run: |
           set +e
-          gradle --no-daemon --stacktrace assembleRelease 2>&1 | tee /tmp/gradle-debug.log
+          gradle --no-daemon --stacktrace --debug assembleRelease 2>&1 | tee /tmp/gradle-debug.log
           GRADLE_EXIT=${PIPESTATUS[0]}
           echo "::notice::GRADLE_EXIT=$GRADLE_EXIT"
-          grep '^e:' /tmp/gradle-debug.log 2>/dev/null | head -30 | while read line; do echo "::notice::GRADLE_KEY: $line"; done
-          head -80 /tmp/gradle-debug.log | while read line; do echo "::notice::GRADLE_REL: $line"; done
+          # Find error context: lines with FAILED/error/Caused by plus surrounding context
+          grep -n -iE 'failed|caused by|what went wrong|exception|unable|cannot|signing|keystore|oom|out of memory|crash' /tmp/gradle-debug.log 2>/dev/null | head -10 | while read line; do
+            linenum=$(echo "$line" | cut -d: -f1)
+            start=$((linenum - 5))
+            [ $start -lt 1 ] && start=1
+            end=$((linenum + 10))
+            echo "::notice::GRADLE_REL_CTX: === Lines $start-$end ==="
+            sed -n "${start},${end}p" /tmp/gradle-debug.log 2>/dev/null | while read ctxline; do echo "::notice::GRADLE_REL_CTX: $ctxline"; done
+            echo "::notice::GRADLE_REL_CTX: ---"
+          done
           exit $GRADLE_EXIT
       - name: "Static gate: no internet permission"
         run: |
