@@ -4,10 +4,7 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import app.onedoc.model.Block
 import app.onedoc.model.Json
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.setMain
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
@@ -31,11 +28,6 @@ class AppDatabaseRobolectricTest {
 
     @Before
     fun setUp() {
-        // Provide a Main dispatcher for Robolectric so Room's suspend DAO calls
-        // (which may internally use Dispatchers.Main) don't fail with
-        // "Main thread not available".
-        Dispatchers.setMain(StandardTestDispatcher())
-
         val context: android.content.Context = ApplicationProvider.getApplicationContext()
         database = Room.databaseBuilder(
             context,
