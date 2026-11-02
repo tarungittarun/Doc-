@@ -36,7 +36,6 @@ androidx-startup = { module = "androidx.startup:startup-runtime", version.ref = 
 junit = { module = "junit:junit", version = "4.13.2" }
 androidx-test-core = { module = "androidx.test:core", version = "1.5.0" }
 robolectric = { module = "org.robolectric:robolectric", version = "4.11.1" }
-kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version = "1.8.0" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
