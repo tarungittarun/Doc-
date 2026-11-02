@@ -59,21 +59,14 @@ fun OneDocTheme(
 }
 
 val Typography = Typography(
-    displayLarge = TextStyle(fontSize = 56.sp),
-    displayMedium = TextStyle(fontSize = 44.sp),
-    displaySmall = TextStyle(fontSize = 36.sp),
     headlineLarge = TextStyle(fontSize = 32.sp),
     headlineMedium = TextStyle(fontSize = 28.sp),
-    headlineSmall = TextStyle(fontSize = 24.sp),
     titleLarge = TextStyle(fontSize = 22.sp),
     titleMedium = TextStyle(fontSize = 18.sp),
-    titleSmall = TextStyle(fontSize = 14.sp),
     bodyLarge = TextStyle(fontSize = 18.sp),
     bodyMedium = TextStyle(fontSize = 16.sp),
-    bodySmall = TextStyle(fontSize = 14.sp),
     labelLarge = TextStyle(fontSize = 16.sp),
     labelMedium = TextStyle(fontSize = 14.sp),
-    labelSmall = TextStyle(fontSize = 12.sp),
 )
 
 
