@@ -3,7 +3,6 @@ package app.onedoc.data
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import app.onedoc.model.Block
-import app.onedoc.model.DocumentEntity
 import app.onedoc.model.Json
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
