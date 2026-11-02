@@ -21,9 +21,9 @@ android {
     }
 
     signingConfigs {
-        release {
+        create("release") {
             // Release signing keystore — supplied at G8. Debug keystore used as placeholder until then.
-            storeFile = rootProject.file("debug.keystore")
+            storeFile = file("debug.keystore")
             storePassword = "android"
             keyAlias = "androiddebugkey"
             keyPassword = "android"
@@ -33,7 +33,7 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.release
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 
