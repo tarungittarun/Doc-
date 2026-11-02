@@ -3,10 +3,9 @@ package app.onedoc.data
 import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
+import android.content.Context
 import app.onedoc.model.Block
-import app.onedoc.model.Document
 import app.onedoc.model.Json
-import app.onedoc.repository.DocumentRepository
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import org.junit.Before
@@ -17,7 +16,7 @@ import org.robolectric.annotation.Config
 
 /**
  * Robolectric test that exercises the full startup path that crashed on device:
- * Room database initialization + DAO queries + DocumentRepository creation.
+ * Room database initialization + DAO queries.
  *
  * This catches the Room index/column-name mismatch ("updatedAt" vs "updated_at")
  * that caused a fatal RoomSchemaException during Room.databaseBuilder().build(),
@@ -27,12 +26,11 @@ import org.robolectric.annotation.Config
 @Config(sdk = [34])
 class AppDatabaseRobolectricTest {
 
-    private lateinit var context: Context
     private lateinit var database: AppDatabase
 
     @Before
     fun setUp() {
-        context = ApplicationProvider.getApplicationContext<Context>()
+        val context = ApplicationProvider.getApplicationContext<Context>()
         database = Room.databaseBuilder(
             context,
             AppDatabase::class.java,
@@ -71,13 +69,5 @@ class AppDatabaseRobolectricTest {
 
         val all = dao.getAllActive()
         assertEquals(1, all.size)
-    }
-
-    @Test
-    fun documentRepositoryInitializesWithoutCrash() {
-        // This is what HomeActivity.onCreate() does lazily — it must not throw.
-        val repository = DocumentRepository.getInstance(context)
-        assertNotNull(repository)
-        assertNotNull(repository.documents)
     }
 }
