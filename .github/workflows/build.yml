@@ -103,7 +103,7 @@ jobs:
       - name: Build release APK
         run: |
           set +e
-          gradle assembleRelease 2>&1 | tee /tmp/gradle-debug.log
+          gradle --no-daemon assembleRelease 2>&1 | tee /tmp/gradle-debug.log
           GRADLE_EXIT=${PIPESTATUS[0]}
           echo "::notice::GRADLE_EXIT=$GRADLE_EXIT"
           tail -150 /tmp/gradle-debug.log | while read line; do echo "::notice::GRADLE_REL_TAIL: $line"; done
