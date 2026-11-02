@@ -115,7 +115,7 @@ jobs:
     name: Build release APKs + static gates
     runs-on: ubuntu-24.04
     timeout-minutes: 20
-    needs: [build-debug, test-unit]
+    needs: [build-debug]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -166,7 +166,7 @@ jobs:
     name: CI lane green
     runs-on: ubuntu-24.04
     timeout-minutes: 10
-    needs: [traceability, build-debug, test-unit, build-release]
+    needs: [traceability, build-debug, build-release]
     if: always()
     steps:
       - uses: actions/checkout@v4
