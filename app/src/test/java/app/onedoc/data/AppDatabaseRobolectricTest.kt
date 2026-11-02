@@ -24,7 +24,7 @@ import org.robolectric.annotation.Config
  * which manifested as "OneDoc keeps stopping" on launch.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = 34)
+@Config(sdk = [34])
 class AppDatabaseRobolectricTest {
 
     private lateinit var context: Context
