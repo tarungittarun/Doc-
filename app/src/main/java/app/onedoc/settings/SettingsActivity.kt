@@ -91,8 +91,6 @@ private fun SettingsItem(
                 Text(text = description, style = MaterialTheme.typography.bodyMedium)
             }
         },
-        colors = ListItemDefaults.colors(
-            containerColor = Color.Transparent,
-        ),
+        colors = ListItemDefaults.colors(),
     )
 }

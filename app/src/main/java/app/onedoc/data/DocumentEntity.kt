@@ -13,7 +13,7 @@ import app.onedoc.model.Document
 @Entity(
     tableName = "documents",
     indices = [
-        Index(value = ["updatedAt"], name = "idx_documents_updatedAt"),
+        Index(value = ["updated_at"], name = "idx_documents_updatedAt"),
         Index(value = ["trashed"], name = "idx_documents_trashed"),
         Index(value = ["starred"], name = "idx_documents_starred"),
     ]
