@@ -12,17 +12,27 @@ android {
         applicationId = "app.onedoc"
         minSdk = 26
         targetSdk = 34
-        versionCode = 2
-        versionName = "1.0.1"
+        versionCode = 3
+        versionName = "1.0.2"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         // BuildConfig provenance (populated by build script / CI)
         buildConfigField("String", "PROVENANCE_SHA", "\"dev-local\"")
         buildConfigField("long", "BUILD_TIME", "0")
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = rootProject.file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 

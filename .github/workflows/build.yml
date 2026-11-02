@@ -72,11 +72,50 @@ jobs:
           path: app/build/outputs/apk/**/*.apk
           if-no-files-found: warn
 
+  test-unit:
+    name: Run unit tests (Robolectric)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    needs: [traceability]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install Gradle 8.10.2
+        run: curl -fsSL https://services.gradle.org/distributions/gradle-8.10.2-bin.zip -o /tmp/gradle.zip && unzip -q /tmp/gradle.zip -d /opt && echo "/opt/gradle-8.10.2/bin" >> $GITHUB_PATH
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Create local.properties
+        run: echo "sdk.dir=${ANDROID_HOME:-$ANDROID_SDK_ROOT}" > local.properties
+      - name: Gradle version
+        run: |
+          echo "::notice::GRADLE_VERSION: $(gradle --version 2>&1 | grep 'Gradle ' | head -1)"
+          gradle --version
+      - name: Run unit tests
+        run: |
+          set +e
+          gradle --no-daemon --stacktrace testDebugUnitTest 2>&1 | tee /tmp/gradle-test.log
+          GRADLE_EXIT=${PIPESTATUS[0]}
+          echo "::notice::GRADLE_EXIT=$GRADLE_EXIT"
+          grep -E '^(e:|Execution failed|FAILED|Exception|Caused by|Error:|Tests failed)' /tmp/gradle-test.log 2>/dev/null | head -40 | while read line; do echo "::notice::GRADLE_KEY: $line"; done
+          tail -200 /tmp/gradle-test.log | while read line; do echo "::notice::GRADLE_TEST_TAIL: $line"; done
+          exit $GRADLE_EXIT
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: onedoc-test-results
+          path: app/build/test-results/**/*.xml
+          if-no-files-found: warn
+
   build-release:
     name: Build release APKs + static gates
     runs-on: ubuntu-24.04
     timeout-minutes: 20
-    needs: [build-debug]
+    needs: [build-debug, test-unit]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -127,7 +166,7 @@ jobs:
     name: CI lane green
     runs-on: ubuntu-24.04
     timeout-minutes: 10
-    needs: [traceability, build-debug, build-release]
+    needs: [traceability, build-debug, test-unit, build-release]
     if: always()
     steps:
       - uses: actions/checkout@v4
