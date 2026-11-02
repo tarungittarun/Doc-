@@ -1,8 +1,0 @@
-<resources>
-    <!-- OneDoc string catalog (Appendix P/AF normative keys). No literal strings in Kotlin code. -->
-    <string name="app_name">OneDoc</string>
-    <string name="od_home_empty">OneDoc home empty state</string>
-    <string name="od_editor_shell">OneDoc editor shell</string>
-    <string name="od_settings_stub">OneDoc settings stub</string>
-    <string name="od_provenance_row">Provenance row</string>
-</resources>
