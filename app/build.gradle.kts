@@ -48,6 +48,13 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+
+    // Fix AGP 8.5.0 bad transitive dependency on javax.activation:1.2.0 (doesn't exist)
+    configurations.all {
+        resolutionStrategy {
+            force("com.sun.activation:javax.activation:1.1.1")
+        }
+    }
 }
 
 dependencies {
