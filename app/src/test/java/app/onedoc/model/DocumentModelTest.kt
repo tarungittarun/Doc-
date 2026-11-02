@@ -24,6 +24,7 @@ class DocumentModelTest {
                 ),
                 Block.ListItem(
                     id = "b3",
+                    kind = BlockKind.ListItem,
                     text = "Item 1",
                     ordered = true,
                 ),

@@ -3,11 +3,11 @@ package app.onedoc.data
 import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
-import app.onedoc.model.Document
 import app.onedoc.model.Block
+import app.onedoc.model.Document
 import app.onedoc.model.Json
 import app.onedoc.repository.DocumentRepository
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
@@ -23,8 +23,8 @@ import org.robolectric.annotation.Config
  * that caused a fatal RoomSchemaException during Room.databaseBuilder().build(),
  * which manifested as "OneDoc keeps stopping" on launch.
  */
-@RunWith(AndroidJUnit4::class)
-@Config(sdk = [34])
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = 34)
 class AppDatabaseRobolectricTest {
 
     private lateinit var context: Context
@@ -50,7 +50,7 @@ class AppDatabaseRobolectricTest {
     }
 
     @Test
-    fun documentInsertAndQueryRoundTrip() {
+    fun documentInsertAndQueryRoundTrip() = runBlocking {
         val dao = database.documentDao()
         val blocksJson = Json.blocksToJson(
             listOf(Block.Paragraph(id = "p1", text = "Hello"))
