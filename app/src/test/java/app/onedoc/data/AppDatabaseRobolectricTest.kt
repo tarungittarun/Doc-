@@ -1,9 +1,9 @@
 package app.onedoc.data
 
-import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import app.onedoc.model.Block
+import app.onedoc.model.DocumentEntity
 import app.onedoc.model.Json
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
@@ -14,10 +14,10 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Robolectric test that exercises the full startup path that crashed on device:
+ * Robolectric test that exercises the startup path that crashed on device:
  * Room database initialization + DAO queries.
  *
- * This catches the Room index/column-name mismatch ("updatedAt" vs "updated_at")
+ * Catches the Room index/column-name mismatch ("updatedAt" vs "updated_at")
  * that caused a fatal RoomSchemaException during Room.databaseBuilder().build(),
  * which manifested as "OneDoc keeps stopping" on launch.
  */
@@ -49,9 +49,7 @@ class AppDatabaseRobolectricTest {
     @Test
     fun documentInsertAndQueryRoundTrip() = runBlocking {
         val dao = database.documentDao()
-        val blocksJson = Json.blocksToJson(
-            listOf(Block.Paragraph(id = "p1", text = "Hello"))
-        )
+        val blocksJson = Json.blocksToJson(listOf(Block.Paragraph(id = "p1", text = "Hello")))
         val entity = DocumentEntity(
             id = "doc-1",
             title = "Test Doc",
