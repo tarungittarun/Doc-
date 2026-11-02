@@ -3,7 +3,6 @@ package app.onedoc.data
 import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
-import android.content.Context
 import app.onedoc.model.Block
 import app.onedoc.model.Json
 import kotlinx.coroutines.runBlocking
@@ -30,7 +29,7 @@ class AppDatabaseRobolectricTest {
 
     @Before
     fun setUp() {
-        val context = ApplicationProvider.getApplicationContext<Context>()
+        val context: android.content.Context = ApplicationProvider.getApplicationContext()
         database = Room.databaseBuilder(
             context,
             AppDatabase::class.java,

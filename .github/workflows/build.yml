@@ -97,7 +97,7 @@ jobs:
       - name: Run unit tests
         run: |
           set +e
-          gradle --no-daemon --stacktrace testDebugUnitTest 2>&1 | tee /tmp/gradle-test.log
+          gradle --no-daemon --stacktrace --max-workers=1 -Dkotlin.daemon.enabled=false testDebugUnitTest 2>&1 | tee /tmp/gradle-test.log
           GRADLE_EXIT=${PIPESTATUS[0]}
           echo "::notice::GRADLE_EXIT=$GRADLE_EXIT"
           grep -E '^(e:|Execution failed|FAILED|Exception|Caused by|Error:|Tests failed)' /tmp/gradle-test.log 2>/dev/null | head -40 | while read line; do echo "::notice::GRADLE_KEY: $line"; done
