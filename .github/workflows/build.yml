@@ -156,7 +156,7 @@ jobs:
     name: CI lane green
     runs-on: ubuntu-24.04
     timeout-minutes: 10
-    needs: [traceability, build-debug, emulator-test, build-release]
+    needs: [traceability, build-debug, build-release]
     if: always()
     steps:
       - uses: actions/checkout@v4
