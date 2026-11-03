@@ -99,9 +99,8 @@ jobs:
           arch: x86_64
           profile: pixel_4
           disable-animations: true
-          force-enable-kvm: false
           script: ./gradlew connectedDebugAndroidTest
-          emulator-boot-timeout-prop: 300000
+          emulator-boot-timeout: 300000
 
   build-release:
     name: Build release APKs + static gates
