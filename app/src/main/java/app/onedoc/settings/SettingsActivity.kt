@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -42,7 +43,9 @@ fun SettingsScreen(context: android.content.Context) {
     val localContext = LocalContext.current
     val prefs: SharedPreferences = localContext.getSharedPreferences("onedoc_settings", Context.MODE_PRIVATE)
 
-    var darkTheme by remember { mutableStateOf(prefs.getBoolean("dark_theme", false)) }
+    val darkTheme: MutableState<Boolean> = remember { mutableStateOf(prefs.getBoolean("dark_theme", false)) }
+    val fontSizeScale: MutableState<Int> = remember { mutableStateOf(prefs.getInt("font_size_scale", 2)) }
+    val reducedMotion: MutableState<Boolean> = remember { mutableStateOf(prefs.getBoolean("reduced_motion", false)) }
 
     Column(modifier = Modifier.fillMaxSize()) {
         app.onedoc.ui.components.AppTopBar(
