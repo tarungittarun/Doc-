@@ -8,6 +8,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Icons
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -20,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import app.onedoc.diagnostics.DiagnosticsLogger
 import app.onedoc.editor.EditorActivity
 import app.onedoc.model.Block
+import app.onedoc.model.BlockKind
 import app.onedoc.model.Document
 import app.onedoc.repository.DocumentRepository
 import app.onedoc.ui.theme.OneDocTheme
@@ -177,10 +179,10 @@ val BUILT_IN_TEMPLATES: List<Template> = listOf(
             Block.Paragraph(id = blockId(), text = "Date: ______"),
             Block.Paragraph(id = blockId(), text = "Attendees: ______"),
             Block.Heading(id = blockId(), level = 2, text = "Agenda"),
-            Block.ListItem(id = blockId(), kind = Block.BlockKind.ListItem, ordered = false, text = ""),
-            Block.ListItem(id = blockId(), kind = Block.BlockKind.ListItem, ordered = false, text = ""),
+            Block.ListItem(id = blockId(), kind = BlockKind.ListItem, ordered = false, text = ""),
+            Block.ListItem(id = blockId(), kind = BlockKind.ListItem, ordered = false, text = ""),
             Block.Heading(id = blockId(), level = 2, text = "Action Items"),
-            Block.ListItem(id = blockId(), kind = Block.BlockKind.ListItem, ordered = false, text = ""),
+            Block.ListItem(id = blockId(), kind = BlockKind.ListItem, ordered = false, text = ""),
         ),
     ),
     Template(
