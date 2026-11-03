@@ -156,7 +156,11 @@ jobs:
           disable-animations: true
           emulator-boot-timeout: 600
           script: |
-            /opt/gradle-8.10.2/bin/gradle --no-daemon --max-workers=1 connectedCheck
+            echo "ANDROID_HOME=$ANDROID_HOME"
+            echo "PATH=$PATH"
+            which gradle || true
+            ls /opt/gradle-8.10.2/bin/gradle || true
+            /opt/gradle-8.10.2/bin/gradle --no-daemon --max-workers=1 --stacktrace connectedCheck
 
   verify-ci-lane:
     name: CI lane green
