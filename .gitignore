@@ -1,0 +1,18 @@
+# Gradle
+.gradle/
+**/build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Android build outputs
+*.apk
+*.aab
+*.keystore
+*.jks
+local.properties
+*.iml
+.idea/
+.cxx/
+*.lock
+
+# OS
+.DS_Store
