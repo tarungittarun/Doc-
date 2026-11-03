@@ -60,7 +60,6 @@ android {
 
     lint {
         checkReleaseBuilds = false
-        disable = ["MissingIcon", "MissingTheme", "IconMissingDensity"]
     }
 
     configurations.all {
