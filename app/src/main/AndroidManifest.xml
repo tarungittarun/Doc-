@@ -7,9 +7,6 @@
     <application
         android:allowBackup="true"
         android:label="@string/app_name"
-        android:icon="@mipmap/ic_launcher"
-        android:roundIcon="@mipmap/ic_launcher_round"
-        android:theme="@style/Theme.OneDoc"
         android:supportsRtl="true"
         android:usesCleartextTraffic="false">
 
@@ -30,30 +27,6 @@
             android:exported="false"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize|uiMode"
             android:windowSoftInputMode="adjustResize" />
-
-        <activity
-            android:name=".settings.SettingsActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".templates.TemplatesActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".diagnostics.DiagnosticsActivity"
-            android:exported="false"
-            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|uiMode"
-            android:windowSoftInputMode="adjustResize" />
-
-        <provider
-            android:name="androidx.core.content.FileProvider"
-            android:authorities="app.onedoc.fileprovider"
-            android:exported="false"
-            android:grantUriPermissions="true">
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/filepaths" />
-        </provider>
 
     </application>
 
