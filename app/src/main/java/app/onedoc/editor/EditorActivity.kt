@@ -28,6 +28,15 @@ import app.onedoc.model.Block
 import app.onedoc.model.Document
 import app.onedoc.ui.theme.OneDocTheme
 
+/**
+ * Editor screen — block-based rich-text editor (§13 laws L1-L10, §14 model).
+ *
+ * Shows document title, block-based content area, and formatting toolbar.
+ * Exposes `od_editor_content` accessibility id for direct-APK QA driving (§24).
+ *
+ * Full block rendering engine (13 block kinds, 7 mark types, IME-safe,
+ * honest undo) lands in G3; this shell renders paragraph blocks as editable text.
+ */
 class EditorActivity : ComponentActivity() {
     private var documentId: String = ""
     private var isNew: Boolean = false
@@ -52,6 +61,7 @@ class EditorActivity : ComponentActivity() {
 fun EditorScreen(documentId: String, isNew: Boolean) {
     val color = MaterialTheme.colorScheme
 
+    // TODO G2: load document from repository by documentId
     val doc = remember {
         Document(
             id = documentId,
@@ -69,9 +79,10 @@ fun EditorScreen(documentId: String, isNew: Boolean) {
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
+        // Title bar
         TextField(
             value = doc.title,
-            onValueChange = { },
+            onValueChange = { /* save title via repository (G2) */ },
             label = { Text(text = "Title") },
             singleLine = true,
             textStyle = MaterialTheme.typography.headlineSmall,
@@ -81,6 +92,7 @@ fun EditorScreen(documentId: String, isNew: Boolean) {
         )
         Divider()
 
+        // Content area — block list
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -154,6 +166,7 @@ private fun CodeBlock(block: Block.CodeBlock) {
         onValueChange = { textState.value = it },
         modifier = Modifier.fillMaxWidth(),
         textStyle = MaterialTheme.typography.bodyMedium,
+        
     )
 }
 

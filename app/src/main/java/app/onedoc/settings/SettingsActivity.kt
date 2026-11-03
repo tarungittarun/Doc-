@@ -7,8 +7,15 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import app.onedoc.ui.theme.OneDocTheme
 
+/**
+ * Settings screen (§17.7).
+ *
+ * Theme toggle, font size scale, reduced motion, locale. DataStore-backed
+ * typed accessors land in G2 (T-FOUND-015); this stub renders the settings UI.
+ */
 class SettingsActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

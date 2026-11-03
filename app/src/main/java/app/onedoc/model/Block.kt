@@ -1,5 +1,22 @@
 package app.onedoc.model
 
+/**
+ * A block within a document. OneDoc supports 13 block kinds (§14):
+ *
+ *  1. paragraph   — body text
+ *  2. heading     — H1–H6
+ *  3. bulletList  — unordered list item
+ *  4. orderedList — ordered list item
+ *  5. codeBlock   — fenced code
+ *  6. blockquote  — quoted text
+ *  7. image       — embedded image
+ *  8. table       — grid of cells
+ *  9. toc         — table of contents
+ * 10. footnote    — footnote reference
+ * 11. divider     — horizontal rule
+ * 12. pageBreak   — page break
+ * 13. title       — document title block
+ */
 sealed class Block {
     abstract val id: String
     abstract val kind: BlockKind
@@ -17,7 +34,7 @@ sealed class Block {
     data class Heading(
         override val id: String,
         override val kind: BlockKind = BlockKind.Heading,
-        val level: Int,
+        val level: Int, // 1..6
         val text: String,
         override val marks: List<Mark> = emptyList(),
         override val createdAt: Long = System.currentTimeMillis(),

@@ -1,5 +1,16 @@
 package app.onedoc.model
 
+/**
+ * Inline mark applied to text within a block. OneDoc supports 7 mark types (§14.5):
+ *
+ *  1. bold
+ *  2. italic
+ *  3. underline
+ *  4. strikethrough
+ *  5. link
+ *  6. code (inline)
+ *  7. highlight
+ */
 sealed class Mark {
     abstract val type: MarkType
     data class Bold(override val type: MarkType = MarkType.Bold) : Mark()

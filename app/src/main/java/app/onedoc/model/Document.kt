@@ -1,5 +1,15 @@
 package app.onedoc.model
 
+/**
+ * A OneDoc document.
+ *
+ * The canonical in-memory representation. Persisted to Room as [DocumentEntity]
+ * and to disk as a .odoc container (JSON).
+ *
+ * Laws L1-L10 (§13 of the blueprint) govern how this model mutates:
+ *  - L3: keystroke loss impossible under process kill (journal + snapshots)
+ *  - L10: no silent mutation — every change is visible, undoable, versioned
+ */
 data class Document(
     val id: String,
     val title: String,
