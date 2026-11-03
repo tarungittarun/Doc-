@@ -36,8 +36,8 @@ class HomeActivityTest {
         // Click "New document"
         newDocButton.click()
 
-        // Wait for editor to load - look for title TextField
-        val titleField = device.wait(Until.findObject(By.res("android:id/text1")), 5000)
+        // Wait for editor to load - look for "Untitled document" title
+        val titleField = device.wait(Until.findObject(By.text("Untitled document")), 5000)
         assert(titleField != null) { "Editor screen should open after clicking New document" }
     }
 
