@@ -1,6 +1,0 @@
-<resources>
-    <style name="Theme.OneDoc" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="android:windowBackground">@color/onedoc_surface</item>
-        <item name="android:colorPrimary">@color/onedoc_primary</item>
-    </style>
-</resources>
