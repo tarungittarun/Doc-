@@ -147,7 +147,7 @@ jobs:
       - name: Create local.properties
         run: echo "sdk.dir=${ANDROID_HOME:-$ANDROID_SDK_ROOT}" > local.properties
       - name: Build debug and test APKs
-        run: /opt/gradle-8.10.2/bin/gradle --no-daemon --max-workers=1 assembleDebug assembleDebugAndroidTest
+        run: /opt/gradle-8.10.2/bin/gradle --no-daemon --max-workers=1 --stacktrace assembleDebug assembleDebugAndroidTest
       - name: Run emulator tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
