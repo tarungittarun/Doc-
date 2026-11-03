@@ -156,7 +156,7 @@ jobs:
           disable-animations: true
           emulator-boot-timeout: 600
           script: |
-            ./gradlew --no-daemon --max-workers=1 connectedCheck
+            gradle --no-daemon --max-workers=1 connectedCheck
 
   verify-ci-lane:
     name: CI lane green
