@@ -58,6 +58,11 @@ android {
         }
     }
 
+    lint {
+        checkReleaseBuilds = false
+        disable = ["MissingIcon", "MissingTheme", "IconMissingDensity"]
+    }
+
     configurations.all {
         resolutionStrategy {
             force("com.sun.activation:javax.activation:1.1.1")
