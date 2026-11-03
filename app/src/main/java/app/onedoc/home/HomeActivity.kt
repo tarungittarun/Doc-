@@ -1,21 +1,11 @@
 package app.onedoc.home
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
+import androidx.appcompat.app.AppCompatActivity
 
-class HomeActivity : ComponentActivity() {
+class HomeActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent {
-            OneDocTheme {
-                Column(modifier = Modifier.fillMaxSize()) {
-                    Text(text = "OneDoc", style = MaterialTheme.typography.titleLarge)
-                }
-            }
-        }
+        setContentView(android.R.layout.simple_list_item_1)
     }
 }
