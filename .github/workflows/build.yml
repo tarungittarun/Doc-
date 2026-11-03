@@ -39,17 +39,17 @@ jobs:
           fetch-depth: 0
       - name: Ensure consistent signing keystore
         run: |
-          if [ ! -f app/onedoc_debug.keystore ]; then
-            echo "::notice::KEYSTORE: generating new onedoc_debug.keystore"
+          if [ ! -f debug.keystore ]; then
+            echo "::notice::KEYSTORE: generating new debug.keystore"
             keytool -genkeypair -v \
-              -keystore app/onedoc_debug.keystore \
+              -keystore debug.keystore \
               -storepass android \
               -keypass android \
-              -alias onedocdebug \
+              -alias androiddebugkey \
               -dname "CN=OneDoc Debug,O=OneDoc,C=US" \
               -keyalg RSA -keysize 2048 -validity 10000
           else
-            echo "::notice::KEYSTORE: using existing app/onedoc_debug.keystore"
+            echo "::notice::KEYSTORE: using existing debug.keystore"
           fi
       - name: Install Gradle 8.10.2
         run: curl -fsSL https://services.gradle.org/distributions/gradle-8.10.2-bin.zip -o /tmp/gradle.zip && unzip -q /tmp/gradle.zip -d /opt && echo "/opt/gradle-8.10.2/bin" >> $GITHUB_PATH
@@ -82,7 +82,7 @@ jobs:
         if: always()
         with:
           name: onedoc-keystore
-          path: app/onedoc_debug.keystore
+          path: debug.keystore
           if-no-files-found: warn
       - name: Upload debug APKs
         uses: actions/upload-artifact@v4
@@ -105,7 +105,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: onedoc-keystore
-          path: app/
+          path: .
       - name: Install Gradle 8.10.2
         run: curl -fsSL https://services.gradle.org/distributions/gradle-8.10.2-bin.zip -o /tmp/gradle.zip && unzip -q /tmp/gradle.zip -d /opt && echo "/opt/gradle-8.10.2/bin" >> $GITHUB_PATH
       - name: Set up JDK 17

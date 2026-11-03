@@ -21,9 +21,9 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = project.file("onedoc_debug.keystore")
+            storeFile = rootProject.file("debug.keystore")
             storePassword = "android"
-            keyAlias = "onedocdebug"
+            keyAlias = "androiddebugkey"
             keyPassword = "android"
         }
     }
