@@ -8,7 +8,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Icons
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -133,10 +132,9 @@ private fun TemplateCard(template: Template, onClick: () -> Unit) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(text = template.description, style = MaterialTheme.typography.bodySmall, color = color.onSurfaceVariant, maxLines = 2)
             }
-            Icon(
-                imageVector = Icons.Default.Description,
-                contentDescription = "Template",
-                tint = color.primary,
+            Text(
+                text = "📄",
+                style = MaterialTheme.typography.bodyLarge,
             )
         }
     }

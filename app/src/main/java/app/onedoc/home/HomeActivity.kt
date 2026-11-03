@@ -5,7 +5,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Icons
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -138,8 +137,14 @@ fun HomeScreen(
             Button(
                 onClick = { onCreateDocument() },
             ) {
-                Icon(imageVector = Icons.Default.Add, contentDescription = "Add document")
-                Text(text = "New document")
+                Row(
+                    modifier = Modifier.wrapContentSize(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Text(text = "+", style = MaterialTheme.typography.bodyLarge)
+                    Text(text = "New document")
+                }
             }
             OutlinedButton(
                 onClick = { onOpenTemplates() },
@@ -162,8 +167,14 @@ fun HomeScreen(
             OutlinedButton(
                 onClick = { onOpenSettings() },
             ) {
-                Icon(imageVector = Icons.Default.Settings, contentDescription = "Settings")
-                Text(text = "Settings")
+                Row(
+                    modifier = Modifier.wrapContentSize(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Text(text = "⚙", style = MaterialTheme.typography.bodyLarge)
+                    Text(text = "Settings")
+                }
             }
         }
 
