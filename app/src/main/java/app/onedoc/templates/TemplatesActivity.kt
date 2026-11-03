@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.lifecycle.lifecycleScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
@@ -58,9 +59,11 @@ class TemplatesActivity : ComponentActivity() {
             createdAt = System.currentTimeMillis(),
             updatedAt = System.currentTimeMillis(),
         )
-        repository.createDocument(doc)
-        diagnostics.recordDocumentCreated()
-        diagnostics.debug("TEMPLATES", "Created document from template: ${template.title}")
+        lifecycleScope.launch {
+            repository.createDocument(doc)
+            diagnostics.recordDocumentCreated()
+            diagnostics.debug("TEMPLATES", "Created document from template: ${template.title}")
+        }
 
         val intent = Intent(this, EditorActivity::class.java)
         intent.putExtra("documentId", doc.id)
@@ -172,10 +175,10 @@ val BUILT_IN_TEMPLATES: List<Template> = listOf(
             Block.Paragraph(id = blockId(), text = "Date: ______"),
             Block.Paragraph(id = blockId(), text = "Attendees: ______"),
             Block.Heading(id = blockId(), level = 2, text = "Agenda"),
-            Block.ListItem(id = blockId(), ordered = false, text = ""),
-            Block.ListItem(id = blockId(), ordered = false, text = ""),
+            Block.ListItem(id = blockId(), kind = Block.BlockKind.ListItem, ordered = false, text = ""),
+            Block.ListItem(id = blockId(), kind = Block.BlockKind.ListItem, ordered = false, text = ""),
             Block.Heading(id = blockId(), level = 2, text = "Action Items"),
-            Block.ListItem(id = blockId(), ordered = false, text = ""),
+            Block.ListItem(id = blockId(), kind = Block.BlockKind.ListItem, ordered = false, text = ""),
         ),
     ),
     Template(
