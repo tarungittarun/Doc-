@@ -8,6 +8,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -20,18 +22,24 @@ import app.onedoc.ui.components.AppTopBar
 import app.onedoc.ui.components.DocumentListItem
 import app.onedoc.ui.components.EmptyState
 import app.onedoc.ui.theme.OneDocTheme
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.MainScope
 
 class HomeActivity : ComponentActivity() {
     private val repository: DocumentRepository by lazy {
         DocumentRepository.getInstance(this)
     }
 
+    private val docs: MutableState<List<Document>> = mutableStateOf(emptyList())
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             OneDocTheme {
                 HomeScreen(
-                    repository = repository,
+                    docs = docs.value,
                     onCreateDocument = { createNewDocument() },
                     onDocumentClick = { doc -> openDocument(doc.id) },
                 )
@@ -53,8 +61,10 @@ class HomeActivity : ComponentActivity() {
             createdAt = System.currentTimeMillis(),
             updatedAt = System.currentTimeMillis(),
         )
-        // Save via repository
-        repository.createDocument(doc)
+        // Save via repository in background coroutine
+        CoroutineScope(Dispatchers.Default).launch {
+            repository.createDocument(doc)
+        }
         // Navigate to editor
         val intent = Intent(this, EditorActivity::class.java)
         intent.putExtra("documentId", doc.id)
@@ -73,7 +83,7 @@ class HomeActivity : ComponentActivity() {
 
 @Composable
 fun HomeScreen(
-    repository: DocumentRepository,
+    docs: List<Document>,
     onCreateDocument: () -> Unit,
     onDocumentClick: (Document) -> Unit,
 ) {
@@ -117,8 +127,6 @@ fun HomeScreen(
                 .padding(horizontal = 16.dp)
                 .weight(1f),
         ) {
-            // Show documents from repository
-            val docs by repository.documents.collectAsStateWithLifecycle(emptyList())
             if (docs.isEmpty()) {
                 EmptyState(
                     title = "No documents yet",
