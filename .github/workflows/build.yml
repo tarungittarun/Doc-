@@ -146,16 +146,12 @@ jobs:
           java-version: "17"
       - name: Create local.properties
         run: echo "sdk.dir=${ANDROID_HOME:-$ANDROID_SDK_ROOT}" > local.properties
-      - name: Install emulator system image
-        run: |
-          yes | sdkmanager "system-images;android-33;google_apis;x86_64" > /dev/null 2>&1 || true
       - name: Run emulator tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 33
-          target: google_apis
+          api-level: 30
           arch: x86_64
-          profile: pixel_6
+          profile: pixel_2
           force-avd-creation: true
           disable-animations: true
           emulator-boot-timeout: 600
