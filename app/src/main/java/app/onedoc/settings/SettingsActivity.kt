@@ -71,24 +71,22 @@ fun SettingsScreen(context: android.content.Context) {
             }
             item {
                 ListItem(
-                    modifier = Modifier.fillMaxWidth().clickable { },
-                    headlineContent = { Text(text = "Diagnostics", style = MaterialTheme.typography.bodyLarge) },
-                    supportingContent = { Text(text = "View logs, export diagnostics file", style = MaterialTheme.typography.bodyMedium) },
-                    onClick = {
+                    modifier = Modifier.fillMaxWidth().clickable {
                         val intent = app.onedoc.diagnostics.DiagnosticsActivity.createIntent(localContext)
                         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
                         localContext.startActivity(intent)
                     },
+                    headlineContent = { Text(text = "Diagnostics", style = MaterialTheme.typography.bodyLarge) },
+                    supportingContent = { Text(text = "View logs, export diagnostics file", style = MaterialTheme.typography.bodyMedium) },
                 )
             }
             item {
                 ListItem(
-                    modifier = Modifier.fillMaxWidth().clickable { },
-                    headlineContent = { Text(text = "Self-test", style = MaterialTheme.typography.bodyLarge) },
-                    supportingContent = { Text(text = "Run offline diagnostics self-test", style = MaterialTheme.typography.bodyMedium) },
-                    onClick = {
+                    modifier = Modifier.fillMaxWidth().clickable {
                         app.onedoc.diagnostics.DiagnosticsLogger(localContext).debug("SETTINGS", "Self-test requested")
                     },
+                    headlineContent = { Text(text = "Self-test", style = MaterialTheme.typography.bodyLarge) },
+                    supportingContent = { Text(text = "Run offline diagnostics self-test", style = MaterialTheme.typography.bodyMedium) },
                 )
             }
         }
