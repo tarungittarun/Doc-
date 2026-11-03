@@ -4,14 +4,17 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.lifecycleScope
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 
+import app.onedoc.diagnostics.DiagnosticsActivity
 import app.onedoc.diagnostics.DiagnosticsLogger
 import app.onedoc.editor.EditorActivity
 import app.onedoc.model.Block
@@ -67,9 +70,11 @@ class HomeActivity : ComponentActivity() {
             createdAt = System.currentTimeMillis(),
             updatedAt = System.currentTimeMillis(),
         )
-        repository.createDocument(doc)
-        diagnostics.recordDocumentCreated()
-        diagnostics.debug("HOME", "Created document ${doc.id}")
+        lifecycleScope.launch {
+            repository.createDocument(doc)
+            diagnostics.recordDocumentCreated()
+            diagnostics.debug("HOME", "Created document ${doc.id}")
+        }
 
         val intent = Intent(this, EditorActivity::class.java)
         intent.putExtra("documentId", doc.id)
