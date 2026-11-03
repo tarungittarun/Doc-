@@ -14,28 +14,13 @@ android {
         targetSdk = 34
         versionCode = 5
         versionName = "1.0.4"
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        buildConfigField("String", "PROVENANCE_SHA", "\"dev-local\"")
-        buildConfigField("long", "BUILD_TIME", "0")
-    }
-
-    signingConfigs {
-        create("release") {
-            storeFile = rootProject.file("debug.keystore")
-            storePassword = "android"
-            keyAlias = "androiddebugkey"
-            keyPassword = "android"
-        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("release")
         }
     }
-
-    tasks.named("buildKotlinToolingMetadata") { enabled = false }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
@@ -49,53 +34,14 @@ android {
     }
     buildFeatures {
         compose = true
-        buildConfig = true
-    }
-
-    packaging {
-        resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
-        }
-    }
-
-    lint {
-        checkReleaseBuilds = false
-    }
-
-    configurations.all {
-        resolutionStrategy {
-            force("com.sun.activation:javax.activation:1.1.1")
-        }
     }
 }
 
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
-implementation(libs.androidx.lifecycle.runtime.ktx)
-implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.8.2")
-implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.2")
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
-    implementation(libs.compose.graphics)
     implementation(libs.compose.material)
-    implementation(libs.compose.tooling)
-    debugImplementation(libs.compose.tooling.preview)
-
-    implementation(libs.room.runtime)
-    implementation(libs.room.ktx)
-    implementation(libs.datastore.preferences)
-    implementation(libs.koin.core)
-    implementation(libs.koin.android)
-    implementation(libs.androidx.startup)
-
-    implementation("org.json:json:20231013")
-
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
-
-testImplementation(libs.junit)
-testImplementation(libs.androidx.test.core)
-testImplementation(libs.robolectric)
 }

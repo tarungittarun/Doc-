@@ -11,37 +11,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun AppTopBar(
-    title: String,
-    onMenuClick: () -> Unit = { },
-    onSearchClick: () -> Unit = { },
-    modifier: Modifier = Modifier,
-) {
+fun AppTopBar(title: String, modifier: Modifier = Modifier) {
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(56.dp)
-            .padding(horizontal = 16.dp),
+        modifier = modifier.fillMaxWidth().height(56.dp).padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        IconButton(onClick = onMenuClick) {
-            Icon(
-                imageVector = Icons.Default.Menu,
-                contentDescription = "Menu",
-            )
-        }
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.weight(1f).padding(horizontal = 16.dp),
-        )
-        Row {
-            IconButton(onClick = onSearchClick) {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = "Search",
-                )
-            }
-        }
+        Text(text = title, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
     }
 }
