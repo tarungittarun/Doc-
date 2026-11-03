@@ -86,27 +86,10 @@ jobs:
           restore-keys: gradle-${{ runner.os }}-jdk17-
 
       - name: Build debug APK
-        id: build
-        continue-on-error: true
         shell: bash
         run: |
           set -o pipefail
           sh gradlew --no-daemon --stacktrace assembleDebug 2>&1 | tee /tmp/build.log
-
-      - name: Surface compile and test errors as annotations
-        if: steps.build.outcome == 'failure'
-        shell: bash
-        run: |
-          esc() { sed 's/%/%25/g; s/\r//g' | awk 'BEGIN { ORS = "%0A" } { print }'; }
-          dump() {
-            f="$1"
-            [ -f "$f" ] || { echo "::error title=$(basename "$f")::MISSING on the runner"; return; }
-            { grep -nE "^e: |error:|Execution failed|What went wrong|FAILURE|FAILED|Caused by:|AssertionError|expected:|Could not resolve|No space left|Daemon" "$f" | head -25
-              echo "--- last 40 lines ---"
-              tail -40 "$f"; } | esc | { body=$(cat); echo "::error title=$(basename "$f")::${body}"; }
-          echo "::notice::outcomes build=${{ steps.build.outcome }} buildlog=$([ -f /tmp/build.log ] && wc -c < /tmp/build.log || echo MISSING)"
-          dump /tmp/build.log
-          exit 1
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
@@ -174,27 +157,10 @@ jobs:
           restore-keys: gradle-${{ runner.os }}-jdk17-
 
       - name: Build release APK
-        id: build
-        continue-on-error: true
         shell: bash
         run: |
           set -o pipefail
           sh gradlew --no-daemon --stacktrace assembleRelease 2>&1 | tee /tmp/build.log
-
-      - name: Surface compile and test errors as annotations
-        if: steps.build.outcome == 'failure'
-        shell: bash
-        run: |
-          esc() { sed 's/%/%25/g; s/\r//g' | awk 'BEGIN { ORS = "%0A" } { print }'; }
-          dump() {
-            f="$1"
-            [ -f "$f" ] || { echo "::error title=$(basename "$f")::MISSING on the runner"; return; }
-            { grep -nE "^e: |error:|Execution failed|What went wrong|FAILURE|FAILED|Caused by:|AssertionError|expected:|Could not resolve|No space left|Daemon" "$f" | head -25
-              echo "--- last 40 lines ---"
-              tail -40 "$f"; } | esc | { body=$(cat); echo "::error title=$(basename "$f")::${body}"; }
-          echo "::notice::outcomes build=${{ steps.build.outcome }} buildlog=$([ -f /tmp/build.log ] && wc -c < /tmp/build.log || echo MISSING)"
-          dump /tmp/build.log
-          exit 1
 
       - name: "Static gate: no internet permission"
         run: |
