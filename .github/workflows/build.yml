@@ -59,11 +59,13 @@ jobs:
       - name: Build debug APK
         run: |
           set +e
-          gradle --no-daemon --stacktrace --max-workers=1 -Dkotlin.daemon.enabled=false assembleDebug 2>&1 | tee /tmp/gradle-debug.log
+          gradle --no-daemon --stacktrace --max-workers=1 -Dkotlin.daemon.enabled=false --info assembleDebug 2>&1 | tee /tmp/gradle-debug.log
           GRADLE_EXIT=${PIPESTATUS[0]}
           echo "::notice::GRADLE_EXIT=$GRADLE_EXIT"
-          grep -E '^(e:|Execution failed|FAILED|Exception|Caused by|Error:|Could not)' /tmp/gradle-debug.log 2>/dev/null | head -40 | while read line; do echo "::notice::GRADLE_KEY: $line"; done
-          tail -300 /tmp/gradle-debug.log | while read line; do echo "::notice::GRADLE_DBG_TAIL: $line"; done
+          echo "::notice::GRADLE_LOG_SIZE=$(wc -c < /tmp/gradle-debug.log)"
+          grep -E '^(e:|Execution failed|FAILED|Exception|Caused by|Error:|Could not|What went wrong)' /tmp/gradle-debug.log 2>/dev/null | head -60 | while read line; do echo "::notice::GRADLE_KEY: $line"; done
+          echo "::notice::GRADLE_LAST_100:"
+          tail -100 /tmp/gradle-debug.log | while read line; do echo "::notice::GRADLE_TAIL: $line"; done
           exit $GRADLE_EXIT
       - name: Upload debug APKs
         uses: actions/upload-artifact@v4
@@ -104,11 +106,13 @@ jobs:
       - name: Build release APK
         run: |
           set +e
-          gradle --no-daemon --stacktrace assembleRelease 2>&1 | tee /tmp/gradle-debug.log
+          gradle --no-daemon --stacktrace --max-workers=1 -Dkotlin.daemon.enabled=false --info assembleRelease 2>&1 | tee /tmp/gradle-debug.log
           GRADLE_EXIT=${PIPESTATUS[0]}
           echo "::notice::GRADLE_EXIT=$GRADLE_EXIT"
-          grep -E '^(e:|Execution failed|FAILED|Exception|Caused by|Error:|Could not)' /tmp/gradle-debug.log 2>/dev/null | head -40 | while read line; do echo "::notice::GRADLE_KEY: $line"; done
-          tail -300 /tmp/gradle-debug.log | while read line; do echo "::notice::GRADLE_REL_TAIL: $line"; done
+          echo "::notice::GRADLE_LOG_SIZE=$(wc -c < /tmp/gradle-debug.log)"
+          grep -E '^(e:|Execution failed|FAILED|Exception|Caused by|Error:|Could not|What went wrong)' /tmp/gradle-debug.log 2>/dev/null | head -60 | while read line; do echo "::notice::GRADLE_KEY: $line"; done
+          echo "::notice::GRADLE_LAST_100:"
+          tail -100 /tmp/gradle-debug.log | while read line; do echo "::notice::GRADLE_TAIL: $line"; done
           exit $GRADLE_EXIT
       - name: "Static gate: no internet permission"
         run: |
