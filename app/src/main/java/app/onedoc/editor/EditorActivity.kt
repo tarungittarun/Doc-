@@ -5,6 +5,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -51,9 +53,10 @@ fun EditorScreen(documentId: String, isNew: Boolean) {
     val repository = DocumentRepository.getInstance(androidx.compose.ui.platform.LocalContext.current)
     val localContext = androidx.compose.ui.platform.LocalContext.current
 
-    var docState by remember { mutableStateOf<Document?>(null) }
+    // Use explicit .value access instead of 'by' delegate to avoid Kotlin delegate ambiguity
+    val docState: MutableState<Document?> = remember { mutableStateOf<Document?>(null) }
 
-    if (docState == null) {
+    if (docState.value == null) {
         coroutineScope.launch {
             val loaded: Document
             if (isNew || documentId.isEmpty()) {
@@ -77,19 +80,19 @@ fun EditorScreen(documentId: String, isNew: Boolean) {
                     updatedAt = System.currentTimeMillis(),
                 )
             }
-            docState = loaded
+            docState.value = loaded
         }
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        Text(text = docState?.title ?: "Untitled", style = MaterialTheme.typography.headlineSmall)
+        Text(text = docState.value?.title ?: "Untitled", style = MaterialTheme.typography.headlineSmall)
         Divider()
 
-        if (docState != null) {
-            androidx.compose.foundation.lazy.LazyColumn(
+        if (docState.value != null) {
+            LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp),
             ) {
-                items(items = docState!!.blocks, key = { it.id }) { block ->
+                items(docState.value!!.blocks, key = { it.id }) { block ->
                     when (block) {
                         is Block.Paragraph -> {
                             val textState = remember(block.id) { mutableStateOf(block.text) }
@@ -97,15 +100,15 @@ fun EditorScreen(documentId: String, isNew: Boolean) {
                                 value = textState.value,
                                 onValueChange = { newText ->
                                     textState.value = newText
-                                    val updatedBlocks = docState!!.blocks.map { b ->
+                                    val updatedBlocks = docState.value!!.blocks.map { b ->
                                         if (b.id == block.id)
                                             b.copy(text = newText, updatedAt = System.currentTimeMillis())
                                         else b
                                     }
-                                    docState = docState!!.copy(
+                                    docState.value = docState.value!!.copy(
                                         blocks = updatedBlocks,
                                         updatedAt = System.currentTimeMillis(),
-                                        version = docState!!.version + 1,
+                                        version = docState.value!!.version + 1,
                                     )
                                 },
                                 modifier = Modifier.fillMaxWidth(),
@@ -126,7 +129,7 @@ fun EditorScreen(documentId: String, isNew: Boolean) {
         ) {
             Button(
                 onClick = {
-                    val doc = docState
+                    val doc = docState.value
                     if (doc != null) {
                         coroutineScope.launch {
                             repository.createDocument(doc)
