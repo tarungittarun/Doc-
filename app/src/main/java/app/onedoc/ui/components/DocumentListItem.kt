@@ -52,10 +52,10 @@ fun DocumentListItem(
                 IconButton(
                     onClick = onStarToggle,
                 ) {
-                    Icon(
-                        imageVector = if (document.starred) Icons.Filled.Star else Icons.Default.Star,
-                        contentDescription = "Star",
-                        tint = if (document.starred) color.primary else color.onSurfaceVariant,
+                    Text(
+                        text = if (document.starred) "★" else "☆",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = if (document.starred) color.primary else color.onSurfaceVariant,
                     )
                 }
             }
@@ -65,10 +65,10 @@ fun DocumentListItem(
                 IconButton(
                     onClick = onTrash,
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "Delete",
-                        tint = color.onSurfaceVariant,
+                    Text(
+                        text = "🗑",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = color.onSurfaceVariant,
                     )
                 }
             }
