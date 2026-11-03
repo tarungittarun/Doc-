@@ -6,9 +6,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.lifecycle.compose.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
@@ -41,7 +41,14 @@ class HomeActivity : ComponentActivity() {
 
         setContent {
             OneDocTheme {
-                val docs by repository.documents.observeAsState()
+                val homeScope = rememberCoroutineScope()
+                val docs by remember { mutableStateOf<List<Document>>(emptyList()) }
+                LaunchedEffect(Unit) {
+                    homeScope.launch {
+                        val allDocs = repository.documents.value ?: emptyList()
+                        docs = allDocs
+                    }
+                }
                 HomeScreen(
                     context = this@HomeActivity,
                     repository = repository,
