@@ -26,6 +26,7 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 import app.onedoc.ui.theme.OneDocTheme
+import app.onedoc.ui.components.AppTopBar
 
 /**
  * DiagnosticsActivity — shows captured diagnostics logs and allows export to file.

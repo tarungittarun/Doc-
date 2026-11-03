@@ -62,7 +62,7 @@ class DiagnosticsLogger(private val context: Context) {
         debug("DIAGNOSTICS", "CLICK: $element")
     }
 
-    recordDocumentCreated() {
+    fun recordDocumentCreated() {
         documentCount++
         info("DIAGNOSTICS", "Document created. Total: $documentCount")
     }
