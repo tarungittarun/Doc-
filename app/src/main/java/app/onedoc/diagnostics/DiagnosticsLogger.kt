@@ -1,6 +1,7 @@
 package app.onedoc.diagnostics
 
 import android.content.Context
+import android.util.Log
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*

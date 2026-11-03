@@ -6,6 +6,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
@@ -48,7 +50,7 @@ fun EditorScreen(documentId: String, isNew: Boolean) {
     val repository = DocumentRepository.getInstance(androidx.compose.ui.platform.LocalContext.current)
     val localContext = androidx.compose.ui.platform.LocalContext.current
 
-    var docState by remember { mutableStateOf<Document?>(null) }
+    var docState: Document? by remember { mutableStateOf(null) }
 
     if (docState == null) {
         coroutineScope.launch {

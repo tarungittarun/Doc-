@@ -6,6 +6,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts.CreateDocument
@@ -19,6 +20,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.FontWeight
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -121,10 +123,26 @@ fun DiagnosticsScreen(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
             horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
         ) {
-            StatCard("Uptime", formatUptime(snapshot.value.capturedAt - snapshot.value.startTime))
-            StatCard("Clicks", snapshot.value.clickCount.toString())
-            StatCard("Documents", snapshot.value.documentCount.toString())
-            StatCard("Errors", snapshot.value.errorCount.toString())
+            StatCard(
+                "Uptime",
+                formatUptime(snapshot.value.capturedAt - snapshot.value.startTime),
+                modifier = Modifier.weight(1f),
+            )
+            StatCard(
+                "Clicks",
+                snapshot.value.clickCount.toString(),
+                modifier = Modifier.weight(1f),
+            )
+            StatCard(
+                "Documents",
+                snapshot.value.documentCount.toString(),
+                modifier = Modifier.weight(1f),
+            )
+            StatCard(
+                "Errors",
+                snapshot.value.errorCount.toString(),
+                modifier = Modifier.weight(1f),
+            )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -164,10 +182,14 @@ fun DiagnosticsScreen(
 }
 
 @Composable
-private fun StatCard(label: String, value: String) {
+private fun StatCard(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+) {
     val color = MaterialTheme.colorScheme
     Surface(
-        modifier = Modifier.weight(1f).height(80.dp),
+        modifier = modifier.height(80.dp),
         color = color.surfaceContainer,
         shape = MaterialTheme.shapes.medium,
     ) {
