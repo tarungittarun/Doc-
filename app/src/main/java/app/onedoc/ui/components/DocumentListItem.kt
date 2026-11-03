@@ -14,6 +14,8 @@ fun DocumentListItem(
     document: Document,
     selected: Boolean = false,
     onClick: () -> Unit,
+    onStarToggle: (() -> Unit)? = null,
+    onTrash: (() -> Unit)? = null,
 ) {
     val color = MaterialTheme.colorScheme
 
@@ -40,12 +42,35 @@ fun DocumentListItem(
                 Text(
                     text = "Updated ${formatTime(document.updatedAt)}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = color.onSurface,
+                    color = color.onSurfaceVariant,
                     maxLines = 1,
                 )
             }
-            if (document.starred) {
-                Text(text = "★", style = MaterialTheme.typography.bodyLarge, color = color.primary)
+
+            // Star button
+            if (onStarToggle != null) {
+                IconButton(
+                    onClick = onStarToggle,
+                ) {
+                    Icon(
+                        imageVector = if (document.starred) Icons.Filled.Star else Icons.Default.Star,
+                        contentDescription = "Star",
+                        tint = if (document.starred) color.primary else color.onSurfaceVariant,
+                    )
+                }
+            }
+
+            // Trash / more button
+            if (onTrash != null) {
+                IconButton(
+                    onClick = onTrash,
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Delete",
+                        tint = color.onSurfaceVariant,
+                    )
+                }
             }
         }
     }

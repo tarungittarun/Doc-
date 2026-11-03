@@ -4,44 +4,53 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 
+import app.onedoc.diagnostics.DiagnosticsLogger
 import app.onedoc.editor.EditorActivity
 import app.onedoc.model.Block
 import app.onedoc.model.Document
 import app.onedoc.repository.DocumentRepository
+import app.onedoc.settings.SettingsActivity
+import app.onedoc.templates.TemplatesActivity
 import app.onedoc.ui.components.AppTopBar
 import app.onedoc.ui.components.DocumentListItem
 import app.onedoc.ui.components.EmptyState
 import app.onedoc.ui.theme.OneDocTheme
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.MainScope
 
 class HomeActivity : ComponentActivity() {
+
     private val repository: DocumentRepository by lazy {
         DocumentRepository.getInstance(this)
     }
 
-    private val docs: MutableState<List<Document>> = mutableStateOf(emptyList())
+    private val diagnostics by lazy {
+        app.onedoc.diagnostics.DiagnosticsLogger(this)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        diagnostics.recordNavigation("launcher", "HomeActivity")
+
         setContent {
             OneDocTheme {
+                val docs by repository.documents.collectAsState()
                 HomeScreen(
-                    docs = docs.value,
+                    context = this@HomeActivity,
+                    repository = repository,
+                    docs = docs,
                     onCreateDocument = { createNewDocument() },
                     onDocumentClick = { doc -> openDocument(doc.id) },
+                    onOpenTemplates = { openTemplates() },
+                    onOpenSettings = { openSettings() },
+                    onOpenDiagnostics = { openDiagnostics() },
                 )
             }
         }
@@ -61,20 +70,36 @@ class HomeActivity : ComponentActivity() {
             createdAt = System.currentTimeMillis(),
             updatedAt = System.currentTimeMillis(),
         )
-        // Save via repository in background coroutine
-        CoroutineScope(Dispatchers.Default).launch {
-            repository.createDocument(doc)
-        }
-        // Navigate to editor
+        repository.createDocument(doc)
+        diagnostics.recordDocumentCreated()
+        diagnostics.debug("HOME", "Created document ${doc.id}")
+
         val intent = Intent(this, EditorActivity::class.java)
-        intent.putExtra("documentId", doc.id)
+        intent.putExtra("documentId", "")
         intent.putExtra("isNew", true)
         startActivity(intent)
     }
 
     private fun openDocument(documentId: String) {
+        diagnostics.debug("HOME", "Opening document $documentId")
         val intent = Intent(this, EditorActivity::class.java)
         intent.putExtra("documentId", documentId)
+        intent.putExtra("isNew", false)
+        startActivity(intent)
+    }
+
+    private fun openTemplates() {
+        val intent = Intent(this, TemplatesActivity::class.java)
+        startActivity(intent)
+    }
+
+    private fun openSettings() {
+        val intent = Intent(this, SettingsActivity::class.java)
+        startActivity(intent)
+    }
+
+    private fun openDiagnostics() {
+        val intent = DiagnosticsActivity.createIntent(this)
         startActivity(intent)
     }
 
@@ -83,16 +108,24 @@ class HomeActivity : ComponentActivity() {
 
 @Composable
 fun HomeScreen(
+    context: android.content.Context,
+    repository: DocumentRepository,
     docs: List<Document>,
     onCreateDocument: () -> Unit,
     onDocumentClick: (Document) -> Unit,
+    onOpenTemplates: () -> Unit,
+    onOpenSettings: () -> Unit,
+    onOpenDiagnostics: () -> Unit,
 ) {
     val color = MaterialTheme.colorScheme
+    val coroutineScope = rememberCoroutineScope()
 
     Column(modifier = Modifier.fillMaxSize()) {
         AppTopBar(
             title = "OneDoc",
-            onSearchClick = {},
+            onMenuClick = { onOpenDiagnostics() },
+            onSearchClick = { /* search handled by more menu */ },
+            onMoreClick = { /* more handled in AppTopBar dropdown */ },
             modifier = Modifier,
         )
         Spacer(modifier = Modifier.height(16.dp))
@@ -104,22 +137,36 @@ fun HomeScreen(
             Button(
                 onClick = { onCreateDocument() },
             ) {
+                Icon(imageVector = Icons.Default.Add, contentDescription = "Add document")
                 Text(text = "New document")
             }
-            Button(
-                onClick = {},
+            OutlinedButton(
+                onClick = { onOpenTemplates() },
             ) {
-                Text(text = "Starred")
+                Text(text = "Templates")
             }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Text(
-            text = "Documents",
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(horizontal = 16.dp),
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+        ) {
+            Text(
+                text = "Documents",
+                style = MaterialTheme.typography.titleMedium,
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            OutlinedButton(
+                onClick = { onOpenSettings() },
+            ) {
+                Icon(imageVector = Icons.Default.Settings, contentDescription = "Settings")
+                Text(text = "Settings")
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
 
         Column(
             modifier = Modifier
@@ -127,18 +174,40 @@ fun HomeScreen(
                 .padding(horizontal = 16.dp)
                 .weight(1f),
         ) {
-            if (docs.isEmpty()) {
+            val activeDocs = docs.filter { !it.trashed }
+            if (activeDocs.isEmpty()) {
                 EmptyState(
                     title = "No documents yet",
-                    description = "Tap + to create your first document.",
+                    description = "Tap \"New document\" to create your first document.",
                     onCreate = onCreateDocument,
                 )
             } else {
-                docs.forEach { doc ->
-                    DocumentListItem(
-                        document = doc,
-                        onClick = { onDocumentClick(doc) },
-                    )
+                androidx.compose.foundation.lazy.LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    items(
+                        items = activeDocs,
+                        key = { it.id },
+                    ) { doc ->
+                        DocumentListItem(
+                            document = doc,
+                            selected = false,
+                            onClick = { onDocumentClick(doc) },
+                            onStarToggle = {
+                                coroutineScope.launch {
+                                    repository.starDocument(doc.id, !doc.starred)
+                                    app.onedoc.diagnostics.DiagnosticsLogger(context).debug("HOME", "Star toggled ${doc.id} -> ${!doc.starred}")
+                                }
+                            },
+                            onTrash = {
+                                coroutineScope.launch {
+                                    repository.trashDocument(doc.id)
+                                    app.onedoc.diagnostics.DiagnosticsLogger(context).debug("HOME", "Document trashed: ${doc.id}")
+                                }
+                            },
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
                 }
             }
         }

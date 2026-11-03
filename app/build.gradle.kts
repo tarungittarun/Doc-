@@ -21,9 +21,9 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = rootProject.file("debug.keystore")
+            storeFile = project.file("onedoc_debug.keystore")
             storePassword = "android"
-            keyAlias = "androiddebugkey"
+            keyAlias = "onedocdebug"
             keyPassword = "android"
         }
     }
@@ -95,7 +95,12 @@ implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
 
-    testImplementation(libs.junit)
-    testImplementation(libs.androidx.test.core)
-    testImplementation(libs.robolectric)
+testImplementation(libs.junit)
+testImplementation(libs.androidx.test.core)
+testImplementation(libs.robolectric)
+
+androidTestImplementation("androidx.test.ext:junit:1.1.5")
+androidTestImplementation("androidx.test:rules:1.5.0")
+androidTestImplementation("androidx.test.uiautomator:uiautomator:2.3.0")
+androidTestImplementation("androidx.test:runner:1.5.2")
 }
