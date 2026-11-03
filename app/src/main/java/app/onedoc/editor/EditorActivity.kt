@@ -102,7 +102,7 @@ fun EditorScreen(documentId: String, isNew: Boolean) {
                                     textState.value = newText
                                     val updatedBlocks = docState.value!!.blocks.map { b ->
                                         if (b.id == block.id && b is Block.Paragraph)
-                                            b.copy(text = newText, updatedAt = System.currentTimeMillis())
+                                            b.copy(text = newText)
                                         else b
                                     }
                                     docState.value = docState.value!!.copy(
