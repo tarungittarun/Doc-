@@ -146,6 +146,8 @@ jobs:
           java-version: "17"
       - name: Create local.properties
         run: echo "sdk.dir=${ANDROID_HOME:-$ANDROID_SDK_ROOT}" > local.properties
+      - name: Build debug and test APKs
+        run: /opt/gradle-8.10.2/bin/gradle --no-daemon --max-workers=1 assembleDebug assembleDebugAndroidTest
       - name: Run emulator tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -156,11 +158,10 @@ jobs:
           disable-animations: true
           emulator-boot-timeout: 600
           script: |
-            echo "ANDROID_HOME=$ANDROID_HOME"
-            echo "PATH=$PATH"
-            which gradle || true
-            ls /opt/gradle-8.10.2/bin/gradle || true
-            /opt/gradle-8.10.2/bin/gradle --no-daemon --max-workers=1 --stacktrace connectedCheck
+            adb wait-for-device
+            adb install -r -g app/build/outputs/apk/debug/app-debug.apk
+            adb install -r -g app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+            adb shell am instrument -w app.onedoc.test/androidx.test.runner.AndroidJUnitRunner
 
   verify-ci-lane:
     name: CI lane green
