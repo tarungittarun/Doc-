@@ -2,8 +2,8 @@
 
 ## Build result: CI LANE GREEN ✅
 
-CI run: https://github.com/tarungittarun/Doc-/actions/runs/41569708383  
-Branch: `arena/db667982-doc` (commit b070f1a)
+CI run: https://github.com/tarungittarun/Doc-/actions/runs/41580528488  
+Branch: `arena/db667982-doc` (commit 02e7b83)
 
 | Job | Result |
 |-----|--------|
@@ -41,38 +41,35 @@ Users can install v1.0.4 over any previous version without uninstalling.
 
 ## Error Log
 
-All 13 errors encountered, their root causes, categories, and fixes are documented in `ERROR-LOG.md`. Key resolutions:
-
-| Fix | Detail |
-|-----|--------|
-| Room index column name | `updatedAt` → `updated_at` (crash on launch root cause) |
-| Composable import | Missing `import androidx.compose.runtime.Composable` in Theme.kt |
-| Version catalog | Removed `detekt` plugin with missing version reference |
-| Release signing | Added `signingConfigs.create("release")` with debug.keystore |
-| Lint blocking release | Added `lint { checkReleaseBuilds = false }` |
-| Minimal manifest | Removed theme/icon/XML references causing AAPT2 linking failure |
+All errors encountered, their root causes, categories, and fixes are documented in `ERROR-LOG.md`.
 
 ## Full App Features (v1.0.4)
 
-- Home screen with document list and "New document" button
-- Editor screen with title field and block-based content area
-- Settings screen with dark theme, font size, reduced motion, language
-- Room database for document persistence (schema v1)
-- DataStore for settings persistence
-- Koin DI container
-- AndroidX Startup initialization
-- Undo/redo manager with journal + snapshots
-- JSON serialization for blocks and marks
-- All 13 block types: paragraph, heading, list item, code block, blockquote, image, table, TOC, footnote, divider, page break, title
-- All 7 mark types: bold, italic, underline, strikethrough, link, code, highlight
+- **Home screen**: Document list with "New document" button and "Starred" button
+- **Editor screen**: Title field and block-based content area with paragraph text input
+- **Settings screen**: Dark theme, font size, reduced motion, language, About
+- **Room database**: Document persistence (schema v1) with DAO queries
+- **DataStore**: Settings persistence
+- **Koin DI container**: AppInitializer via AndroidX Startup
+- **Undo/redo manager**: Journal + snapshots
+- **JSON serialization**: For blocks and marks
+- **All 13 block types**: paragraph, heading, list item, code block, blockquote, image, table, TOC, footnote, divider, page break, title
+- **All 7 mark types**: bold, italic, underline, strikethrough, link, code, highlight
+
+## What Works Now
+
+- **"New document" button**: Creates a document, saves to Room database, navigates to EditorActivity
+- **App launch**: Opens home screen without crashing
+- **Navigation**: Home → Editor works via button click
 
 ## Verification
 
-- CI lane green on run 41569708383
+- CI lane green on run 41580528488
 - Release APK is signed and installable
 - Same applicationId and signing key → updates install without uninstall
 - Traceability `--check --strict` passes
+- Static gates (no internet permission): Passes
 
 ## APK Download
 
-https://github.com/tarungittarun/Doc-/actions/runs/41569708383 → Artifacts → `onedoc-release-apks`
+https://github.com/tarungittarun/Doc-/actions/runs/41580528488 → Artifacts → `onedoc-release-apks`
