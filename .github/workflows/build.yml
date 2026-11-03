@@ -158,9 +158,11 @@ jobs:
           disable-animations: true
           emulator-boot-timeout: 600
           script: |
-            cd $GITHUB_WORKSPACE
             adb wait-for-device
-            /opt/gradle-8.10.2/bin/gradle --no-daemon --max-workers=1 connectedCheck
+            /opt/gradle-8.10.2/bin/gradle --no-daemon --max-workers=1 --stacktrace connectedCheck 2>&1 | tee /tmp/connectedcheck.log
+            GRADLE_EXIT=${PIPESTATUS[0]}
+            grep -E '^(e:|Execution failed|FAILED|Exception|Caused by|Error:|Could not|What went wrong)' /tmp/connectedcheck.log 2>/dev/null | head -60 | while read line; do echo "::notice::GRADLE_KEY: $line"; done
+            exit $GRADLE_EXIT
 
   verify-ci-lane:
     name: CI lane green
