@@ -211,13 +211,15 @@ jobs:
         run: |
           mkdir -p app/build/outputs/screenshots
           sleep 3
-          # Capture home screen via adb exec-out (outputs raw PNG to stdout)
-          adb exec-out screencap -p > app/build/outputs/screenshots/shard1_home.png 2>/dev/null || true
+          # Capture home screen via adb shell screencap + pull (more reliable than exec-out)
+          adb shell screencap -p /sdcard/onedoc_shard1_home.png 2>/dev/null || true
+          adb pull /sdcard/onedoc_shard1_home.png app/build/outputs/screenshots/shard1_home.png 2>/dev/null || true
           sleep 3
           # Try to open editor and capture
           adb shell input tap 200 500 2>/dev/null || true
           sleep 3
-          adb exec-out screencap -p > app/build/outputs/screenshots/shard1_editor.png 2>/dev/null || true
+          adb shell screencap -p /sdcard/onedoc_shard1_editor.png 2>/dev/null || true
+          adb pull /sdcard/onedoc_shard1_editor.png app/build/outputs/screenshots/shard1_editor.png 2>/dev/null || true
           SCREENSHOT_COUNT=$(ls app/build/outputs/screenshots/*.png 2>/dev/null | wc -l)
           echo "Captured $SCREENSHOT_COUNT screenshots for shard 1"
           if [ "$SCREENSHOT_COUNT" -eq 0 ]; then
@@ -273,8 +275,9 @@ jobs:
         run: |
           mkdir -p app/build/outputs/screenshots
           sleep 3
-          # Capture performance test screen via adb exec-out
-          adb exec-out screencap -p > app/build/outputs/screenshots/shard2_perf.png 2>/dev/null || true
+          # Capture performance test screen via adb shell screencap + pull
+          adb shell screencap -p /sdcard/onedoc_shard2_perf.png 2>/dev/null || true
+          adb pull /sdcard/onedoc_shard2_perf.png app/build/outputs/screenshots/shard2_perf.png 2>/dev/null || true
           SCREENSHOT_COUNT=$(ls app/build/outputs/screenshots/*.png 2>/dev/null | wc -l)
           echo "Captured $SCREENSHOT_COUNT screenshots for shard 2"
           if [ "$SCREENSHOT_COUNT" -eq 0 ]; then
