@@ -63,6 +63,14 @@ jobs:
       - name: Create debug keystore for release signing
         if: steps.restore-keystore.outputs.keystore_exists == 'false'
         run: keytool -genkeypair -v -keystore debug.keystore -storepass android -keypass android -alias androiddebugkey -dname "CN=OneDoc Debug,O=OneDoc,C=US" -keyalg RSA -keysize 2048 -validity 10000
+      - name: Commit keystore to repo for same-app updates
+        if: steps.restore-keystore.outputs.keystore_exists == 'false'
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add debug.keystore
+          git commit -m "chore: Add debug keystore for same-app updates" || true
+          git push || true
       - name: Gradle version
         run: |
           echo "::notice::GRADLE_VERSION: $(gradle --version 2>&1 | grep 'Gradle ' | head -1)"

@@ -29,8 +29,7 @@ proguard/
 # Android Studio
 .idea/
 
-# Keystore files
-*.keystore
+# Keystore files — debug.keystore is committed to repo for same-app updates
 *.jks
 
 # External native build
