@@ -5,6 +5,7 @@ import android.os.Environment
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
+import androidx.test.uiautomator.Until
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
