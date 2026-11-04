@@ -13,8 +13,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
@@ -70,11 +70,11 @@ fun EditorScreen(documentId: String, isNew: Boolean) {
     val localContext = androidx.compose.ui.platform.LocalContext.current
 
     // Document state — only changes when user clicks Save or document is loaded
-    var doc by remember { mutableStateOf<Document?>(null) }
+    val docState: MutableState<Document?> = remember { mutableStateOf<Document?>(null) }
 
     // Local editing state — updated on every keystroke, does NOT trigger document recomposition
-    var editText by remember { mutableStateOf("") }
-    var editingBlockId by remember { mutableStateOf("") }
+    val editTextState: MutableState<String> = remember { mutableStateOf("") }
+    val editingBlockIdState: MutableState<String> = remember { mutableStateOf("") }
 
     // Load document on first composition
     LaunchedEffect(Unit) {
@@ -104,11 +104,11 @@ fun EditorScreen(documentId: String, isNew: Boolean) {
                         updatedAt = System.currentTimeMillis(),
                     )
                 }
-                doc = loaded
+                docState.value = loaded
                 // Initialize editing state from loaded document
                 val firstPara = loaded.blocks.firstOrNull { it is Block.Paragraph } as? Block.Paragraph
-                editText = firstPara?.text ?: ""
-                editingBlockId = firstPara?.id ?: ""
+                editTextState.value = firstPara?.text ?: ""
+                editingBlockIdState.value = firstPara?.id ?: ""
             } catch (e: Exception) {
                 Log.e("EditorActivity", "Failed to load document", e)
                 app.onedoc.diagnostics.DiagnosticsLogger(localContext).error("EDITOR", "Failed to load document", e)
@@ -117,10 +117,10 @@ fun EditorScreen(documentId: String, isNew: Boolean) {
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        Text(text = doc?.title ?: "Untitled", style = MaterialTheme.typography.headlineSmall)
+        Text(text = docState.value?.title ?: "Untitled", style = MaterialTheme.typography.headlineSmall)
         Divider()
 
-        val currentDoc = doc
+        val currentDoc = docState.value
         if (currentDoc != null) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp),
@@ -130,14 +130,14 @@ fun EditorScreen(documentId: String, isNew: Boolean) {
                         is Block.Paragraph -> {
                             // Only use local editText state for the block being edited;
                             // for other blocks, show their stored text
-                            val isEditingBlock = block.id == editingBlockId
-                            val displayText = if (isEditingBlock) editText else block.text
+                            val isEditingBlock = block.id == editingBlockIdState.value
+                            val displayText = if (isEditingBlock) editTextState.value else block.text
                             TextField(
                                 value = displayText,
                                 onValueChange = { newText ->
                                     // Update only local state — no document recomposition per keystroke
-                                    editText = newText
-                                    editingBlockId = block.id
+                                    editTextState.value = newText
+                                    editingBlockIdState.value = block.id
                                 },
                                 modifier = Modifier.fillMaxWidth(),
                                 textStyle = MaterialTheme.typography.bodyLarge,
@@ -158,12 +158,12 @@ fun EditorScreen(documentId: String, isNew: Boolean) {
             Button(
                 onClick = {
                     try {
-                        val current = doc
+                        val current = docState.value
                         if (current != null) {
                             // Persist the current editText into the document before saving
                             val updatedBlocks = current.blocks.map { b ->
-                                if (b.id == editingBlockId && b is Block.Paragraph)
-                                    b.copy(text = editText)
+                                if (b.id == editingBlockIdState.value && b is Block.Paragraph)
+                                    b.copy(text = editTextState.value)
                                 else b
                             }
                             val docToSave = current.copy(
@@ -175,9 +175,9 @@ fun EditorScreen(documentId: String, isNew: Boolean) {
                                 try {
                                     val repo = DocumentRepository.getInstance(localContext)
                                     repo.createDocument(docToSave)
-                                    doc = docToSave
-                                    editingBlockId = docToSave.blocks.firstOrNull { it is Block.Paragraph }?.id ?: ""
-                                    editText = docToSave.blocks.firstOrNull { it is Block.Paragraph }?.text ?: ""
+                                    docState.value = docToSave
+                                    editingBlockIdState.value = docToSave.blocks.firstOrNull { it is Block.Paragraph }?.id ?: ""
+                                    editTextState.value = docToSave.blocks.firstOrNull { it is Block.Paragraph }?.text ?: ""
                                     app.onedoc.diagnostics.DiagnosticsLogger(localContext).debug("EDITOR", "Saved document ${docToSave.id}")
                                 } catch (e: Exception) {
                                     Log.e("EditorActivity", "Failed to save document", e)
