@@ -94,7 +94,9 @@ class DiagnosticsLogger(private val context: Context) {
     fun exportToFile(): String? {
         val snapshot = getSnapshot()
         val fileName = "onedoc_diagnostics_${dateFormat.format(Date())}.log"
-        val file = File(context.filesDir, fileName)
+        val extDir = context.getExternalFilesDir(null)
+        val dir = if (extDir != null) extDir else context.filesDir
+        val file = File(dir, fileName)
 
         try {
             file.bufferedWriter().use { writer ->
