@@ -66,7 +66,6 @@ class EditorActivity : ComponentActivity() {
 @Composable
 fun EditorScreen(documentId: String, isNew: Boolean) {
     val coroutineScope = rememberCoroutineScope()
-    val repository = DocumentRepository.getInstance(androidx.compose.ui.platform.LocalContext.current)
     val localContext = androidx.compose.ui.platform.LocalContext.current
 
     // Use explicit .value access instead of 'by' delegate to avoid Kotlin delegate ambiguity
@@ -85,10 +84,12 @@ fun EditorScreen(documentId: String, isNew: Boolean) {
                         createdAt = System.currentTimeMillis(),
                         updatedAt = System.currentTimeMillis(),
                     )
-                    repository.createDocument(loaded)
+                    val repo = DocumentRepository.getInstance(localContext)
+                    repo.createDocument(loaded)
                     app.onedoc.diagnostics.DiagnosticsLogger(localContext).recordDocumentCreated()
                 } else {
-                    loaded = repository.getDocument(documentId) ?: Document(
+                    val repo = DocumentRepository.getInstance(localContext)
+                    loaded = repo.getDocument(documentId) ?: Document(
                         id = documentId,
                         title = "Untitled document",
                         blocks = listOf(Block.Paragraph(id = blockId(), text = "")),
@@ -161,7 +162,8 @@ fun EditorScreen(documentId: String, isNew: Boolean) {
                         if (doc != null) {
                             coroutineScope.launch {
                                 try {
-                                    repository.createDocument(doc)
+                                    val repo = DocumentRepository.getInstance(localContext)
+                                    repo.createDocument(doc)
                                     app.onedoc.diagnostics.DiagnosticsLogger(localContext).debug("EDITOR", "Saved document ${doc.id}")
                                 } catch (e: Exception) {
                                     Log.e("EditorActivity", "Failed to save document", e)

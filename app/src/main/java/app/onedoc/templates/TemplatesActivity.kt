@@ -28,10 +28,6 @@ import app.onedoc.ui.theme.OneDocTheme
 
 class TemplatesActivity : ComponentActivity() {
 
-    private val repository: DocumentRepository by lazy {
-        DocumentRepository.getInstance(this)
-    }
-
     private val diagnostics by lazy {
         DiagnosticsLogger(this)
     }
@@ -81,7 +77,8 @@ class TemplatesActivity : ComponentActivity() {
             )
             CoroutineScope(Dispatchers.Main).launch {
                 try {
-                    repository.createDocument(doc)
+                    val repo = DocumentRepository.getInstance(this@TemplatesActivity)
+                    repo.createDocument(doc)
                     diagnostics.recordDocumentCreated()
                     diagnostics.debug("TEMPLATES", "Created document from template: ${template.title}")
                 } catch (e: Exception) {

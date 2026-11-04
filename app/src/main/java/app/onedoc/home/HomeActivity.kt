@@ -31,10 +31,6 @@ import app.onedoc.ui.theme.OneDocTheme
 
 class HomeActivity : ComponentActivity() {
 
-    private val repository: DocumentRepository by lazy {
-        DocumentRepository.getInstance(this)
-    }
-
     private val diagnostics by lazy {
         app.onedoc.diagnostics.DiagnosticsLogger(this)
     }
@@ -48,9 +44,8 @@ class HomeActivity : ComponentActivity() {
                 OneDocTheme {
                     HomeScreen(
                         context = this@HomeActivity,
-                        repository = repository,
                         onCreateDocument = { createNewDocument() },
-                        onDocumentClick = { doc -> openDocument(doc.id) },
+                        onDocumentClick = { docId -> openDocument(docId) },
                         onOpenTemplates = { openTemplates() },
                         onOpenSettings = { openSettings() },
                         onOpenDiagnostics = { openDiagnostics() },
@@ -90,7 +85,8 @@ class HomeActivity : ComponentActivity() {
             )
             lifecycleScope.launch {
                 try {
-                    repository.createDocument(doc)
+                    val repo = DocumentRepository.getInstance(this@HomeActivity)
+                    repo.createDocument(doc)
                     diagnostics.recordDocumentCreated()
                     diagnostics.debug("HOME", "Created document ${doc.id}")
                 } catch (e: Exception) {
@@ -138,9 +134,8 @@ class HomeActivity : ComponentActivity() {
 @Composable
 fun HomeScreen(
     context: android.content.Context,
-    repository: DocumentRepository,
     onCreateDocument: () -> Unit,
-    onDocumentClick: (Document) -> Unit,
+    onDocumentClick: (String) -> Unit,
     onOpenTemplates: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenDiagnostics: () -> Unit,
