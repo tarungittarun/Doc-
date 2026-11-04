@@ -203,28 +203,24 @@ jobs:
           disable-animations: true
           emulator-boot-timeout: 600
           script: |
+            set +e
             adb wait-for-device
             adb install -r -g app/build/outputs/apk/debug/app-debug.apk
             adb install -r -g app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
             adb shell am instrument -w -e package app.onedoc.home app.onedoc.test/androidx.test.runner.AndroidJUnitRunner
-      - name: Capture screenshots via adb screencap
-        run: |
-          mkdir -p app/build/outputs/screenshots
-          sleep 3
-          # Capture home screen via adb shell screencap + pull (more reliable than exec-out)
-          adb shell screencap -p /sdcard/onedoc_shard1_home.png 2>/dev/null || true
-          adb pull /sdcard/onedoc_shard1_home.png app/build/outputs/screenshots/shard1_home.png 2>/dev/null || true
-          sleep 3
-          # Try to open editor and capture
-          adb shell input tap 200 500 2>/dev/null || true
-          sleep 3
-          adb shell screencap -p /sdcard/onedoc_shard1_editor.png 2>/dev/null || true
-          adb pull /sdcard/onedoc_shard1_editor.png app/build/outputs/screenshots/shard1_editor.png 2>/dev/null || true
-          SCREENSHOT_COUNT=$(ls app/build/outputs/screenshots/*.png 2>/dev/null | wc -l)
-          echo "Captured $SCREENSHOT_COUNT screenshots for shard 1"
-          if [ "$SCREENSHOT_COUNT" -eq 0 ]; then
-            echo "::warning::No screenshots captured — continuing anyway"
-          fi
+            TEST_EXIT=$?
+            # Capture screenshots while emulator is still active
+            mkdir -p app/build/outputs/screenshots
+            adb shell screencap -p /sdcard/onedoc_shard1_home.png 2>/dev/null || true
+            adb pull /sdcard/onedoc_shard1_home.png app/build/outputs/screenshots/shard1_home.png 2>/dev/null || true
+            sleep 2
+            adb shell input tap 200 500 2>/dev/null || true
+            sleep 2
+            adb shell screencap -p /sdcard/onedoc_shard1_editor.png 2>/dev/null || true
+            adb pull /sdcard/onedoc_shard1_editor.png app/build/outputs/screenshots/shard1_editor.png 2>/dev/null || true
+            SCREENSHOT_COUNT=$(ls app/build/outputs/screenshots/*.png 2>/dev/null | wc -l)
+            echo "Captured $SCREENSHOT_COUNT screenshots for shard 1"
+            exit $TEST_EXIT
       - name: Upload screenshots shard 1
         uses: actions/upload-artifact@v4
         if: always()
@@ -232,6 +228,7 @@ jobs:
           name: screenshots-shard-1
           path: app/build/outputs/screenshots/**/*.png
           retention-days: 30
+          if-no-files-found: warn
 
   emulator-test-shard-2:
     name: Emulator tests shard 2
@@ -267,22 +264,19 @@ jobs:
           disable-animations: true
           emulator-boot-timeout: 600
           script: |
+            set +e
             adb wait-for-device
             adb install -r -g app/build/outputs/apk/debug/app-debug.apk
             adb install -r -g app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
             adb shell am instrument -w -e package app.onedoc.performance app.onedoc.test/androidx.test.runner.AndroidJUnitRunner
-      - name: Capture screenshots via adb screencap
-        run: |
-          mkdir -p app/build/outputs/screenshots
-          sleep 3
-          # Capture performance test screen via adb shell screencap + pull
-          adb shell screencap -p /sdcard/onedoc_shard2_perf.png 2>/dev/null || true
-          adb pull /sdcard/onedoc_shard2_perf.png app/build/outputs/screenshots/shard2_perf.png 2>/dev/null || true
-          SCREENSHOT_COUNT=$(ls app/build/outputs/screenshots/*.png 2>/dev/null | wc -l)
-          echo "Captured $SCREENSHOT_COUNT screenshots for shard 2"
-          if [ "$SCREENSHOT_COUNT" -eq 0 ]; then
-            echo "::warning::No screenshots captured — continuing anyway"
-          fi
+            TEST_EXIT=$?
+            # Capture screenshots while emulator is still active
+            mkdir -p app/build/outputs/screenshots
+            adb shell screencap -p /sdcard/onedoc_shard2_perf.png 2>/dev/null || true
+            adb pull /sdcard/onedoc_shard2_perf.png app/build/outputs/screenshots/shard2_perf.png 2>/dev/null || true
+            SCREENSHOT_COUNT=$(ls app/build/outputs/screenshots/*.png 2>/dev/null | wc -l)
+            echo "Captured $SCREENSHOT_COUNT screenshots for shard 2"
+            exit $TEST_EXIT
       - name: Upload screenshots shard 2
         uses: actions/upload-artifact@v4
         if: always()
@@ -290,6 +284,7 @@ jobs:
           name: screenshots-shard-2
           path: app/build/outputs/screenshots/**/*.png
           retention-days: 30
+          if-no-files-found: warn
 
   screenshots-pdf:
     name: Generate screenshot PDF report
