@@ -176,8 +176,9 @@ fun EditorScreen(documentId: String, isNew: Boolean) {
                                     val repo = DocumentRepository.getInstance(localContext)
                                     repo.createDocument(docToSave)
                                     docState.value = docToSave
-                                    editingBlockIdState.value = docToSave.blocks.firstOrNull { it is Block.Paragraph }?.id ?: ""
-                                    editTextState.value = docToSave.blocks.firstOrNull { it is Block.Paragraph }?.text ?: ""
+                                    val firstPara = docToSave.blocks.firstOrNull { it is Block.Paragraph } as? Block.Paragraph
+                                    editingBlockIdState.value = firstPara?.id ?: ""
+                                    editTextState.value = firstPara?.text ?: ""
                                     app.onedoc.diagnostics.DiagnosticsLogger(localContext).debug("EDITOR", "Saved document ${docToSave.id}")
                                 } catch (e: Exception) {
                                     Log.e("EditorActivity", "Failed to save document", e)
