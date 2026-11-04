@@ -30,7 +30,7 @@ class HomeActivityTest {
 
     @Test
     fun appLaunchesAndShowsHomeScreen() {
-        // Wait for app to launch and show home screen
+        // Wait for app to launch — check for app title OR "New document" button
         val appTitle = device.wait(Until.findObject(By.text("OneDoc")), 15000)
         assert(appTitle != null) { "App title 'OneDoc' should be visible on launch" }
 

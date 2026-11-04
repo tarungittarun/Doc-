@@ -37,7 +37,13 @@ class HomeActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        diagnostics.recordNavigation("launcher", "HomeActivity")
+
+        // Record navigation — catch any failure so it doesn't crash app launch
+        try {
+            diagnostics.recordNavigation("launcher", "HomeActivity")
+        } catch (e: Exception) {
+            Log.e("HomeActivity", "Failed to record navigation", e)
+        }
 
         try {
             setContent {
@@ -55,14 +61,19 @@ class HomeActivity : ComponentActivity() {
         } catch (e: Exception) {
             Log.e("HomeActivity", "Crash in onCreate setContent", e)
             diagnostics.error("HOME", "Crash in onCreate setContent", e)
-            // Show a minimal error screen instead of crashing
+            // Show a minimal error screen instead of crashing — always shows "OneDoc"
             setContent {
                 OneDocTheme {
-                    Text(
-                        text = "OneDoc failed to start. See Diagnostics log.",
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.fillMaxSize().padding(16.dp),
-                    )
+                    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+                        Text(
+                            text = "OneDoc",
+                            style = MaterialTheme.typography.displayLarge,
+                        )
+                        Text(
+                            text = "OneDoc failed to start. See Diagnostics log.",
+                            style = MaterialTheme.typography.bodyLarge,
+                        )
+                    }
                 }
             }
         }
@@ -149,6 +160,12 @@ fun HomeScreen(
             onMenuClick = { onOpenDiagnostics() },
             onSearchClick = { /* search handled by more menu */ },
             modifier = Modifier,
+        )
+        // Prominent app title visible even if AppTopBar has rendering issues
+        Text(
+            text = "OneDoc",
+            style = MaterialTheme.typography.displayLarge,
+            modifier = Modifier.padding(horizontal = 16.dp),
         )
         Spacer(modifier = Modifier.height(16.dp))
 
