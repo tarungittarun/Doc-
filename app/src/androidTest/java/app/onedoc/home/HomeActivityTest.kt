@@ -2,7 +2,9 @@ package app.onedoc.home
 
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
+import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.Until
 import org.junit.Before
 import org.junit.Rule
@@ -27,7 +29,7 @@ class HomeActivityTest {
 
     @Test
     fun appLaunchesAndNewDocumentButtonNavigatesToEditor() {
-        val device = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().uiAutomation
+        val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
 
         // Wait for "New document" button to appear
         val newDocButton = device.wait(Until.findObject(By.text("New document")), 5000)
@@ -44,7 +46,7 @@ class HomeActivityTest {
     @Test
     fun appLaunchesWithoutCrash() {
         // Simply verify the app launches and shows the home screen
-        val device = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().uiAutomation
+        val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         val appTitle = device.wait(Until.findObject(By.text("OneDoc")), 5000)
         assert(appTitle != null) { "App title 'OneDoc' should be visible on launch" }
     }
