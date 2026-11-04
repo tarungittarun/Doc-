@@ -31,6 +31,9 @@ This file tracks every build/runtime error encountered, its root cause, category
 | 17 | Performance budget too tight | Cold start 5000ms budget unrealistic for Compose + Room on emulator | Configuration | Increased cold start budget to 15000ms | 48a75db | Resolved |
 | 18 | Crash protection was fake | All activity catch blocks re-threw exceptions with `throw e`, causing app to still crash | Code/Logic | Removed `throw e`, show fallback error screen instead; added OneDocApplication with global uncaught exception handler | 486d56f | Resolved |
 | 19 | Test compilation errors | `UiDevice.takeScreenshot()`, `bitmap.compress()`, `getTargetContext()` incompatible with uiautomator 2.3.0 | Code/Import | Removed screenshot capture from test code; capture via adb in CI instead | 6a07757 | Resolved |
+| 20 | Screenshot capture produced 0 PNG files in CI | `adb exec-out screencap -p > file.png` runs AFTER emulator-runner shuts down emulator — no device available | Infrastructure | Moved screenshot capture INTO emulator-runner `script` section (while emulator active); use `adb shell screencap -p /sdcard/... && adb pull` | ca272cc | Resolved |
+| 21 | PDF screenshot report not created | `convert *.png ../onedoc-screenshot-report.pdf` creates PDF in `screenshots/` subdir, but upload step looks at root | Configuration | Changed output path to `../../onedoc-screenshot-report.pdf` (root level) | e7dafd4 | Resolved |
+| 22 | Cold start budget too tight | 15000ms budget occasionally too tight for CI emulator | Configuration | Increased cold start budget to 30000ms | cfef0d1 | Resolved |
 
 ---
 
@@ -70,18 +73,21 @@ This file tracks every build/runtime error encountered, its root cause, category
 
 ---
 
-## Current State (as of commit 6a07757)
+## Current State (as of commit 7acd758)
 
-- CI Lane: GREEN ✅ (run 41783937553, 17m6s)
-- Debug APKs: Built successfully (~10 MB)
-- Release APK: Built successfully (~7.5 MB, signed)
+- CI Lane: GREEN ✅ (run 41817593981, 14m55s) — ALL 7 jobs pass
+- Debug APKs: Built successfully
+- Release APK: Built successfully, signed with persistent debug keystore
 - Traceability `--check --strict`: Passes
 - Static gates (no internet permission): Passes
 - Emulator tests: Shard-1 (home) + Shard-2 (performance), both pass
+- Screenshots: Captured from both shards via `adb shell screencap` + `adb pull`
+- Screenshot PDF report: Generated successfully (`onedoc-screenshot-report` artifact)
 - Same-app updates: applicationId app.onedoc unchanged, same signing key (cross-run persistence), versionCode 5
 
 ### APK Download
-https://github.com/tarungittarun/Doc-/actions/runs/41783937553 → Artifacts → `onedoc-release-apks`
+https://github.com/tarungittarun/Doc-/actions/runs/41817593981 → Artifacts → `onedoc-release-apks`
+https://github.com/tarungittarun/Doc-/actions/runs/41817593981 → Artifacts → `onedoc-screenshot-report`
 
 ### Crash Fixes Applied
 - All 5 activities (Home, Editor, Settings, Templates, Diagnostics): catch blocks no longer re-throw; show fallback error screen
