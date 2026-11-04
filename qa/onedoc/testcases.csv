@@ -1,0 +1,91 @@
+test_id,feature_id,priority,title,binding,verdict
+TC-EDIT-001,F-001,P0,Verify F-001: Document create (new blank doc),auto,not-run
+TC-EDIT-002,F-002,P0,Verify F-002: Document open from library,auto,not-run
+TC-EDIT-003,F-003,P0,Verify F-003: Document auto-save on every keystroke,auto,not-run
+TC-EDIT-004,F-004,P0,Verify F-004: Document rename,auto,not-run
+TC-LIB-001,F-005,P0,Verify F-005: Document delete (to trash),auto,not-run
+TC-LIB-002,F-006,P0,Verify F-006: Document restore from trash,auto,not-run
+TC-LIB-003,F-007,P0,Verify F-007: Document permanent delete (shred),auto,not-run
+TC-LIB-004,F-008,P0,Verify F-008: Document star / unstar,auto,not-run
+TC-LIB-005,F-009,P0,Verify F-009: Document version list,auto,not-run
+TC-LIB-006,F-010,P0,Verify F-010: Document restore to a prior version,auto,not-run
+TC-EDIT-005,F-011,P0,Verify F-011: Paragraph block insert,auto,not-run
+TC-EDIT-006,F-012,P0,Verify F-012: Heading block (H1-H6),auto,not-run
+TC-EDIT-007,F-013,P0,Verify F-013: Bullet list block,auto,not-run
+TC-EDIT-008,F-014,P0,Verify F-014: Numbered list block,auto,not-run
+TC-EDIT-009,F-015,P0,Verify F-015: Code block,auto,not-run
+TC-EDIT-010,F-016,P0,Verify F-016: Blockquote block,auto,not-run
+TC-IMG-001,F-017,P0,Verify F-017: Image block,auto,not-run
+TC-TBL-001,F-018,P0,Verify F-018: Table block,auto,not-run
+TC-TOC-001,F-019,P0,Verify F-019: TOC block,auto,not-run
+TC-FN-001,F-020,P0,Verify F-020: Footnote block,auto,not-run
+TC-EDIT-011,F-021,P0,Verify F-021: Bold mark,auto,not-run
+TC-EDIT-012,F-022,P0,Verify F-022: Italic mark,auto,not-run
+TC-EDIT-013,F-023,P0,Verify F-023: Underline mark,auto,not-run
+TC-EDIT-014,F-024,P0,Verify F-024: Strikethrough mark,auto,not-run
+TC-EDIT-015,F-025,P0,Verify F-025: Link mark,auto,not-run
+TC-EDIT-016,F-026,P0,Verify F-026: Code inline mark,auto,not-run
+TC-EDIT-017,F-027,P0,Verify F-027: Highlight mark,auto,not-run
+TC-IME-001,F-028,P0,Verify F-028: IME-safe input (composition),auto,not-run
+TC-SEL-001,F-029,P0,Verify F-029: Selection expand/collapse,auto,not-run
+TC-EDIT-018,F-030,P0,Verify F-030: Honest undo (no silent mutation),auto,not-run
+TC-SRC-001,F-031,P0,Verify F-031: Library full-text search,auto,not-run
+TC-LIB-007,F-032,P0,Verify F-032: Library sort (recency/title),auto,not-run
+TC-LIB-008,F-033,P0,Verify F-033: Library filter (starred/trashed),auto,not-run
+TC-SEC-001,F-034,P0,Verify F-034: First-run privacy card (once),auto,not-run
+TC-SYS-001,F-035,P0,Verify F-035: Settings: theme toggle light/dark,auto,not-run
+TC-SYS-002,F-036,P2,Verify F-036: Settings: font size scale,auto,not-run
+TC-SYS-003,F-037,P2,Verify F-037: Settings: reduced motion,auto,not-run
+TC-SYS-004,F-038,P2,Verify F-038: Settings: locale (en/hi/mr),auto,not-run
+TC-TPL-001,F-039,P2,Verify F-039: Templates: 12 built-in templates,auto,not-run
+TC-TPL-002,F-040,P2,Verify F-040: Template apply to new doc,auto,not-run
+TC-FR-001,F-041,P0,Verify F-041: Find & replace with pre-edit versioning,auto,not-run
+TC-FR-002,F-042,P0,Verify F-042: Find & replace replace-all,auto,not-run
+TC-TBL-002,F-043,P0,Verify F-043: Table insert rows/cols,auto,not-run
+TC-TBL-003,F-044,P0,Verify F-044: Table delete rows/cols,auto,not-run
+TC-IMG-002,F-045,P0,Verify F-045: Image insert from gallery/camera,auto,not-run
+TC-IMG-003,F-046,P2,Verify F-046: Image resize / crop,auto,not-run
+TC-IMG-004,F-047,P2,Verify F-047: Image alt text,auto,not-run
+TC-TOC-002,F-048,P0,Verify F-048: TOC auto-generate from headings,auto,not-run
+TC-TOC-003,F-049,P2,Verify F-049: TOC update on edit,auto,not-run
+TC-FN-002,F-050,P2,Verify F-050: Footnote render inline,auto,not-run
+TC-RDR-001,F-051,P0,Verify F-051: Reader mode (distraction-free),auto,not-run
+TC-TTS-001,F-052,P0,Verify F-052: Reader mode text-to-speech (read-aloud),auto,not-run
+TC-TTS-002,F-053,P0,Verify F-053: TTS pause/resume/stop,auto,not-run
+TC-TTS-003,F-054,P2,Verify F-054: TTS voice select,auto,not-run
+TC-TTS-004,F-055,P2,Verify F-055: TTS rate/pitch adjust,auto,not-run
+TC-FMT-PDF-001,F-056,P2,Verify F-056: Export to PDF,auto,not-run
+TC-FMT-MD-001,F-057,P0,Verify F-057: Export to Markdown,auto,not-run
+TC-FMT-HTML-001,F-058,P0,Verify F-058: Export to HTML,auto,not-run
+TC-FMT-TXT-001,F-059,P0,Verify F-059: Export to TXT,auto,not-run
+TC-FMT-ODOC-001,F-060,P0,Verify F-060: Export to native .odoc,auto,not-run
+TC-FMT-PDF-002,F-061,P2,Verify F-061: Import PDF with declared fidelity,auto,not-run
+TC-FMT-DOCX-001,F-062,P2,Verify F-062: Import DOCX with declared fidelity,auto,not-run
+TC-FMT-MD-002,F-063,P2,Verify F-063: Import Markdown,auto,not-run
+TC-FMT-HTML-002,F-064,P2,Verify F-064: Import HTML,auto,not-run
+TC-FMT-TXT-002,F-065,P2,Verify F-065: Import TXT,auto,not-run
+TC-FMT-ODOC-002,F-066,P2,Verify F-066: Import .odoc,auto,not-run
+TC-FMT-001,F-067,P2,Verify F-067: Fidelity level declared on every conversion,auto,not-run
+TC-FMT-002,F-068,P2,Verify F-068: Conversion note on lossy export,auto,not-run
+TC-FMT-003,F-069,P0,Verify F-069: Refuse ambiguous conversion (never guess),auto,not-run
+TC-AI-OCR-001,F-070,P0,Verify F-070: On-device AI: scan-to-doc OCR,auto,not-run
+TC-AI-ASR-001,F-071,P0,Verify F-071: On-device AI: dictation (ASR),auto,not-run
+TC-AI-WR-001,F-072,P0,Verify F-072: On-device AI: writing assistant Summarize,auto,not-run
+TC-AI-WR-002,F-073,P0,Verify F-073: On-device AI: writing assistant Rewrite,auto,not-run
+TC-AI-WR-003,F-074,P0,Verify F-074: On-device AI: writing assistant Continue,auto,not-run
+TC-AI-WR-004,F-075,P0,Verify F-075: On-device AI: writing assistant Fix,auto,not-run
+TC-AI-L10-001,F-076,P0,Verify F-076: AI output via preview card + explicit insert (Law L10),auto,not-run
+TC-AI-TIER-001,F-077,P0,Verify F-077: AI fallback ladder (tier A/B/C),auto,not-run
+no fetch),F-078,P0,Verify F-078: Missing AI pack degrades gracefully (no crash,auto,not-run
+TC-AI-SEM-001,F-079,P2,Verify F-079: Semantic search (embeddings MiniLM-L6),auto,not-run
+TC-AI-TIER-002,F-080,P2,Verify F-080: Device tier detection (A/B/C),auto,not-run
+TC-SEC-P-001,F-081,P0,Verify F-081: No INTERNET permission in manifest,auto,not-run
+TC-SEC-P-002,F-082,P0,Verify F-082: Zero network sockets at runtime,auto,not-run
+TC-SEC-P-003,F-083,P0,Verify F-083: No ads / trackers / analytics,auto,not-run
+TC-SYS-005,F-084,P0,Verify F-084: Build provenance row (commit SHA + time),auto,not-run
+TC-ENV-001,F-085,P0,Verify F-085: APK size <= 25 MB,auto,not-run
+TC-ENV-002,F-086,P0,Verify F-086: Cold start < 1.2 s,auto,not-run
+TC-ENV-003,F-087,P0,Verify F-087: Typing P95 < 50 ms,auto,not-run
+TC-ENV-004,F-088,P0,Verify F-088: Search < 300 ms,auto,not-run
+TC-ENV-005,F-089,P0,Verify F-089: minSdk 26 (Android 8.0+) support,auto,not-run
+portrait + landscape,F-090,P0,Verify F-090: Phones + tablets,auto,not-run
