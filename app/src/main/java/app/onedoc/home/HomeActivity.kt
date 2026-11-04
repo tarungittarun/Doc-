@@ -40,10 +40,10 @@ class HomeActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        try {
-            super.onCreate(savedInstanceState)
-            diagnostics.recordNavigation("launcher", "HomeActivity")
+        super.onCreate(savedInstanceState)
+        diagnostics.recordNavigation("launcher", "HomeActivity")
 
+        try {
             setContent {
                 OneDocTheme {
                     HomeScreen(
@@ -58,9 +58,18 @@ class HomeActivity : ComponentActivity() {
                 }
             }
         } catch (e: Exception) {
-            Log.e("HomeActivity", "Crash in onCreate", e)
-            diagnostics.error("HOME", "Crash in onCreate", e)
-            throw e
+            Log.e("HomeActivity", "Crash in onCreate setContent", e)
+            diagnostics.error("HOME", "Crash in onCreate setContent", e)
+            // Show a minimal error screen instead of crashing
+            setContent {
+                OneDocTheme {
+                    Text(
+                        text = "OneDoc failed to start. See Diagnostics log.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.fillMaxSize().padding(16.dp),
+                    )
+                }
+            }
         }
     }
 

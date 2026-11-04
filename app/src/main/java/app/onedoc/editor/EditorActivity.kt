@@ -30,14 +30,14 @@ class EditorActivity : ComponentActivity() {
     private var isNew: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        documentId = intent.getStringExtra("documentId") ?: ""
+        isNew = intent.getBooleanExtra("isNew", false)
+
+        val diagnostics = app.onedoc.diagnostics.DiagnosticsLogger(this)
+        diagnostics.recordNavigation("HomeActivity", "EditorActivity")
+
         try {
-            super.onCreate(savedInstanceState)
-            documentId = intent.getStringExtra("documentId") ?: ""
-            isNew = intent.getBooleanExtra("isNew", false)
-
-            val diagnostics = app.onedoc.diagnostics.DiagnosticsLogger(this)
-            diagnostics.recordNavigation("HomeActivity", "EditorActivity")
-
             setContent {
                 OneDocTheme {
                     EditorScreen(
@@ -47,13 +47,18 @@ class EditorActivity : ComponentActivity() {
                 }
             }
         } catch (e: Exception) {
-            Log.e("EditorActivity", "Crash in onCreate", e)
-            try {
-                app.onedoc.diagnostics.DiagnosticsLogger(this).error("EDITOR", "Crash in onCreate", e)
-            } catch (e2: Exception) {
-                Log.e("EditorActivity", "Failed to log crash", e2)
+            Log.e("EditorActivity", "Crash in onCreate setContent", e)
+            diagnostics.error("EDITOR", "Crash in onCreate setContent", e)
+            // Show a minimal error screen instead of crashing
+            setContent {
+                OneDocTheme {
+                    Text(
+                        text = "Editor failed to load. See Diagnostics log.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.fillMaxSize().padding(16.dp),
+                    )
+                }
             }
-            throw e
         }
     }
 }
@@ -104,11 +109,12 @@ fun EditorScreen(documentId: String, isNew: Boolean) {
         Text(text = docState.value?.title ?: "Untitled", style = MaterialTheme.typography.headlineSmall)
         Divider()
 
-        if (docState.value != null) {
+        val currentDoc = docState.value
+        if (currentDoc != null) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp),
             ) {
-                items(docState.value!!.blocks, key = { it.id }) { block ->
+                items(currentDoc.blocks, key = { it.id }) { block ->
                     when (block) {
                         is Block.Paragraph -> {
                             val textState = remember(block.id) { mutableStateOf(block.text) }
@@ -117,15 +123,15 @@ fun EditorScreen(documentId: String, isNew: Boolean) {
                                 onValueChange = { newText ->
                                     try {
                                         textState.value = newText
-                                        val updatedBlocks = docState.value!!.blocks.map { b ->
+                                        val updatedBlocks = currentDoc.blocks.map { b ->
                                             if (b.id == block.id && b is Block.Paragraph)
                                                 b.copy(text = newText)
                                             else b
                                         }
-                                        docState.value = docState.value!!.copy(
+                                        docState.value = currentDoc.copy(
                                             blocks = updatedBlocks,
                                             updatedAt = System.currentTimeMillis(),
-                                            version = docState.value!!.version + 1,
+                                            version = currentDoc.version + 1,
                                         )
                                     } catch (e: Exception) {
                                         Log.e("EditorActivity", "Failed to update text", e)

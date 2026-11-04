@@ -25,11 +25,11 @@ import app.onedoc.ui.theme.OneDocTheme
 class SettingsActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        try {
-            super.onCreate(savedInstanceState)
-            val diagnostics = app.onedoc.diagnostics.DiagnosticsLogger(this)
-            diagnostics.recordNavigation("launcher/Home", "SettingsActivity")
+        super.onCreate(savedInstanceState)
+        val diagnostics = app.onedoc.diagnostics.DiagnosticsLogger(this)
+        diagnostics.recordNavigation("launcher/Home", "SettingsActivity")
 
+        try {
             setContent {
                 OneDocTheme {
                     SettingsScreen(
@@ -38,13 +38,18 @@ class SettingsActivity : ComponentActivity() {
                 }
             }
         } catch (e: Exception) {
-            Log.e("SettingsActivity", "Crash in onCreate", e)
-            try {
-                app.onedoc.diagnostics.DiagnosticsLogger(this).error("SETTINGS", "Crash in onCreate", e)
-            } catch (e2: Exception) {
-                Log.e("SettingsActivity", "Failed to log crash", e2)
+            Log.e("SettingsActivity", "Crash in onCreate setContent", e)
+            diagnostics.error("SETTINGS", "Crash in onCreate setContent", e)
+            // Show a minimal error screen instead of crashing
+            setContent {
+                OneDocTheme {
+                    Text(
+                        text = "Settings failed to load. See Diagnostics log.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.fillMaxSize().padding(16.dp),
+                    )
+                }
             }
-            throw e
         }
     }
 }

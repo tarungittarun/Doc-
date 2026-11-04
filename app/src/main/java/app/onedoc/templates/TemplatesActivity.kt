@@ -37,10 +37,10 @@ class TemplatesActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        try {
-            super.onCreate(savedInstanceState)
-            diagnostics.recordNavigation("HomeActivity", "TemplatesActivity")
+        super.onCreate(savedInstanceState)
+        diagnostics.recordNavigation("HomeActivity", "TemplatesActivity")
 
+        try {
             setContent {
                 OneDocTheme {
                     TemplatesScreen(
@@ -54,13 +54,18 @@ class TemplatesActivity : ComponentActivity() {
                 }
             }
         } catch (e: Exception) {
-            Log.e("TemplatesActivity", "Crash in onCreate", e)
-            try {
-                diagnostics.error("TEMPLATES", "Crash in onCreate", e)
-            } catch (e2: Exception) {
-                Log.e("TemplatesActivity", "Failed to log crash", e2)
+            Log.e("TemplatesActivity", "Crash in onCreate setContent", e)
+            diagnostics.error("TEMPLATES", "Crash in onCreate setContent", e)
+            // Show a minimal error screen instead of crashing
+            setContent {
+                OneDocTheme {
+                    Text(
+                        text = "Templates failed to load. See Diagnostics log.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.fillMaxSize().padding(16.dp),
+                    )
+                }
             }
-            throw e
         }
     }
 
