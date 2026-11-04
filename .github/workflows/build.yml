@@ -116,16 +116,29 @@ jobs:
         run: echo "::notice::BUILD_TOOLS:$(ls $ANDROID_HOME/build-tools/ 2>/dev/null | tr '\n' ',' | sed 's/,$//')"
       - name: Create local.properties
         run: echo "sdk.dir=${ANDROID_HOME:-$ANDROID_SDK_ROOT}" > local.properties
-      - name: Restore debug keystore for consistent signing
+      - name: Restore debug keystore from same run (build-debug)
         uses: actions/download-artifact@v4
-        id: restore-keystore
+        id: restore-keystore-same-run
         with:
           name: debug-keystore
           path: .
           github-token: ${{ github.token }}
         continue-on-error: true
+      - name: Restore debug keystore from latest successful run (cross-run persistence)
+        if: steps.restore-keystore-same-run.outcome != 'success'
+        id: restore-keystore-cross-run
+        run: |
+          # Try to get the latest successful run's debug-keystore artifact
+          LATEST_RUN=$(gh api repos/$GITHUB_REPOSITORY/actions/runs -q '.workflow_runs[] | select(.status == "completed" and .conclusion == "success" and .head_branch == "arena/db667982-doc") | .[0].id' 2>/dev/null || echo "")
+          if [ -n "$LATEST_RUN" ] && [ "$LATEST_RUN" != "$GITHUB_RUN_ID" ]; then
+            ARTIFACT_URL=$(gh api repos/$GITHUB_REPOSITORY/actions/runs/$LATEST_RUN/artifacts -q '.artifacts[] | select(.name == "debug-keystore") | .archive_download_url' 2>/dev/null || echo "")
+            if [ -n "$ARTIFACT_URL" ]; then
+              gh api -X GET "$ARTIFACT_URL" -H 'Accept: application/zip' > /tmp/keystore.zip 2>/dev/null && unzip -o /tmp/keystore.zip -d . && echo "Restored keystore from run $LATEST_RUN" && echo "keystore_restored=true" >> $GITHUB_OUTPUT && exit 0
+            fi
+          fi
+          echo "keystore_restored=false" >> $GITHUB_OUTPUT
       - name: Create debug keystore if not restored
-        if: steps.restore-keystore.outcome != 'success'
+        if: steps.restore-keystore-same-run.outcome != 'success' && steps.restore-keystore-cross-run.outputs.keystore_restored != 'true'
         run: keytool -genkeypair -v -keystore debug.keystore -storepass android -keypass android -alias androiddebugkey -dname "CN=OneDoc Debug,O=OneDoc,C=US" -keyalg RSA -keysize 2048 -validity 10000
       - name: Gradle version
         run: |
