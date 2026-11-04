@@ -1,0 +1,8 @@
+<resources>
+    <style name="Theme.OneDoc" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@android:color/white</item>
+        <item name="android:colorPrimary">#2563EB</item>
+        <item name="android:colorPrimaryDark">#1D4ED8</item>
+        <item name="android:colorAccent">#2563EB</item>
+    </style>
+</resources>
