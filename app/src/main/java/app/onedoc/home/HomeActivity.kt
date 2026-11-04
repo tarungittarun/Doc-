@@ -2,6 +2,7 @@ package app.onedoc.home
 
 import android.content.Intent
 import android.os.Bundle
+import android.os.SystemClock
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -37,6 +38,7 @@ class HomeActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val launchStart = SystemClock.elapsedRealtime()
 
         // Record navigation — catch any failure so it doesn't crash app launch
         try {
@@ -46,6 +48,7 @@ class HomeActivity : ComponentActivity() {
         }
 
         try {
+            Log.d("HomeActivity", "Cold start: setContent started at ${SystemClock.elapsedRealtime() - launchStart}ms")
             setContent {
                 OneDocTheme {
                     HomeScreen(
@@ -77,6 +80,7 @@ class HomeActivity : ComponentActivity() {
                 }
             }
         }
+        Log.d("HomeActivity", "Cold start: setContent completed at ${SystemClock.elapsedRealtime() - launchStart}ms")
     }
 
     private fun createNewDocument() {
