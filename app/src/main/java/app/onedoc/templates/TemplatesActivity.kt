@@ -41,7 +41,6 @@ class TemplatesActivity : ComponentActivity() {
                 OneDocTheme {
                     TemplatesScreen(
                         context = this@TemplatesActivity,
-                        repository = repository,
                         onTemplateSelected = { template ->
                             createDocumentFromTemplate(template)
                         },
@@ -104,7 +103,6 @@ class TemplatesActivity : ComponentActivity() {
 @Composable
 fun TemplatesScreen(
     context: android.content.Context,
-    repository: DocumentRepository,
     onTemplateSelected: (Template) -> Unit,
     onClose: () -> Unit,
 ) {
