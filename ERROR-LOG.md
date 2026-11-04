@@ -73,21 +73,21 @@ This file tracks every build/runtime error encountered, its root cause, category
 
 ---
 
-## Current State (as of commit 4b3f3c0)
+## Current State (as of commit dc7b5a9)
 
-- CI Lane: GREEN ✅ (run 41828135429, 18m26s) — ALL 7 jobs pass
+- CI Lane: GREEN ✅ (run 41884668947, 19m35s) — ALL 7 jobs pass
 - Debug APKs: Built successfully
-- Release APK: Built successfully, signed with persistent debug keystore
+- Release APK: Built successfully, signed with persistent debug keystore, versionCode 6, versionName 1.0.5
 - Traceability `--check --strict`: Passes
 - Static gates (no internet permission): Passes
 - Emulator tests: Shard-1 (home) + Shard-2 (performance), both pass
 - Screenshots: Captured from both shards via `adb shell screencap` + `adb pull`
 - Screenshot PDF report: Generated successfully (`onedoc-screenshot-report` artifact)
-- Same-app updates: applicationId app.onedoc unchanged, same signing key (cross-run persistence), versionCode 5
+- Same-app updates: applicationId app.onedoc unchanged, same signing key (cross-run persistence), versionCode 6
 
 ### APK Download
-https://github.com/tarungittarun/Doc-/actions/runs/41828135429 → Artifacts → `onedoc-release-apks`
-https://github.com/tarungittarun/Doc-/actions/runs/41828135429 → Artifacts → `onedoc-screenshot-report`
+https://github.com/tarungittarun/Doc-/actions/runs/41884668947 → Artifacts → `onedoc-release-apks`
+https://github.com/tarungittarun/Doc-/actions/runs/41884668947 → Artifacts → `onedoc-screenshot-report`
 
 Note: GitHub Actions artifacts are downloaded as ZIP files containing the APK. Direct single-file APK download is not supported by GitHub Actions artifacts.
 
@@ -96,6 +96,12 @@ Note: GitHub Actions artifacts are downloaded as ZIP files containing the APK. D
 - OneDocApplication: global uncaught exception handler catches all crashes, logs to DiagnosticsLogger
 - Room DB: deferred initialization — created only when first document is created/opened, not at app launch
 - Performance budget: cold start 30000ms (realistic for Compose + Room on emulator)
+- Off-main-thread DB operations (TemplatesActivity, EditorActivity) to prevent ANR
+- Background thread for diagnostics file export (DiagnosticsLogger) to prevent ANR
+
+### Version History
+- v1.0.4 / versionCode 5 — previous release
+- v1.0.5 / versionCode 6 — current (bumped for same-app update)
 
 ### Crash Fixes Applied
 - All 5 activities (Home, Editor, Settings, Templates, Diagnostics): catch blocks no longer re-throw; show fallback error screen
