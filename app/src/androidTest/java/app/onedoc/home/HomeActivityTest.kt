@@ -11,7 +11,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
-import java.io.FileOutputStream
 
 /**
  * Instrumentation test that verifies the app launches and the "New document"
@@ -32,12 +31,9 @@ class HomeActivityTest {
 
     private fun captureScreenshot(name: String) {
         try {
-            val bitmap = device.takeScreenshot()
-            val dir = File(
-                InstrumentationRegistry.getTargetContext()
-                    .getExternalFilesDir(null),
-                "screenshots"
-            )
+            val bitmap = device.takeScreenshot() ?: return
+            val context = InstrumentationRegistry.getInstrumentation().targetContext
+            val dir = File(context.getExternalFilesDir(null), "screenshots")
             dir.mkdirs()
             val file = File(dir, "$name.png")
             file.outputStream().use { out ->
@@ -50,20 +46,16 @@ class HomeActivityTest {
 
     @Test
     fun appLaunchesAndNewDocumentButtonNavigatesToEditor() {
-        // Step 1: Verify app launches and shows home screen
         captureScreenshot("01_app_launched")
         val appTitle = device.wait(Until.findObject(By.text("OneDoc")), 10000)
         assert(appTitle != null) { "App title 'OneDoc' should be visible on launch" }
 
-        // Step 2: Wait for "New document" button to appear
         captureScreenshot("02_home_screen")
         val newDocButton = device.wait(Until.findObject(By.text("New document")), 10000)
         assert(newDocButton != null) { "New document button should be visible" }
 
-        // Step 3: Click "New document"
         newDocButton.click()
 
-        // Step 4: Wait for editor to load - look for "Untitled document" title
         captureScreenshot("03_after_click_new_doc")
         val titleField = device.wait(Until.findObject(By.text("Untitled document")), 10000)
         assert(titleField != null) { "Editor screen should open after clicking New document" }
