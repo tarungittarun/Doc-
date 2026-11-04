@@ -147,10 +147,11 @@ jobs:
       - name: Create local.properties
         run: echo "sdk.dir=${ANDROID_HOME:-$ANDROID_SDK_ROOT}" > local.properties
       - name: Build debug + test APKs
-        run: /opt/gradle-8.10.2/bin/gradle --no-daemon --max-workers=1 --stacktrace assembleDebug assembleDebugAndroidTest 2>&1 | tee /tmp/gradle-build.log
-        GRADLE_EXIT=${PIPESTATUS[0]}
-        grep -E '^(e:|Execution failed|FAILED|Exception|Caused by|Error:|Could not|What went wrong)' /tmp/gradle-build.log 2>/dev/null | head -60 | while read line; do echo "::notice::GRADLE_KEY: $line"; done
-        exit $GRADLE_EXIT
+        run: |
+          /opt/gradle-8.10.2/bin/gradle --no-daemon --max-workers=1 --stacktrace assembleDebug assembleDebugAndroidTest 2>&1 | tee /tmp/gradle-build.log
+          GRADLE_EXIT=${PIPESTATUS[0]}
+          grep -E '^(e:|Execution failed|FAILED|Exception|Caused by|Error:|Could not|What went wrong)' /tmp/gradle-build.log 2>/dev/null | head -60 | while read line; do echo "::notice::GRADLE_KEY: $line"; done
+          exit $GRADLE_EXIT
       - name: Run emulator tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
