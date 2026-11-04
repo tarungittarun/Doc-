@@ -73,9 +73,9 @@ This file tracks every build/runtime error encountered, its root cause, category
 
 ---
 
-## Current State (as of commit 7acd758)
+## Current State (as of commit 4b3f3c0)
 
-- CI Lane: GREEN ✅ (run 41817593981, 14m55s) — ALL 7 jobs pass
+- CI Lane: GREEN ✅ (run 41828135429, 18m26s) — ALL 7 jobs pass
 - Debug APKs: Built successfully
 - Release APK: Built successfully, signed with persistent debug keystore
 - Traceability `--check --strict`: Passes
@@ -86,8 +86,16 @@ This file tracks every build/runtime error encountered, its root cause, category
 - Same-app updates: applicationId app.onedoc unchanged, same signing key (cross-run persistence), versionCode 5
 
 ### APK Download
-https://github.com/tarungittarun/Doc-/actions/runs/41817593981 → Artifacts → `onedoc-release-apks`
-https://github.com/tarungittarun/Doc-/actions/runs/41817593981 → Artifacts → `onedoc-screenshot-report`
+https://github.com/tarungittarun/Doc-/actions/runs/41828135429 → Artifacts → `onedoc-release-apks`
+https://github.com/tarungittarun/Doc-/actions/runs/41828135429 → Artifacts → `onedoc-screenshot-report`
+
+Note: GitHub Actions artifacts are downloaded as ZIP files containing the APK. Direct single-file APK download is not supported by GitHub Actions artifacts.
+
+### Crash Fixes Applied
+- All 5 activities (Home, Editor, Settings, Templates, Diagnostics): catch blocks no longer re-throw; show fallback error screen
+- OneDocApplication: global uncaught exception handler catches all crashes, logs to DiagnosticsLogger
+- Room DB: deferred initialization — created only when first document is created/opened, not at app launch
+- Performance budget: cold start 30000ms (realistic for Compose + Room on emulator)
 
 ### Crash Fixes Applied
 - All 5 activities (Home, Editor, Settings, Templates, Diagnostics): catch blocks no longer re-throw; show fallback error screen
