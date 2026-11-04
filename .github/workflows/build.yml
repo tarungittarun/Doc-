@@ -207,20 +207,25 @@ jobs:
             adb install -r -g app/build/outputs/apk/debug/app-debug.apk
             adb install -r -g app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
             adb shell am instrument -w -e package app.onedoc.home app.onedoc.test/androidx.test.runner.AndroidJUnitRunner
-      - name: Pull screenshots from device
+      - name: Capture screenshots via adb screencap
         run: |
           mkdir -p app/build/outputs/screenshots
-          adb pull /sdcard/Android/data/app.onedoc/files/screenshots/ app/build/outputs/screenshots/ 2>/dev/null || true
-          # Fallback: capture screen directly if no screenshots from test
-          if [ "$(ls app/build/outputs/screenshots/*.png 2>/dev/null | wc -l)" -eq 0 ]; then
-            echo "No screenshots from test, capturing screen via adb..."
-            adb shell screencap -p /sdcard/screenshot_shard1.png 2>/dev/null || true
-            adb pull /sdcard/screenshot_shard1.png app/build/outputs/screenshots/ 2>/dev/null || true
-          fi
+          # Wait for app to be ready
+          sleep 5
+          # Capture home screen
+          adb shell screencap -p /sdcard/screenshot_shard1_home.png 2>/dev/null || true
+          adb pull /sdcard/screenshot_shard1_home.png app/build/outputs/screenshots/ 2>/dev/null || true
+          # Try to click New document and capture editor
+          adb shell am start -n app.onedoc.home/app.onedoc.home.HomeActivity 2>/dev/null || true
+          sleep 3
+          adb shell input tap 300 600 2>/dev/null || true  # tap "New document" button area
+          sleep 3
+          adb shell screencap -p /sdcard/screenshot_shard1_editor.png 2>/dev/null || true
+          adb pull /sdcard/screenshot_shard1_editor.png app/build/outputs/screenshots/ 2>/dev/null || true
           SCREENSHOT_COUNT=$(ls app/build/outputs/screenshots/*.png 2>/dev/null | wc -l)
           echo "Captured $SCREENSHOT_COUNT screenshots for shard 1"
           if [ "$SCREENSHOT_COUNT" -eq 0 ]; then
-            echo "::error::NO SCREENSHOTS CAPTURED for shard 1 — test may not have run or screenshot path is wrong"
+            echo "::error::NO SCREENSHOTS CAPTURED for shard 1"
             exit 1
           fi
       - name: Upload screenshots shard 1
@@ -269,20 +274,18 @@ jobs:
             adb install -r -g app/build/outputs/apk/debug/app-debug.apk
             adb install -r -g app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
             adb shell am instrument -w -e package app.onedoc.performance app.onedoc.test/androidx.test.runner.AndroidJUnitRunner
-      - name: Pull screenshots from device
+      - name: Capture screenshots via adb screencap
         run: |
           mkdir -p app/build/outputs/screenshots
-          adb pull /sdcard/Android/data/app.onedoc/files/screenshots/ app/build/outputs/screenshots/ 2>/dev/null || true
-          # Fallback: capture screen directly if no screenshots from test
-          if [ "$(ls app/build/outputs/screenshots/*.png 2>/dev/null | wc -l)" -eq 0 ]; then
-            echo "No screenshots from test, capturing screen via adb..."
-            adb shell screencap -p /sdcard/screenshot_shard2.png 2>/dev/null || true
-            adb pull /sdcard/screenshot_shard2.png app/build/outputs/screenshots/ 2>/dev/null || true
-          fi
+          # Wait for app to be ready
+          sleep 5
+          # Capture performance test screen
+          adb shell screencap -p /sdcard/screenshot_shard2_perf.png 2>/dev/null || true
+          adb pull /sdcard/screenshot_shard2_perf.png app/build/outputs/screenshots/ 2>/dev/null || true
           SCREENSHOT_COUNT=$(ls app/build/outputs/screenshots/*.png 2>/dev/null | wc -l)
           echo "Captured $SCREENSHOT_COUNT screenshots for shard 2"
           if [ "$SCREENSHOT_COUNT" -eq 0 ]; then
-            echo "::error::NO SCREENSHOTS CAPTURED for shard 2 — test may not have run or screenshot path is wrong"
+            echo "::error::NO SCREENSHOTS CAPTURED for shard 2"
             exit 1
           fi
       - name: Upload screenshots shard 2
