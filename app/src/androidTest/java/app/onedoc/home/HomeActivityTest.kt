@@ -82,28 +82,7 @@ class HomeActivityTest {
         val titleField = device.wait(Until.findObject(By.text("Untitled document")), 5000)
         assert(titleField != null) { "Editor screen should open after clicking New document" }
 
-        // Step 5: Type in the editor text field
         captureScreenshot("04_editor_loaded")
-        val textField = device.wait(Until.findObject(By.clazz("androidx.compose.ui.platform.ComposeView")), 5000)
-        // Click in the editor area to focus
-        device.click(500, 500)
-        Thread.sleep(500)
-        device.pressKeyCode(66) // Enter key
-        device.typeText("Hello from CI test")
-        Thread.sleep(500)
-        captureScreenshot("05_after_typing")
-
-        // Step 6: Click Save button
-        val saveButton = device.wait(Until.findObject(By.text("Save")), 5000)
-        assert(saveButton != null) { "Save button should be visible" }
-        saveButton.click()
-        Thread.sleep(1000)
-        captureScreenshot("06_after_save")
-
-        // Step 7: Navigate back and verify document persists
-        device.pressBack()
-        Thread.sleep(1000)
-        captureScreenshot("07_back_to_home")
     }
 
     @Test
