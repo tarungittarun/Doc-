@@ -2,6 +2,7 @@ package app.onedoc.templates
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.clickable
@@ -36,43 +37,63 @@ class TemplatesActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        diagnostics.recordNavigation("HomeActivity", "TemplatesActivity")
+        try {
+            super.onCreate(savedInstanceState)
+            diagnostics.recordNavigation("HomeActivity", "TemplatesActivity")
 
-        setContent {
-            OneDocTheme {
-                TemplatesScreen(
-                    context = this@TemplatesActivity,
-                    repository = repository,
-                    onTemplateSelected = { template ->
-                        createDocumentFromTemplate(template)
-                    },
-                    onClose = { finish() },
-                )
+            setContent {
+                OneDocTheme {
+                    TemplatesScreen(
+                        context = this@TemplatesActivity,
+                        repository = repository,
+                        onTemplateSelected = { template ->
+                            createDocumentFromTemplate(template)
+                        },
+                        onClose = { finish() },
+                    )
+                }
             }
+        } catch (e: Exception) {
+            Log.e("TemplatesActivity", "Crash in onCreate", e)
+            try {
+                diagnostics.error("TEMPLATES", "Crash in onCreate", e)
+            } catch (e2: Exception) {
+                Log.e("TemplatesActivity", "Failed to log crash", e2)
+            }
+            throw e
         }
     }
 
     private fun createDocumentFromTemplate(template: Template) {
-        val doc = Document(
-            id = blockId(),
-            title = template.title,
-            blocks = template.blocks,
-            version = 1,
-            createdAt = System.currentTimeMillis(),
-            updatedAt = System.currentTimeMillis(),
-        )
-        CoroutineScope(Dispatchers.Main).launch {
-            repository.createDocument(doc)
-            diagnostics.recordDocumentCreated()
-            diagnostics.debug("TEMPLATES", "Created document from template: ${template.title}")
-        }
+        try {
+            val doc = Document(
+                id = blockId(),
+                title = template.title,
+                blocks = template.blocks,
+                version = 1,
+                createdAt = System.currentTimeMillis(),
+                updatedAt = System.currentTimeMillis(),
+            )
+            CoroutineScope(Dispatchers.Main).launch {
+                try {
+                    repository.createDocument(doc)
+                    diagnostics.recordDocumentCreated()
+                    diagnostics.debug("TEMPLATES", "Created document from template: ${template.title}")
+                } catch (e: Exception) {
+                    Log.e("TemplatesActivity", "Failed to create document from template", e)
+                    diagnostics.error("TEMPLATES", "Failed to create document from template", e)
+                }
+            }
 
-        val intent = Intent(this, EditorActivity::class.java)
-        intent.putExtra("documentId", doc.id)
-        intent.putExtra("isNew", false)
-        startActivity(intent)
-        finish()
+            val intent = Intent(this, EditorActivity::class.java)
+            intent.putExtra("documentId", doc.id)
+            intent.putExtra("isNew", false)
+            startActivity(intent)
+            finish()
+        } catch (e: Exception) {
+            Log.e("TemplatesActivity", "Failed to create document from template", e)
+            diagnostics.error("TEMPLATES", "Failed to create document from template", e)
+        }
     }
 
     private fun blockId() = java.util.UUID.randomUUID().toString()

@@ -2,6 +2,7 @@ package app.onedoc.home
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
@@ -39,48 +40,64 @@ class HomeActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        diagnostics.recordNavigation("launcher", "HomeActivity")
+        try {
+            super.onCreate(savedInstanceState)
+            diagnostics.recordNavigation("launcher", "HomeActivity")
 
-        setContent {
-            OneDocTheme {
-                HomeScreen(
-                    context = this@HomeActivity,
-                    repository = repository,
-                    onCreateDocument = { createNewDocument() },
-                    onDocumentClick = { doc -> openDocument(doc.id) },
-                    onOpenTemplates = { openTemplates() },
-                    onOpenSettings = { openSettings() },
-                    onOpenDiagnostics = { openDiagnostics() },
-                )
+            setContent {
+                OneDocTheme {
+                    HomeScreen(
+                        context = this@HomeActivity,
+                        repository = repository,
+                        onCreateDocument = { createNewDocument() },
+                        onDocumentClick = { doc -> openDocument(doc.id) },
+                        onOpenTemplates = { openTemplates() },
+                        onOpenSettings = { openSettings() },
+                        onOpenDiagnostics = { openDiagnostics() },
+                    )
+                }
             }
+        } catch (e: Exception) {
+            Log.e("HomeActivity", "Crash in onCreate", e)
+            diagnostics.error("HOME", "Crash in onCreate", e)
+            throw e
         }
     }
 
     private fun createNewDocument() {
-        val doc = Document(
-            id = blockId(),
-            title = "Untitled document",
-            blocks = listOf(
-                Block.Paragraph(
-                    id = blockId(),
-                    text = "",
-                )
-            ),
-            version = 1,
-            createdAt = System.currentTimeMillis(),
-            updatedAt = System.currentTimeMillis(),
-        )
-        lifecycleScope.launch {
-            repository.createDocument(doc)
-            diagnostics.recordDocumentCreated()
-            diagnostics.debug("HOME", "Created document ${doc.id}")
-        }
+        try {
+            val doc = Document(
+                id = blockId(),
+                title = "Untitled document",
+                blocks = listOf(
+                    Block.Paragraph(
+                        id = blockId(),
+                        text = "",
+                    )
+                ),
+                version = 1,
+                createdAt = System.currentTimeMillis(),
+                updatedAt = System.currentTimeMillis(),
+            )
+            lifecycleScope.launch {
+                try {
+                    repository.createDocument(doc)
+                    diagnostics.recordDocumentCreated()
+                    diagnostics.debug("HOME", "Created document ${doc.id}")
+                } catch (e: Exception) {
+                    Log.e("HomeActivity", "Failed to create document", e)
+                    diagnostics.error("HOME", "Failed to create document", e)
+                }
+            }
 
-        val intent = Intent(this, EditorActivity::class.java)
-        intent.putExtra("documentId", doc.id)
-        intent.putExtra("isNew", true)
-        startActivity(intent)
+            val intent = Intent(this, EditorActivity::class.java)
+            intent.putExtra("documentId", doc.id)
+            intent.putExtra("isNew", true)
+            startActivity(intent)
+        } catch (e: Exception) {
+            Log.e("HomeActivity", "Failed to create new document", e)
+            diagnostics.error("HOME", "Failed to create new document", e)
+        }
     }
 
     private fun openDocument(documentId: String) {

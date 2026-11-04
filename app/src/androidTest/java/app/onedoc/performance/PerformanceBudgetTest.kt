@@ -1,8 +1,15 @@
 package app.onedoc.performance
 
+import android.graphics.Bitmap
+import android.os.Environment
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import androidx.test.rule.ActivityTestRule
+import androidx.test.uiautomator.UiDevice
+import java.io.File
+import java.io.FileOutputStream
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -22,14 +29,41 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class PerformanceBudgetTest {
 
+    private lateinit var device: UiDevice
+    private val dateFormat = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
+
+    private fun captureScreenshot(name: String) {
+        try {
+            val bitmap: Bitmap? = device.takeScreenshot()
+            if (bitmap != null) {
+                val timestamp = dateFormat.format(Date())
+                val fileName = "onedoc_perf_${name}_$timestamp.png"
+                val screenshotsDir = File(
+                    InstrumentationRegistry.getInstrumentation().targetContext
+                        .getExternalFilesDir(Environment.DIRECTORY_PICTURES),
+                    "onedoc_screenshots"
+                )
+                screenshotsDir.mkdirs()
+                val file = File(screenshotsDir, fileName)
+                file.outputStream().use { os ->
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 90, os)
+                }
+            }
+        } catch (e: Exception) {
+            // Screenshot capture failure should not fail the test
+        }
+    }
+
     @get:Rule
-    val activityRule = ActivityTestRule(app.onedoc.home.HomeActivity::class.java)
+    val activityRule = androidx.test.ext.junit.rules.ActivityScenarioRule(app.onedoc.home.HomeActivity::class.java)
 
     @Test
     fun coldStartUnder1_2s() {
+        device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         val start = System.currentTimeMillis()
         val activity = activityRule.activity
         val elapsed = System.currentTimeMillis() - start
+        captureScreenshot("cold_start")
         // Budget: cold start < 5000ms on CI emulator
         org.junit.Assert.assertTrue(
             "Cold start ${elapsed}ms exceeds 5000ms budget",
@@ -39,6 +73,7 @@ class PerformanceBudgetTest {
 
     @Test
     fun typingP95Under50ms() {
+        device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         // Measure typing latency across multiple keystrokes
         val latencies = mutableListOf<Long>()
         for (i in 1..100) {
@@ -48,6 +83,7 @@ class PerformanceBudgetTest {
             val t1 = System.nanoTime()
             latencies.add((t1 - t0) / 1_000_000) // ms
         }
+        captureScreenshot("typing_p95")
         latencies.sortDescending()
         val p95 = latencies[(latencies.size * 0.95).toInt().coerceAtLeast(0).coerceAtMost(latencies.size - 1)]
         org.junit.Assert.assertTrue(
@@ -58,10 +94,12 @@ class PerformanceBudgetTest {
 
     @Test
     fun searchUnder300ms() {
+        device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         val t0 = System.currentTimeMillis()
         // Simulate search: type in search field and wait for results
         InstrumentationRegistry.getInstrumentation().waitForIdleSync()
         val elapsed = System.currentTimeMillis() - t0
+        captureScreenshot("search")
         org.junit.Assert.assertTrue(
             "Search ${elapsed}ms exceeds 1000ms budget",
             elapsed < 1000,

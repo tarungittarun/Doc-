@@ -50,7 +50,18 @@ jobs:
         run: echo "::notice::BUILD_TOOLS:$(ls $ANDROID_HOME/build-tools/ 2>/dev/null | tr '\n' ',' | sed 's/,$//')"
       - name: Create local.properties
         run: echo "sdk.dir=${ANDROID_HOME:-$ANDROID_SDK_ROOT}" > local.properties
+      - name: Restore debug keystore from previous run (for same-app updates)
+        id: restore-keystore
+        run: |
+          if [ -f debug.keystore ]; then
+            echo "Keystore already exists in repo"
+            echo "keystore_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "No keystore in repo, will generate one"
+            echo "keystore_exists=false" >> $GITHUB_OUTPUT
+          fi
       - name: Create debug keystore for release signing
+        if: steps.restore-keystore.outputs.keystore_exists == 'false'
         run: keytool -genkeypair -v -keystore debug.keystore -storepass android -keypass android -alias androiddebugkey -dname "CN=OneDoc Debug,O=OneDoc,C=US" -keyalg RSA -keysize 2048 -validity 10000
       - name: Gradle version
         run: |
@@ -73,6 +84,14 @@ jobs:
         with:
           name: onedoc-debug-apks
           path: app/build/outputs/apk/**/*.apk
+          if-no-files-found: warn
+      - name: Upload debug keystore for same-app updates
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: debug-keystore
+          path: debug.keystore
+          retention-days: 90
           if-no-files-found: warn
 
   build-release:
@@ -97,7 +116,16 @@ jobs:
         run: echo "::notice::BUILD_TOOLS:$(ls $ANDROID_HOME/build-tools/ 2>/dev/null | tr '\n' ',' | sed 's/,$//')"
       - name: Create local.properties
         run: echo "sdk.dir=${ANDROID_HOME:-$ANDROID_SDK_ROOT}" > local.properties
-      - name: Create debug keystore for release signing
+      - name: Restore debug keystore for consistent signing
+        uses: actions/download-artifact@v4
+        id: restore-keystore
+        with:
+          name: debug-keystore
+          path: .
+          github-token: ${{ github.token }}
+        continue-on-error: true
+      - name: Create debug keystore if not restored
+        if: steps.restore-keystore.outcome != 'success'
         run: keytool -genkeypair -v -keystore debug.keystore -storepass android -keypass android -alias androiddebugkey -dname "CN=OneDoc Debug,O=OneDoc,C=US" -keyalg RSA -keysize 2048 -validity 10000
       - name: Gradle version
         run: |
@@ -128,8 +156,8 @@ jobs:
           retention-days: 30
           if-no-files-found: warn
 
-  emulator-test:
-    name: Emulator instrumentation tests
+  emulator-test-shard-1:
+    name: Emulator tests shard 1
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     needs: [build-debug]
@@ -152,7 +180,7 @@ jobs:
           GRADLE_EXIT=${PIPESTATUS[0]}
           grep -E '^(e:|Execution failed|FAILED|Exception|Caused by|Error:|Could not|What went wrong)' /tmp/gradle-build.log 2>/dev/null | head -60 | while read line; do echo "::notice::GRADLE_KEY: $line"; done
           exit $GRADLE_EXIT
-      - name: Run emulator tests
+      - name: Run emulator tests shard 1
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 30
@@ -165,13 +193,113 @@ jobs:
             adb wait-for-device
             adb install -r -g app/build/outputs/apk/debug/app-debug.apk
             adb install -r -g app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
-            adb shell am instrument -w app.onedoc.test/androidx.test.runner.AndroidJUnitRunner
+            adb shell am instrument -w -e package app.onedoc.home app.onedoc.test/androidx.test.runner.AndroidJUnitRunner
+      - name: Upload screenshots shard 1
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: screenshots-shard-1
+          path: app/build/outputs/screenshots/**/*.png
+          retention-days: 30
+          if-no-files-found: warn
+
+  emulator-test-shard-2:
+    name: Emulator tests shard 2
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    needs: [build-debug]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install Gradle 8.10.2
+        run: curl -fsSL https://services.gradle.org/distributions/gradle-8.10.2-bin.zip -o /tmp/gradle.zip && unzip -q /tmp/gradle.zip -d /opt && echo "/opt/gradle-8.10.2/bin" >> $GITHUB_PATH
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Create local.properties
+        run: echo "sdk.dir=${ANDROID_HOME:-$ANDROID_SDK_ROOT}" > local.properties
+      - name: Build debug + test APKs
+        run: |
+          /opt/gradle-8.10.2/bin/gradle --no-daemon --max-workers=1 --stacktrace assembleDebug assembleDebugAndroidTest 2>&1 | tee /tmp/gradle-build.log
+          GRADLE_EXIT=${PIPESTATUS[0]}
+          grep -E '^(e:|Execution failed|FAILED|Exception|Caused by|Error:|Could not|What went wrong)' /tmp/gradle-build.log 2>/dev/null | head -60 | while read line; do echo "::notice::GRADLE_KEY: $line"; done
+          exit $GRADLE_EXIT
+      - name: Run emulator tests shard 2
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          arch: x86_64
+          profile: pixel_2
+          force-avd-creation: true
+          disable-animations: true
+          emulator-boot-timeout: 600
+          script: |
+            adb wait-for-device
+            adb install -r -g app/build/outputs/apk/debug/app-debug.apk
+            adb install -r -g app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+            adb shell am instrument -w -e package app.onedoc.performance app.onedoc.test/androidx.test.runner.AndroidJUnitRunner
+      - name: Upload screenshots shard 2
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: screenshots-shard-2
+          path: app/build/outputs/screenshots/**/*.png
+          retention-days: 30
+          if-no-files-found: warn
+
+  screenshots-pdf:
+    name: Generate screenshot PDF report
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    needs: [emulator-test-shard-1, emulator-test-shard-2]
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download screenshots shard 1
+        uses: actions/download-artifact@v4
+        with:
+          name: screenshots-shard-1
+          path: screenshots/shard-1
+          github-token: ${{ github.token }}
+        continue-on-error: true
+      - name: Download screenshots shard 2
+        uses: actions/download-artifact@v4
+        with:
+          name: screenshots-shard-2
+          path: screenshots/shard-2
+          github-token: ${{ github.token }}
+        continue-on-error: true
+      - name: Generate PDF report
+        run: |
+          mkdir -p screenshots/combined
+          cp screenshots/shard-1/*.png screenshots/combined/ 2>/dev/null || true
+          cp screenshots/shard-2/*.png screenshots/combined/ 2>/dev/null || true
+          if [ -d screenshots/combined ] && [ "$(ls screenshots/combined/*.png 2>/dev/null | wc -l)" -gt 0 ]; then
+            sudo apt-get update -qq && sudo apt-get install -y -qq imagemagick
+            cd screenshots/combined
+            convert *.png ../onedoc-screenshot-report.pdf
+            cd ../..
+          else
+            echo "No screenshots found, creating empty placeholder"
+            echo "No screenshots captured" > onedoc-screenshot-report.txt
+          fi
+      - name: Upload screenshot PDF
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: onedoc-screenshot-report
+          path: onedoc-screenshot-report.*
+          retention-days: 30
+          if-no-files-found: warn
 
   verify-ci-lane:
     name: CI lane green
     runs-on: ubuntu-24.04
     timeout-minutes: 10
-    needs: [traceability, build-debug, build-release, emulator-test]
+    needs: [traceability, build-debug, build-release, emulator-test-shard-1, emulator-test-shard-2]
     if: always()
     steps:
       - uses: actions/checkout@v4

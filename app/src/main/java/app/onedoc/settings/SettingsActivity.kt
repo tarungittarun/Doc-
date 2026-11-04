@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.clickable
@@ -24,16 +25,26 @@ import app.onedoc.ui.theme.OneDocTheme
 class SettingsActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        val diagnostics = app.onedoc.diagnostics.DiagnosticsLogger(this)
-        diagnostics.recordNavigation("launcher/Home", "SettingsActivity")
+        try {
+            super.onCreate(savedInstanceState)
+            val diagnostics = app.onedoc.diagnostics.DiagnosticsLogger(this)
+            diagnostics.recordNavigation("launcher/Home", "SettingsActivity")
 
-        setContent {
-            OneDocTheme {
-                SettingsScreen(
-                    context = this@SettingsActivity,
-                )
+            setContent {
+                OneDocTheme {
+                    SettingsScreen(
+                        context = this@SettingsActivity,
+                    )
+                }
             }
+        } catch (e: Exception) {
+            Log.e("SettingsActivity", "Crash in onCreate", e)
+            try {
+                app.onedoc.diagnostics.DiagnosticsLogger(this).error("SETTINGS", "Crash in onCreate", e)
+            } catch (e2: Exception) {
+                Log.e("SettingsActivity", "Failed to log crash", e2)
+            }
+            throw e
         }
     }
 }
@@ -72,9 +83,14 @@ fun SettingsScreen(context: android.content.Context) {
             item {
                 ListItem(
                     modifier = Modifier.fillMaxWidth().clickable {
-                        val intent = app.onedoc.diagnostics.DiagnosticsActivity.createIntent(localContext)
-                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                        localContext.startActivity(intent)
+                        try {
+                            val intent = app.onedoc.diagnostics.DiagnosticsActivity.createIntent(localContext)
+                            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                            localContext.startActivity(intent)
+                        } catch (e: Exception) {
+                            Log.e("SettingsActivity", "Failed to open diagnostics", e)
+                            app.onedoc.diagnostics.DiagnosticsLogger(localContext).error("SETTINGS", "Failed to open diagnostics", e)
+                        }
                     },
                     headlineContent = { Text(text = "Diagnostics", style = MaterialTheme.typography.bodyLarge) },
                     supportingContent = { Text(text = "View logs, export diagnostics file", style = MaterialTheme.typography.bodyMedium) },
@@ -83,7 +99,12 @@ fun SettingsScreen(context: android.content.Context) {
             item {
                 ListItem(
                     modifier = Modifier.fillMaxWidth().clickable {
-                        app.onedoc.diagnostics.DiagnosticsLogger(localContext).debug("SETTINGS", "Self-test requested")
+                        try {
+                            app.onedoc.diagnostics.DiagnosticsLogger(localContext).debug("SETTINGS", "Self-test requested")
+                        } catch (e: Exception) {
+                            Log.e("SettingsActivity", "Self-test failed", e)
+                            app.onedoc.diagnostics.DiagnosticsLogger(localContext).error("SETTINGS", "Self-test failed", e)
+                        }
                     },
                     headlineContent = { Text(text = "Self-test", style = MaterialTheme.typography.bodyLarge) },
                     supportingContent = { Text(text = "Run offline diagnostics self-test", style = MaterialTheme.typography.bodyMedium) },

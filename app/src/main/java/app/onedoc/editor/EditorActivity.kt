@@ -2,6 +2,7 @@ package app.onedoc.editor
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
@@ -29,20 +30,30 @@ class EditorActivity : ComponentActivity() {
     private var isNew: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        documentId = intent.getStringExtra("documentId") ?: ""
-        isNew = intent.getBooleanExtra("isNew", false)
+        try {
+            super.onCreate(savedInstanceState)
+            documentId = intent.getStringExtra("documentId") ?: ""
+            isNew = intent.getBooleanExtra("isNew", false)
 
-        val diagnostics = app.onedoc.diagnostics.DiagnosticsLogger(this)
-        diagnostics.recordNavigation("HomeActivity", "EditorActivity")
+            val diagnostics = app.onedoc.diagnostics.DiagnosticsLogger(this)
+            diagnostics.recordNavigation("HomeActivity", "EditorActivity")
 
-        setContent {
-            OneDocTheme {
-                EditorScreen(
-                    documentId = documentId,
-                    isNew = isNew,
-                )
+            setContent {
+                OneDocTheme {
+                    EditorScreen(
+                        documentId = documentId,
+                        isNew = isNew,
+                    )
+                }
             }
+        } catch (e: Exception) {
+            Log.e("EditorActivity", "Crash in onCreate", e)
+            try {
+                app.onedoc.diagnostics.DiagnosticsLogger(this).error("EDITOR", "Crash in onCreate", e)
+            } catch (e2: Exception) {
+                Log.e("EditorActivity", "Failed to log crash", e2)
+            }
+            throw e
         }
     }
 }
@@ -58,29 +69,34 @@ fun EditorScreen(documentId: String, isNew: Boolean) {
 
     if (docState.value == null) {
         coroutineScope.launch {
-            val loaded: Document
-            if (isNew || documentId.isEmpty()) {
-                loaded = Document(
-                    id = blockId(),
-                    title = "Untitled document",
-                    blocks = listOf(Block.Paragraph(id = blockId(), text = "")),
-                    version = 1,
-                    createdAt = System.currentTimeMillis(),
-                    updatedAt = System.currentTimeMillis(),
-                )
-                repository.createDocument(loaded)
-                app.onedoc.diagnostics.DiagnosticsLogger(localContext).recordDocumentCreated()
-            } else {
-                loaded = repository.getDocument(documentId) ?: Document(
-                    id = documentId,
-                    title = "Untitled document",
-                    blocks = listOf(Block.Paragraph(id = blockId(), text = "")),
-                    version = 1,
-                    createdAt = System.currentTimeMillis(),
-                    updatedAt = System.currentTimeMillis(),
-                )
+            try {
+                val loaded: Document
+                if (isNew || documentId.isEmpty()) {
+                    loaded = Document(
+                        id = blockId(),
+                        title = "Untitled document",
+                        blocks = listOf(Block.Paragraph(id = blockId(), text = "")),
+                        version = 1,
+                        createdAt = System.currentTimeMillis(),
+                        updatedAt = System.currentTimeMillis(),
+                    )
+                    repository.createDocument(loaded)
+                    app.onedoc.diagnostics.DiagnosticsLogger(localContext).recordDocumentCreated()
+                } else {
+                    loaded = repository.getDocument(documentId) ?: Document(
+                        id = documentId,
+                        title = "Untitled document",
+                        blocks = listOf(Block.Paragraph(id = blockId(), text = "")),
+                        version = 1,
+                        createdAt = System.currentTimeMillis(),
+                        updatedAt = System.currentTimeMillis(),
+                    )
+                }
+                docState.value = loaded
+            } catch (e: Exception) {
+                Log.e("EditorActivity", "Failed to load document", e)
+                app.onedoc.diagnostics.DiagnosticsLogger(localContext).error("EDITOR", "Failed to load document", e)
             }
-            docState.value = loaded
         }
     }
 
@@ -99,17 +115,22 @@ fun EditorScreen(documentId: String, isNew: Boolean) {
                             TextField(
                                 value = textState.value,
                                 onValueChange = { newText ->
-                                    textState.value = newText
-                                    val updatedBlocks = docState.value!!.blocks.map { b ->
-                                        if (b.id == block.id && b is Block.Paragraph)
-                                            b.copy(text = newText)
-                                        else b
+                                    try {
+                                        textState.value = newText
+                                        val updatedBlocks = docState.value!!.blocks.map { b ->
+                                            if (b.id == block.id && b is Block.Paragraph)
+                                                b.copy(text = newText)
+                                            else b
+                                        }
+                                        docState.value = docState.value!!.copy(
+                                            blocks = updatedBlocks,
+                                            updatedAt = System.currentTimeMillis(),
+                                            version = docState.value!!.version + 1,
+                                        )
+                                    } catch (e: Exception) {
+                                        Log.e("EditorActivity", "Failed to update text", e)
+                                        app.onedoc.diagnostics.DiagnosticsLogger(localContext).error("EDITOR", "Failed to update text", e)
                                     }
-                                    docState.value = docState.value!!.copy(
-                                        blocks = updatedBlocks,
-                                        updatedAt = System.currentTimeMillis(),
-                                        version = docState.value!!.version + 1,
-                                    )
                                 },
                                 modifier = Modifier.fillMaxWidth(),
                                 textStyle = MaterialTheme.typography.bodyLarge,
@@ -129,12 +150,22 @@ fun EditorScreen(documentId: String, isNew: Boolean) {
         ) {
             Button(
                 onClick = {
-                    val doc = docState.value
-                    if (doc != null) {
-                        coroutineScope.launch {
-                            repository.createDocument(doc)
-                            app.onedoc.diagnostics.DiagnosticsLogger(localContext).debug("EDITOR", "Saved document ${doc.id}")
+                    try {
+                        val doc = docState.value
+                        if (doc != null) {
+                            coroutineScope.launch {
+                                try {
+                                    repository.createDocument(doc)
+                                    app.onedoc.diagnostics.DiagnosticsLogger(localContext).debug("EDITOR", "Saved document ${doc.id}")
+                                } catch (e: Exception) {
+                                    Log.e("EditorActivity", "Failed to save document", e)
+                                    app.onedoc.diagnostics.DiagnosticsLogger(localContext).error("EDITOR", "Failed to save document", e)
+                                }
+                            }
                         }
+                    } catch (e: Exception) {
+                        Log.e("EditorActivity", "Save button click failed", e)
+                        app.onedoc.diagnostics.DiagnosticsLogger(localContext).error("EDITOR", "Save button click failed", e)
                     }
                 },
             ) {
@@ -142,10 +173,15 @@ fun EditorScreen(documentId: String, isNew: Boolean) {
             }
             Button(
                 onClick = {
-                    app.onedoc.diagnostics.DiagnosticsLogger(localContext).debug("EDITOR", "Diagnostics requested")
-                    val intent = app.onedoc.diagnostics.DiagnosticsActivity.createIntent(localContext)
-                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                    localContext.startActivity(intent)
+                    try {
+                        app.onedoc.diagnostics.DiagnosticsLogger(localContext).debug("EDITOR", "Diagnostics requested")
+                        val intent = app.onedoc.diagnostics.DiagnosticsActivity.createIntent(localContext)
+                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        localContext.startActivity(intent)
+                    } catch (e: Exception) {
+                        Log.e("EditorActivity", "Failed to open diagnostics", e)
+                        app.onedoc.diagnostics.DiagnosticsLogger(localContext).error("EDITOR", "Failed to open diagnostics", e)
+                    }
                 },
             ) {
                 Text(text = "Diagnostics")
