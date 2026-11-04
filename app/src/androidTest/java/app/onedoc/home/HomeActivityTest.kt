@@ -26,8 +26,6 @@ class HomeActivityTest {
     @Before
     fun setUp() {
         device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
-        // Wait for app to initialize
-        Thread.sleep(2000)
     }
 
     @Test
@@ -42,7 +40,6 @@ class HomeActivityTest {
 
         // Step 3: Click "New document"
         newDocButton.click()
-        Thread.sleep(1500) // Wait for navigation
 
         // Step 4: Wait for editor to load - look for "Untitled document" title
         val titleField = device.wait(Until.findObject(By.text("Untitled document")), 5000)
