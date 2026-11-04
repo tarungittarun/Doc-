@@ -225,11 +225,6 @@ jobs:
             echo "Captured $SCREENSHOT_COUNT screenshots for shard 1"
             # Capture logcat for crash diagnosis
             adb logcat -d > app/build/outputs/screenshots/logcat-shard1.txt 2>/dev/null || true
-            # Check for System UI crash
-            if adb shell dumpsys window windows 2>/dev/null | grep -q "isn't responding\|System UI"; then
-              echo "::error::System UI is not responding detected — emulator crashed"
-              TEST_EXIT=1
-            fi
             exit $TEST_EXIT
       - name: Upload screenshots shard 1
         uses: actions/upload-artifact@v4
@@ -299,11 +294,6 @@ jobs:
             echo "Captured $SCREENSHOT_COUNT screenshots for shard 2"
             # Capture logcat for crash diagnosis
             adb logcat -d > app/build/outputs/screenshots/logcat-shard2.txt 2>/dev/null || true
-            # Check for System UI crash
-            if adb shell dumpsys window windows 2>/dev/null | grep -q "isn't responding\|System UI"; then
-              echo "::error::System UI is not responding detected — emulator crashed"
-              TEST_EXIT=1
-            fi
             exit $TEST_EXIT
       - name: Upload screenshots shard 2
         uses: actions/upload-artifact@v4

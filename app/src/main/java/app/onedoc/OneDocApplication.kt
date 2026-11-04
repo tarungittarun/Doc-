@@ -1,7 +1,6 @@
 package app.onedoc
 
 import android.app.Application
-import android.os.StrictMode
 import android.util.Log
 
 /**
@@ -15,22 +14,6 @@ class OneDocApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-
-        // StrictMode to catch main thread violations during development
-        if (BuildConfig.DEBUG) {
-            StrictMode.setThreadPolicy(
-                StrictMode.ThreadPolicy.Builder()
-                    .detectAll()
-                    .penaltyLog()
-                    .build()
-            )
-            StrictMode.setVmPolicy(
-                StrictMode.VmPolicy.Builder()
-                    .detectAll()
-                    .penaltyLog()
-                    .build()
-            )
-        }
 
         // Install global uncaught exception handler
         Thread.setDefaultUncaughtExceptionHandler { _, throwable -> 
