@@ -1,0 +1,183 @@
+# OneDoc — task graph (single source of scheduling truth, work order §5)
+# Schema per task:
+#   id, phase, title, binding-spec [§ refs], acceptance [F/UX/TC ids or checks],
+#   depends-on [task ids], estimate (agent-iterations proxy), artifacts [paths],
+#   status [open | in-progress | blocked(reason) | done(evidence-ref)]
+# Rules: update statuses in the same commit as the work; populate the next phase's
+# slice at gate entry (§5), never from memory; placeholders below for G2–G8.
+
+- id: T-G0-001
+  phase: G0
+  title: Blueprint accepted by owner (close G0)
+  binding-spec: ["§front S1-S8", "§10 Owner Acceptance Act"]
+  acceptance: ["owner acceptance recorded in reports/onedoc/gates/G0.md"]
+  depends-on: []
+  estimate: 1
+  artifacts: ["reports/onedoc/gates/G0.md"]
+  status: done(evidence-ref=reports/onedoc/gates/G0.md)
+
+# ---------------------------------------------------------------- G1 (5 tasks)
+- id: T-G1-001
+  phase: G1
+  title: Environment bootstrap (JDK 17, Android SDK 36, AVDs od-api26/33/35/36, venv)
+  binding-spec: ["§4 Environment Setup", "Appendix N", "Appendix E/F pins"]
+  acceptance: ["java -version 17", "sdkmanager lists platforms;android-36",
+               "four AVDs boot-verified", ".venv created with reportlab pypdf pillow matplotlib pymupdf pyyaml"]
+  depends-on: [T-G0-001]
+  estimate: 2
+  artifacts: ["$HOME/android-sdk", "AVDs od-api26/33/35/36", ".venv"]
+  status: blocked(reason="No Java/JDK, no Android SDK, and no network to dl.google.com in this sandbox; cannot run sdkmanager/avdmanager. Recorded BLOCKED; unblock plan: owner provides SDK/JDK or a pre-built environment.")
+
+- id: T-G1-002
+  phase: G1
+  title: Gradle multi-module skeleton (full + writer flavors), app.onedoc, versioning
+  binding-spec: ["§10.1 modules", "§26 topology/flavors/versioning", "§26.3"]
+  acceptance: ["settings.gradle.kts + build.gradle.kts + libs.versions.toml resolve",
+               "assembleFullDebug + assembleWriterDebug assemble (empty shells)",
+               "namespaces app.onedoc both flavors", "versioning scheme per §26.3"]
+  depends-on: [T-BOOT-001-style: T-G1-001 unblocked OR gradle present]
+  estimate: 2
+  artifacts: ["settings.gradle.kts", "build.gradle.kts", "gradle/libs.versions.toml", "app/build.gradle.kts", "app/src/full/", "app/src/writer/"]
+  status: blocked(reason="Requires Gradle + Android SDK (T-G1-001). Source scaffolding committed; build verification deferred until SDK available.")
+
+- id: T-G1-003
+  phase: G1
+  title: CI pr.yml green (<= 8 jobs, <= 12 min lane), budgets enforced
+  binding-spec: ["§22 pipelines", "C8 <= 3 runners <= 30 jobs", "§21.4 budgets"]
+  acceptance: ["pr.yml lane green on PR", "<= 8 jobs", "artifact upload on failure",
+               "budget checks: APK size, manifest permission set"]
+  depends-on: [T-G1-002]
+  estimate: 2
+  artifacts: [".github/workflows/pr.yml"]
+  status: open
+
+- id: T-G1-004
+  phase: G1
+  title: Shell app (home empty-state, settings stub, About) + provenance row
+  binding-spec: ["§5.3 home", "§17.7 settings", "F-084 provenance", "§23.2 BuildConfig"]
+  acceptance: ["home empty-state renders", "settings stub present",
+               "About row shows PROVENANCE_SHA + BUILD_TIME (debug)",
+               "screenshot golden recorded on emulator"]
+  depends-on: [T-G1-002]
+  estimate: 3
+  artifacts: ["feature/home/", "feature/settings/", "app/src/debug/res/", "app/src/test/screenshots/home-golden.png"]
+  status: blocked(reason="Requires emulator + Gradle build (T-G1-001/T-G1-002). UI skeleton committed; golden screenshot deferred until emulator available.")
+
+- id: T-G1-005
+  phase: G1
+  title: qa-driver module skeleton + close G1 with DoD evidence
+  binding-spec: ["§24 direct-APK pipeline", "§21 test layers", "Appendix N.4"]
+  acceptance: ["qa-driver module compiles/stubs present",
+               "reports/onedoc/gates/G1.md committed with all DoD rows + artifact paths"]
+  depends-on: [T-G1-001, T-G1-002, T-G1-003, T-G1-004]
+  estimate: 1
+  artifacts: ["qa/onedoc/driver/", "reports/onedoc/gates/G1.md"]
+  status: blocked(reason="Depends on T-G1-001..004 which are BLOCKED without the Android SDK.")
+
+# --------------------------------------------------------------- G2 (5 tasks, seeded at G1 closure)
+- id: T-G2-001
+  phase: G2
+  title: core-model: document schema (Appendix AN), marks §14.5, rendering §14.6
+  binding-spec: ["§14.2 JSON schema", "§14.5 marks", "§14.6 rendering", "Appendix AN"]
+  acceptance: ["document model + 13 block kinds + 7 mark types",
+               "property suite P1-P10 green (JVM)", "Appendix AN schema round-trip"]
+  depends-on: [T-G1-005]
+  estimate: 5
+  artifacts: ["core/model/", "core/editor/", "src/test/properties/"]
+  status: open
+- id: T-G2-002
+  phase: G2
+  title: Room schema v3 + journal + kill-trial harness (Law L3 zero keystroke loss)
+  binding-spec: ["§12.2", "§12.3", "§14.7 memory playbook", "Law L3"]
+  acceptance: ["schema v3 exported", "journal + snapshots",
+               "kill-trial harness: zero loss under process kill"]
+  depends-on: [T-G2-001]
+  estimate: 5
+  artifacts: ["core/data/schemas/", "core/data/AppDatabase.kt", "core/data/journal/"]
+  status: open
+- id: T-G2-003
+  phase: G2
+  title: .odoc container + goldens (Appendix J fixtures, Appendix V oracles)
+  binding-spec: ["§18 formats/IO", "Appendix J", "Appendix V", "§18.9 goldens"]
+  acceptance: [".odoc read/write round-trip", "golden fixtures pass",
+               "fidelity level declared on every import/export"]
+  depends-on: [T-G2-001]
+  estimate: 4
+  artifacts: ["core/io/odoc/", "qa/onedoc/fixtures/", "qa/onedoc/oracles/"]
+  status: open
+- id: T-G2-004
+  phase: G2
+  title: Find & replace with pre-edit versioning; trash/versions/stars
+  binding-spec: ["§17.4 find-replace", "§12 library", "§14.7 versions"]
+  acceptance: ["find/replace creates pre-edit version", "trash/restore/delete forever",
+               "star/unstar, version list, restore-to-version"]
+  depends-on: [T-G2-001, T-G2-002]
+  estimate: 4
+  artifacts: ["feature/library/", "core/editor/findreplace/"]
+  status: open
+- id: T-G2-005
+  phase: G2
+  title: G2 gate report committed
+  binding-spec: ["§15.5", "§15.9"]
+  acceptance: ["all criteria rows have artifact paths", "defects/ledger current"]
+  depends-on: [T-G2-001, T-G2-002, T-G2-003, T-G2-004]
+  estimate: 1
+  artifacts: ["reports/onedoc/gates/G2.md"]
+  status: open
+
+# --------------------------------------------------- G3–G8 (slices at gates)
+- id: SLICE-G3
+  phase: G3
+  title: Editor core phase slice (blocks, marks, IME, selection, undo, laws L1-L10)
+  binding-spec: ["§13 laws L1-L10", "§15 IME contract", "§16 property tests"]
+  acceptance: ["TC-EDIT-001..026", "TC-LAW-001..010", "P1-P10 green"]
+  depends-on: [T-G2-005]
+  estimate: 20
+  artifacts: ["(seeded at G2 closure)"]
+  status: open
+- id: SLICE-G4
+  phase: G4
+  title: Rich features phase slice (tables, images, TOC, footnotes, templates, reader, TTS)
+  binding-spec: ["§17 per-feature contracts", "§7.3-7.9 modules", "§9 reader/TTS"]
+  acceptance: ["module P0 sets", "J-01..J-10 (AI mocked)"]
+  depends-on: [SLICE-G3]
+  estimate: 20
+  artifacts: ["(seeded at G3 closure)"]
+  status: open
+- id: SLICE-G5
+  phase: G5
+  title: Formats + IO phase slice (PDF, DOCX, Markdown, HTML, TXT, .odoc fidelity F0-F3)
+  binding-spec: ["§18 formats/IO", "F0-F3 fidelity matrix", "§18.8 errors Appendix Q"]
+  acceptance: ["TC-FORMAT-*", "golden round-trips", "fidelity declared + conversion note"]
+  depends-on: [SLICE-G4]
+  estimate: 15
+  artifacts: ["(seeded at G4 closure)"]
+  status: open
+- id: SLICE-G6
+  phase: G6
+  title: On-device AI phase slice (OCR/ASR/embeddings/LLM packs, fallback ladder, eval)
+  binding-spec: ["§19 AI pipelines", "§19.4 ladder", "§19.11 pack format", "Appendix G"]
+  acceptance: ["TC-PACK-*", "TC-AI-*", "eval thresholds §19.8", "no model bundled in APK"]
+  depends-on: [SLICE-G5]
+  estimate: 20
+  artifacts: ["(seeded at G5 closure)"]
+  status: open
+- id: SLICE-G7
+  phase: G7
+  title: Quality pass + release prep (a11y battery, perf budgets, security SC-01..12, release)
+  binding-spec: ["§6.18 a11y", "§20 security", "§21.4 budgets", "§25 release"]
+  acceptance: ["TC-A11Y-*", "TC-SEC-P-01/02/03", "cold start < 1.2s", "APK <= 25 MB",
+               "release APK signed + on GitHub Release"]
+  depends-on: [SLICE-G6]
+  estimate: 15
+  artifacts: ["(seeded at G6 closure)"]
+  status: open
+- id: SLICE-G8
+  phase: G8
+  title: Operate + maintenance (triage, v1.1 backlog, runbook, G8 report)
+  binding-spec: ["§26 operate", "§29", "Appendix AG shelf items"]
+  acceptance: ["backlog filed", "runbook committed", "ledger triaged"]
+  depends-on: [SLICE-G7]
+  estimate: 5
+  artifacts: ["(seeded at G7 closure)"]
+  status: open
