@@ -97,17 +97,15 @@ class DiagnosticsLogger(private val context: Context) {
      * Export all logs to a file in the app's external files directory (Documents).
      * Runs on a background thread to prevent ANR. Returns the file path, or null on failure.
      */
-    fun exportToFile(): String? {
+    fun exportToFile(callback: (String?) -> Unit) {
         val snapshot = getSnapshot()
         val fileName = "onedoc_diagnostics_${dateFormat.format(Date())}.log"
         val extDir = context.getExternalFilesDir(null)
         val dir = if (extDir != null) extDir else context.filesDir
         val file = File(dir, fileName)
 
-        var result: String? = null
-        val latch = java.util.concurrent.CountDownLatch(1)
-
         ioHandler.post {
+            var result: String? = null
             try {
                 file.bufferedWriter().use { writer ->
                     writer.write("=== OneDoc Diagnostics Report ===")
@@ -141,13 +139,13 @@ class DiagnosticsLogger(private val context: Context) {
             } catch (e: Exception) {
                 error("DIAGNOSTICS", "Failed to export diagnostics: ${e.message}", e)
                 result = null
-            } finally {
-                latch.countDown()
+            }
+
+            // Deliver result back on main thread
+            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                callback(result)
             }
         }
-
-        latch.await()
-        return result
     }
 }
 

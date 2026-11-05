@@ -58,27 +58,28 @@ class DiagnosticsActivity : ComponentActivity() {
     }
 
     private fun exportLogs() {
-        val path = logger.exportToFile()
-        if (path != null) {
-            val file = File(path)
-            logger.info("DIAGNOSTICS", "Diagnostics exported to $path")
+        logger.exportToFile { path ->
+            if (path != null) {
+                val file = File(path)
+                logger.info("DIAGNOSTICS", "Diagnostics exported to $path")
 
-            val uri = FileProvider.getUriForFile(
-                applicationContext,
-                "app.onedoc.fileprovider",
-                file
-            )
+                val uri = FileProvider.getUriForFile(
+                    applicationContext,
+                    "app.onedoc.fileprovider",
+                    file
+                )
 
-            val intent = Intent(Intent.ACTION_VIEW).apply {
-                setDataAndType(uri, "text/plain")
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-            }
+                val intent = Intent(Intent.ACTION_VIEW).apply {
+                    setDataAndType(uri, "text/plain")
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                }
 
-            if (intent.resolveActivity(packageManager) != null) {
-                startActivity(intent)
-            } else {
-                // Fallback: save to Downloads
-                saveToDownloads(file)
+                if (intent.resolveActivity(packageManager) != null) {
+                    startActivity(intent)
+                } else {
+                    // Fallback: save to Downloads
+                    saveToDownloads(file)
+                }
             }
         }
     }
