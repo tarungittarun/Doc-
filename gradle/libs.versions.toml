@@ -1,9 +1,9 @@
 [versions]
 agp = "8.13.0"
 kotlin = "2.4.21"
-compileSdk = "36"
+compileSdk = "34"
 minSdk = "26"
-targetSdk = "36"
+targetSdk = "34"
 coreKtx = "1.15.0"
 appCompat = "1.7.0"
 lifecycleRuntimeKtx = "2.9.0"
