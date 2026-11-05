@@ -21,13 +21,29 @@ jobs:
     timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
+      - name: Setup log directory
+        run: mkdir -p ci-logs/pr-traceability
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
       - name: Install tool deps
-        run: python3 -m pip -q install pyyaml
+        run: |
+          python3 -m pip -q install pyyaml 2>&1 | tee ci-logs/pr-traceability/install-deps.log
+          test ${PIPESTATUS[0]} -eq 0 || { echo "::error::Failed to install pyyaml"; exit 1; }
       - name: Run traceability check (strict)
-        run: python3 tools/onedoc/traceability.py --check --strict
+        run: |
+          python3 tools/onedoc/traceability.py --check --strict 2>&1 | tee ci-logs/pr-traceability/traceability.log
+          TEST_EXIT=${PIPESTATUS[0]}
+          echo "traceability_exit=$TEST_EXIT" >> $GITHUB_OUTPUT
+          exit $TEST_EXIT
+      - name: Upload traceability logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ci-logs-pr-traceability
+          path: ci-logs/pr-traceability/
+          retention-days: 30
+          if-no-files-found: warn
 
   static-gates:
     name: Static gates (manifest)
@@ -36,12 +52,23 @@ jobs:
     needs: [traceability]
     steps:
       - uses: actions/checkout@v4
+      - name: Setup log directory
+        run: mkdir -p ci-logs/pr-static-gates
       - name: Assert NO internet permission in manifest
         run: |
           if grep -qi 'android.permission.INTERNET\|ACCESS_NETWORK_STATE' app/src/main/AndroidManifest.xml; then
-            echo "::error::FAIL: internet permission present" >&2; exit 1
+            echo "::error::FAIL: internet permission present" | tee ci-logs/pr-static-gates/static-gate.log >&2
+            exit 1
           fi
-          echo "PASS: no internet permission"
+          echo "PASS: no internet permission" | tee ci-logs/pr-static-gates/static-gate.log
+      - name: Upload static-gates logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ci-logs-pr-static-gates
+          path: ci-logs/pr-static-gates/
+          retention-days: 30
+          if-no-files-found: warn
 
   verify-pr-lane:
     name: PR lane green (<= 12 min)
@@ -51,11 +78,24 @@ jobs:
     if: always()
     steps:
       - uses: actions/checkout@v4
-      - run: |
+      - name: Setup log directory
+        run: mkdir -p ci-logs/pr-verify
+      - name: Validate PR lane status
+        run: |
           statuses="${{ join(needs.*.result, ',') }}"
-          echo "Job statuses: $statuses"
+          echo "Job statuses: $statuses" | tee ci-logs/pr-verify/pr-lane-status.log
+          echo "Run ID: $GITHUB_RUN_ID" | tee -a ci-logs/pr-verify/pr-lane-status.log
+          echo "Run URL: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" | tee -a ci-logs/pr-verify/pr-lane-status.log
           if echo "$statuses" | grep -q 'failure\|cancelled'; then
-            echo "::error::PR lane not green" >&2
+            echo "::error::PR lane not green" | tee -a ci-logs/pr-verify/pr-lane-status.log >&2
             exit 1
           fi
-          echo "PASS: PR lane green"
+          echo "PASS: PR lane green" | tee -a ci-logs/pr-verify/pr-lane-status.log
+      - name: Upload pr-verify logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ci-logs-pr-verify
+          path: ci-logs/pr-verify/
+          retention-days: 30
+          if-no-files-found: warn

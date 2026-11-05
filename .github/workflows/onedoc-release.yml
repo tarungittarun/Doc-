@@ -28,39 +28,53 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Setup log directory
+        run: mkdir -p ci-logs/release-build
       - name: Install Gradle 8.14.2
         run: |
-          curl -fsSL https://services.gradle.org/distributions/gradle-8.14.2-bin.zip -o /tmp/gradle.zip
-          unzip -q /tmp/gradle.zip -d /opt
+          set -o pipefail
+          curl -fsSL https://services.gradle.org/distributions/gradle-8.14.2-bin.zip -o /tmp/gradle.zip 2>&1 | tee ci-logs/release-build/gradle-download.log
+          curl_exit=${PIPESTATUS[0]}
+          test $curl_exit -eq 0 || { echo "::error::Gradle download failed (exit $curl_exit)"; exit 1; }
+          unzip -q /tmp/gradle.zip -d /opt 2>&1 | tee -a ci-logs/release-build/gradle-download.log
+          test ${PIPESTATUS[0]} -eq 0 || { echo "::error::Gradle unzip failed"; exit 1; }
           echo "/opt/gradle-8.14.2/bin" >> $GITHUB_PATH
+          echo "Gradle 8.14.2 installed successfully" | tee -a ci-logs/release-build/gradle-download.log
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "21"
+      - name: Validate JDK 21
+        run: |
+          java -version 2>&1 | tee ci-logs/release-build/jdk-version.log
+          java_version=$(java -version 2>&1 | head -1)
+          echo "$java_version" | grep -q "21" || { echo "::error::JDK 21 not found: $java_version"; exit 1; }
+          echo "JDK 21 validated" | tee -a ci-logs/release-build/jdk-version.log
       - name: Report toolchain
         run: |
           set -x
-          java -version
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          java -version 2>&1 | tee -a ci-logs/release-build/toolchain.log
+          echo "ANDROID_HOME=$ANDROID_HOME" | tee -a ci-logs/release-build/toolchain.log
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" | tee -a ci-logs/release-build/toolchain.log
           SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
-          ls "$SDK" || true
-          gradle --version || true
+          ls "$SDK" 2>&1 | tee -a ci-logs/release-build/toolchain.log
+          gradle --version 2>&1 | tee -a ci-logs/release-build/toolchain.log
       - name: Install missing SDK packages
         run: |
           SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
-          yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null 2>&1 | tee ci-logs/release-build/sdk-licenses.log
           "$SDK/cmdline-tools/latest/bin/sdkmanager" \
-            "platform-tools" "platforms;android-36" "build-tools;36.0.0" || true
+            "platform-tools" "platforms;android-36" "build-tools;36.0.0" 2>&1 | tee ci-logs/release-build/sdk-install.log
+          test ${PIPESTATUS[0]} -eq 0 || { echo "::error::SDK package install failed"; exit 1; }
       - name: Verify committed debug keystore for same-app updates
         run: |
           if [ ! -f debug.keystore ]; then
-            echo "::error::debug.keystore not found in repo — same-app updates will break"
+            echo "::error::debug.keystore not found in repo — same-app updates will break" | tee ci-logs/release-build/keystore-verify.log
             exit 1
           fi
-          echo "Using committed debug.keystore for release signing"
-          ls -l debug.keystore
+          echo "Using committed debug.keystore for release signing" | tee ci-logs/release-build/keystore-verify.log
+          ls -l debug.keystore | tee -a ci-logs/release-build/keystore-verify.log
       - name: Cache Gradle
         uses: actions/cache@v4
         with:
@@ -73,37 +87,47 @@ jobs:
         run: |
           echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_ENV
           echo "VERSION_CODE=${{ github.event.inputs.version_code }}" >> $GITHUB_ENV
+          echo "Version: ${{ github.event.inputs.version }}, VersionCode: ${{ github.event.inputs.version_code }}" | tee ci-logs/release-build/version.log
       - name: Apply versioning (versionCode/versionName)
         run: |
           sed -i "s/versionCode = .*/versionCode = ${{ github.event.inputs.version_code }}/" app/build.gradle.kts
           sed -i "s/versionName = .*/versionName = \"${{ github.event.inputs.version }}\"/" app/build.gradle.kts
+          grep "versionCode\|versionName" app/build.gradle.kts | tee ci-logs/release-build/version-applied.log
       - name: Assemble release APKs (RC debug keystore until owner keystore)
         id: build
         continue-on-error: true
         shell: bash
         run: |
           set -o pipefail
-          gradle --no-daemon --stacktrace assembleFullRelease assembleWriterRelease 2>&1 | tee /tmp/build-release.log
+          gradle --no-daemon --stacktrace assembleFullRelease assembleWriterRelease 2>&1 | tee ci-logs/release-build/gradle-build.log
+          BUILD_EXIT=${PIPESTATUS[0]}
+          echo "build_exit=$BUILD_EXIT" >> $GITHUB_OUTPUT
+          echo "Release build exit code: $BUILD_EXIT" | tee -a ci-logs/release-build/gradle-build.log
       - name: Surface release build errors
-        if: steps.build.outcome == 'failure'
+        if: steps.build.outputs.build_exit != '0'
         shell: bash
         run: |
           esc() { sed 's/%/%25/g; s/\r//g' | awk 'BEGIN { ORS = "%0A" } { print }'; }
-          { grep -nE "^e: |error:|FAILURE|What went wrong|Execution failed|Caused by:|Could not resolve|Unresolved|Plugin.*not found|Could not.*compile" /tmp/build-release.log | head -20
+          { grep -nE "^e: |error:|FAILURE|What went wrong|Execution failed|Caused by:|Could not resolve|Unresolved|Plugin.*not found|Could not.*compile" ci-logs/release-build/gradle-build.log | head -20
             echo "--- last 30 lines ---"
-            tail -30 /tmp/build-release.log; } | esc | { body=$(cat); echo "::error title=build-release::${body}"; }
+            tail -30 ci-logs/release-build/gradle-build.log; } | esc | { body=$(cat); echo "::error title=build-release::${body}"; }
       - name: Compute APK SHA-256 + size
         id: hashes
+        if: steps.build.outputs.build_exit == '0'
         run: |
           shopt -s globstar
+          found=0
           for apk in app/build/outputs/apk/**/release/*.apk; do
             sha=$(sha256sum "$apk" | awk '{print $1}')
             size=$(stat -c%s "$apk")
             name=$(basename "$apk")
             echo "APK_${name}=${sha}" >> $GITHUB_OUTPUT
-            echo "APK_SIZE_${name}=${size}" >> $GITHUB_OUTPUT
+            echo "APK_SIZE_${name}=$size" >> $GITHUB_OUTPUT
             echo "APK_PATH_${name}=$apk" >> $GITHUB_OUTPUT
+            echo "$name: sha=$sha size=$size path=$apk" | tee -a ci-logs/release-build/apk-hashes.log
+            found=1
           done
+          test $found -eq 1 || { echo "::error::No release APKs found"; exit 1; }
       - name: Upload release APKs as artifacts
         uses: actions/upload-artifact@v4
         if: always()
@@ -111,6 +135,14 @@ jobs:
           name: release-apks-${{ github.run_id }}
           path: app/build/outputs/apk/**/release/*.apk
           retention-days: 90
+          if-no-files-found: warn
+      - name: Upload release-build logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ci-logs-release-build
+          path: ci-logs/release-build/
+          retention-days: 30
           if-no-files-found: warn
 
   provenance:
@@ -120,10 +152,14 @@ jobs:
     needs: [build-release]
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - name: Setup log directory
+        run: mkdir -p ci-logs/provenance
+      - name: Download release APKs
+        uses: actions/download-artifact@v4
         with:
           name: release-apks-${{ github.run_id }}
           path: release-apks
+          github-token: ${{ github.token }}
       - name: Write provenance.json
         id: prov
         run: |
@@ -162,13 +198,21 @@ jobs:
             "generatedAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           }
           EOF
-          cat provenance.json
+          cat provenance.json | tee ci-logs/provenance/provenance.log
       - name: Upload provenance
         uses: actions/upload-artifact@v4
         with:
           name: provenance-${{ github.run_id }}
           path: provenance.json
           retention-days: 90
+      - name: Upload provenance logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ci-logs-provenance
+          path: ci-logs/provenance/
+          retention-days: 30
+          if-no-files-found: warn
 
   release:
     name: Create GitHub Release
@@ -178,14 +222,20 @@ jobs:
     if: always()
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - name: Setup log directory
+        run: mkdir -p ci-logs/release
+      - name: Download release APKs
+        uses: actions/download-artifact@v4
         with:
           name: release-apks-${{ github.run_id }}
           path: release-apks
-      - uses: actions/download-artifact@v4
+          github-token: ${{ github.token }}
+      - name: Download provenance
+        uses: actions/download-artifact@v4
         with:
           name: provenance-${{ github.run_id }}
           path: .
+          github-token: ${{ github.token }}
       - name: Create release notes
         run: |
           cat > release-notes.md <<EOF
@@ -208,6 +258,7 @@ jobs:
           ## Verification
           Recompute APK SHA-256 and match against provenance.json before install.
           EOF
+          cat release-notes.md | tee ci-logs/release/release-notes.log
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -221,3 +272,11 @@ jobs:
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload release logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ci-logs-release
+          path: ci-logs/release/
+          retention-days: 30
+          if-no-files-found: warn

@@ -55,3 +55,6 @@ reports/
 
 # QA
 qa/
+
+# CI per-run logs (uploaded as GitHub Actions artifacts instead)
+ci-logs/
