@@ -22,11 +22,11 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install Java 21
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "21"
+          java-version: "17"
 
       - name: Validate Java and keytool
         run: |
@@ -37,16 +37,8 @@ jobs:
           echo "=== ANDROID_HOME ===" | tee -a ci-logs/apk-artifact/java.log
           echo "ANDROID_HOME=$ANDROID_HOME" | tee -a ci-logs/apk-artifact/java.log
           echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" | tee -a ci-logs/apk-artifact/java.log
-          ls "$ANDROID_HOME" 2>&1 | tee -a ci-logs/apk-artifact/java.log
 
-      - name: Install missing SDK packages
-        run: |
-          SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
-          yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null 2>&1 || true
-          "$SDK/cmdline-tools/latest/bin/sdkmanager" \
-            "platform-tools" "platforms;android-34" "build-tools;34.0.0" 2>&1 | tee ci-logs/apk-artifact/sdk-install.log
-
-      - name: Install Gradle
+      - name: Install Gradle 8.10.2
         run: |
           curl -fsSL https://services.gradle.org/distributions/gradle-8.10.2-bin.zip -o /tmp/gradle.zip 2>&1 | tee ci-logs/apk-artifact/gradle-download.log
           unzip -q /tmp/gradle.zip -d /opt 2>&1 | tee -a ci-logs/apk-artifact/gradle-download.log
