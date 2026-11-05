@@ -66,6 +66,13 @@ jobs:
         run: |
           echo "::notice::BUILD_TOOLS:$(ls $ANDROID_HOME/build-tools/ 2>/dev/null | tr '\n' ',' | sed 's/,$//')" | tee ci-logs/build-debug/sdk-build-tools.log
           test -d "$ANDROID_HOME/build-tools" || { echo "::error::ANDROID_HOME/build-tools not found at $ANDROID_HOME/build-tools"; exit 1; }
+      - name: Install missing SDK packages
+        run: |
+          SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null 2>&1 | tee ci-logs/build-debug/sdk-licenses.log || true
+          "$SDK/cmdline-tools/latest/bin/sdkmanager" \
+            "platform-tools" "platforms;android-36" "build-tools;36.0.0" 2>&1 | tee ci-logs/build-debug/sdk-install.log
+          test ${PIPESTATUS[0]} -eq 0 || { echo "::error::SDK package install failed"; exit 1; }
       - name: Create local.properties
         run: |
           echo "sdk.dir=${ANDROID_HOME:-$ANDROID_SDK_ROOT}" > local.properties
@@ -179,6 +186,13 @@ jobs:
         run: |
           echo "::notice::BUILD_TOOLS:$(ls $ANDROID_HOME/build-tools/ 2>/dev/null | tr '\n' ',' | sed 's/,$//')" | tee ci-logs/build-release/sdk-build-tools.log
           test -d "$ANDROID_HOME/build-tools" || { echo "::error::ANDROID_HOME/build-tools not found"; exit 1; }
+      - name: Install missing SDK packages
+        run: |
+          SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null 2>&1 | tee ci-logs/build-release/sdk-licenses.log || true
+          "$SDK/cmdline-tools/latest/bin/sdkmanager" \
+            "platform-tools" "platforms;android-36" "build-tools;36.0.0" 2>&1 | tee ci-logs/build-release/sdk-install.log
+          test ${PIPESTATUS[0]} -eq 0 || { echo "::error::SDK package install failed"; exit 1; }
       - name: Create local.properties
         run: |
           echo "sdk.dir=${ANDROID_HOME:-$ANDROID_SDK_ROOT}" > local.properties
@@ -282,6 +296,21 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
+      - name: List SDK platforms
+        run: |
+          echo "::notice::PLATFORMS:$(ls $ANDROID_HOME/platforms/ 2>/dev/null | tr '\n' ',' | sed 's/,$//')" | tee ci-logs/emulator-shard-1/sdk-platforms.log
+          test -d "$ANDROID_HOME/platforms" || { echo "::error::ANDROID_HOME/platforms not found"; exit 1; }
+      - name: List SDK build-tools
+        run: |
+          echo "::notice::BUILD_TOOLS:$(ls $ANDROID_HOME/build-tools/ 2>/dev/null | tr '\n' ',' | sed 's/,$//')" | tee ci-logs/emulator-shard-1/sdk-build-tools.log
+          test -d "$ANDROID_HOME/build-tools" || { echo "::error::ANDROID_HOME/build-tools not found"; exit 1; }
+      - name: Install missing SDK packages
+        run: |
+          SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null 2>&1 | tee ci-logs/emulator-shard-1/sdk-licenses.log || true
+          "$SDK/cmdline-tools/latest/bin/sdkmanager" \
+            "platform-tools" "platforms;android-36" "build-tools;36.0.0" 2>&1 | tee ci-logs/emulator-shard-1/sdk-install.log
+          test ${PIPESTATUS[0]} -eq 0 || { echo "::error::SDK package install failed"; exit 1; }
       - name: Create local.properties
         run: |
           echo "sdk.dir=${ANDROID_HOME:-$ANDROID_SDK_ROOT}" > local.properties
@@ -386,6 +415,21 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
+      - name: List SDK platforms
+        run: |
+          echo "::notice::PLATFORMS:$(ls $ANDROID_HOME/platforms/ 2>/dev/null | tr '\n' ',' | sed 's/,$//')" | tee ci-logs/emulator-shard-2/sdk-platforms.log
+          test -d "$ANDROID_HOME/platforms" || { echo "::error::ANDROID_HOME/platforms not found"; exit 1; }
+      - name: List SDK build-tools
+        run: |
+          echo "::notice::BUILD_TOOLS:$(ls $ANDROID_HOME/build-tools/ 2>/dev/null | tr '\n' ',' | sed 's/,$//')" | tee ci-logs/emulator-shard-2/sdk-build-tools.log
+          test -d "$ANDROID_HOME/build-tools" || { echo "::error::ANDROID_HOME/build-tools not found"; exit 1; }
+      - name: Install missing SDK packages
+        run: |
+          SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null 2>&1 | tee ci-logs/emulator-shard-2/sdk-licenses.log || true
+          "$SDK/cmdline-tools/latest/bin/sdkmanager" \
+            "platform-tools" "platforms;android-36" "build-tools;36.0.0" 2>&1 | tee ci-logs/emulator-shard-2/sdk-install.log
+          test ${PIPESTATUS[0]} -eq 0 || { echo "::error::SDK package install failed"; exit 1; }
       - name: Create local.properties
         run: |
           echo "sdk.dir=${ANDROID_HOME:-$ANDROID_SDK_ROOT}" > local.properties
