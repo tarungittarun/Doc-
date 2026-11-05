@@ -253,7 +253,7 @@ jobs:
           tail -100 ci-logs/build-release/gradle-build.log | while read line; do echo "::notice::GRADLE_TAIL: $line"; done
           echo "Build release exit code: $GRADLE_EXIT" | tee -a ci-logs/build-release/gradle-build.log
           exit $GRADLE_EXIT
-      - name: Static gate: no internet permission
+      - name: "Static gate: no internet permission"
         run: |
           if grep -rqi 'android.permission.INTERNET' app/src/main/AndroidManifest.xml; then echo 'FAIL: internet permission present' | tee ci-logs/build-release/static-gate.log; exit 1; fi
           if grep -rqi 'ACCESS_NETWORK_STATE' app/src/main/AndroidManifest.xml; then echo 'FAIL: network permission present' | tee -a ci-logs/build-release/static-gate.log; exit 1; fi
