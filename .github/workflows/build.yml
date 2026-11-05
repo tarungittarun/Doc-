@@ -40,18 +40,18 @@ jobs:
       - name: Install Gradle 8.10.2
         run: |
           set -o pipefail
-          curl -fsSL https://services.gradle.org/distributions/gradle-8.14.2-bin.zip -o /tmp/gradle.zip 2>&1 | tee ci-logs/build-debug/gradle-download.log
+          curl -fsSL https://services.gradle.org/distributions/gradle-8.10.2-bin.zip -o /tmp/gradle.zip 2>&1 | tee ci-logs/build-debug/gradle-download.log
           curl_exit=${PIPESTATUS[0]}
           test $curl_exit -eq 0 || { echo "::error::Gradle download failed (exit $curl_exit)"; exit 1; }
           unzip -q /tmp/gradle.zip -d /opt 2>&1 | tee -a ci-logs/build-debug/gradle-download.log
           test ${PIPESTATUS[0]} -eq 0 || { echo "::error::Gradle unzip failed"; exit 1; }
-          echo "/opt/gradle-8.14.2/bin" >> $GITHUB_PATH
+          echo "/opt/gradle-8.10.2/bin" >> $GITHUB_PATH
           echo "Gradle installed successfully" | tee -a ci-logs/build-debug/gradle-download.log
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "21"
+          java-version: "17"
       - name: Validate JDK 17
         run: |
           java -version 2>&1 | tee ci-logs/build-debug/jdk-version.log
@@ -160,18 +160,18 @@ jobs:
       - name: Install Gradle 8.10.2
         run: |
           set -o pipefail
-          curl -fsSL https://services.gradle.org/distributions/gradle-8.14.2-bin.zip -o /tmp/gradle.zip 2>&1 | tee ci-logs/build-release/gradle-download.log
+          curl -fsSL https://services.gradle.org/distributions/gradle-8.10.2-bin.zip -o /tmp/gradle.zip 2>&1 | tee ci-logs/build-release/gradle-download.log
           curl_exit=${PIPESTATUS[0]}
           test $curl_exit -eq 0 || { echo "::error::Gradle download failed (exit $curl_exit)"; exit 1; }
           unzip -q /tmp/gradle.zip -d /opt 2>&1 | tee -a ci-logs/build-release/gradle-download.log
           test ${PIPESTATUS[0]} -eq 0 || { echo "::error::Gradle unzip failed"; exit 1; }
-          echo "/opt/gradle-8.14.2/bin" >> $GITHUB_PATH
+          echo "/opt/gradle-8.10.2/bin" >> $GITHUB_PATH
           echo "Gradle installed successfully" | tee -a ci-logs/build-release/gradle-download.log
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "21"
+          java-version: "17"
       - name: Validate JDK 17
         run: |
           java -version 2>&1 | tee ci-logs/build-release/jdk-version.log
@@ -284,18 +284,18 @@ jobs:
       - name: Install Gradle 8.10.2
         run: |
           set -o pipefail
-          curl -fsSL https://services.gradle.org/distributions/gradle-8.14.2-bin.zip -o /tmp/gradle.zip 2>&1 | tee ci-logs/emulator-shard-1/gradle-download.log
+          curl -fsSL https://services.gradle.org/distributions/gradle-8.10.2-bin.zip -o /tmp/gradle.zip 2>&1 | tee ci-logs/emulator-shard-1/gradle-download.log
           curl_exit=${PIPESTATUS[0]}
           test $curl_exit -eq 0 || { echo "::error::Gradle download failed (exit $curl_exit)"; exit 1; }
           unzip -q /tmp/gradle.zip -d /opt 2>&1 | tee -a ci-logs/emulator-shard-1/gradle-download.log
           test ${PIPESTATUS[0]} -eq 0 || { echo "::error::Gradle unzip failed"; exit 1; }
-          echo "/opt/gradle-8.14.2/bin" >> $GITHUB_PATH
+          echo "/opt/gradle-8.10.2/bin" >> $GITHUB_PATH
           echo "Gradle installed successfully" | tee -a ci-logs/emulator-shard-1/gradle-download.log
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "21"
+          java-version: "17"
       - name: List SDK platforms
         run: |
           echo "::notice::PLATFORMS:$(ls $ANDROID_HOME/platforms/ 2>/dev/null | tr '\n' ',' | sed 's/,$//')" | tee ci-logs/emulator-shard-1/sdk-platforms.log
@@ -318,7 +318,7 @@ jobs:
       - name: Build debug + test APKs
         run: |
           set +e
-          /opt/gradle-8.14.2/bin/gradle --no-daemon --max-workers=1 --stacktrace assembleDebug assembleDebugAndroidTest 2>&1 | tee ci-logs/emulator-shard-1/gradle-build.log
+          /opt/gradle-8.10.2/bin/gradle --no-daemon --max-workers=1 --stacktrace assembleDebug assembleDebugAndroidTest 2>&1 | tee ci-logs/emulator-shard-1/gradle-build.log
           GRADLE_EXIT=${PIPESTATUS[0]}
           echo "::notice::GRADLE_EXIT=$GRADLE_EXIT"
           grep -E '^(e:|Execution failed|FAILED|Exception|Caused by|Error:|Could not|What went wrong)' ci-logs/emulator-shard-1/gradle-build.log 2>/dev/null | head -60 | while read line; do echo "::notice::GRADLE_KEY: $line"; done
@@ -403,18 +403,18 @@ jobs:
       - name: Install Gradle 8.10.2
         run: |
           set -o pipefail
-          curl -fsSL https://services.gradle.org/distributions/gradle-8.14.2-bin.zip -o /tmp/gradle.zip 2>&1 | tee ci-logs/emulator-shard-2/gradle-download.log
+          curl -fsSL https://services.gradle.org/distributions/gradle-8.10.2-bin.zip -o /tmp/gradle.zip 2>&1 | tee ci-logs/emulator-shard-2/gradle-download.log
           curl_exit=${PIPESTATUS[0]}
           test $curl_exit -eq 0 || { echo "::error::Gradle download failed (exit $curl_exit)"; exit 1; }
           unzip -q /tmp/gradle.zip -d /opt 2>&1 | tee -a ci-logs/emulator-shard-2/gradle-download.log
           test ${PIPESTATUS[0]} -eq 0 || { echo "::error::Gradle unzip failed"; exit 1; }
-          echo "/opt/gradle-8.14.2/bin" >> $GITHUB_PATH
+          echo "/opt/gradle-8.10.2/bin" >> $GITHUB_PATH
           echo "Gradle installed successfully" | tee -a ci-logs/emulator-shard-2/gradle-download.log
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "21"
+          java-version: "17"
       - name: List SDK platforms
         run: |
           echo "::notice::PLATFORMS:$(ls $ANDROID_HOME/platforms/ 2>/dev/null | tr '\n' ',' | sed 's/,$//')" | tee ci-logs/emulator-shard-2/sdk-platforms.log
@@ -437,7 +437,7 @@ jobs:
       - name: Build debug + test APKs
         run: |
           set +e
-          /opt/gradle-8.14.2/bin/gradle --no-daemon --max-workers=1 --stacktrace assembleDebug assembleDebugAndroidTest 2>&1 | tee ci-logs/emulator-shard-2/gradle-build.log
+          /opt/gradle-8.10.2/bin/gradle --no-daemon --max-workers=1 --stacktrace assembleDebug assembleDebugAndroidTest 2>&1 | tee ci-logs/emulator-shard-2/gradle-build.log
           GRADLE_EXIT=${PIPESTATUS[0]}
           echo "::notice::GRADLE_EXIT=$GRADLE_EXIT"
           grep -E '^(e:|Execution failed|FAILED|Exception|Caused by|Error:|Could not|What went wrong)' ci-logs/emulator-shard-2/gradle-build.log 2>/dev/null | head -60 | while read line; do echo "::notice::GRADLE_KEY: $line"; done
