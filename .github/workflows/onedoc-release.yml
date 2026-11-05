@@ -28,16 +28,16 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Install Gradle 8.10.2
+      - name: Install Gradle 8.14.2
         run: |
-          curl -fsSL https://services.gradle.org/distributions/gradle-8.10.2-bin.zip -o /tmp/gradle.zip
+          curl -fsSL https://services.gradle.org/distributions/gradle-8.14.2-bin.zip -o /tmp/gradle.zip
           unzip -q /tmp/gradle.zip -d /opt
-          echo "/opt/gradle-8.10.2/bin" >> $GITHUB_PATH
-      - name: Set up JDK 17
+          echo "/opt/gradle-8.14.2/bin" >> $GITHUB_PATH
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: "21"
       - name: Report toolchain
         run: |
           set -x
@@ -53,27 +53,22 @@ jobs:
           yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
           "$SDK/cmdline-tools/latest/bin/sdkmanager" \
             "platform-tools" "platforms;android-36" "build-tools;36.0.0" || true
-      - name: Ensure the stable sideload signing key
+      - name: Verify committed debug keystore for same-app updates
         run: |
-          if [ ! -f signing/onedoc.p12 ]; then
-            mkdir -p signing
-            keytool -genkeypair -keystore signing/onedoc.p12 -storetype pkcs12 \
-              -storepass onedoc-sideload -keypass onedoc-sideload -alias onedoc \
-              -keyalg RSA -keysize 2048 -validity 10950 \
-              -dname "CN=OneDoc Sideload, OU=Sideload, O=OneDoc, C=IN"
-            echo "generated signing/onedoc.p12; the commit step will persist it"
-          else
-            echo "using the committed signing key"
+          if [ ! -f debug.keystore ]; then
+            echo "::error::debug.keystore not found in repo — same-app updates will break"
+            exit 1
           fi
-          ls -l signing/
+          echo "Using committed debug.keystore for release signing"
+          ls -l debug.keystore
       - name: Cache Gradle
         uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-jdk17-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties', '*.gradle.kts', 'gradle/libs.versions.toml') }}
-          restore-keys: gradle-${{ runner.os }}-jdk17-
+          key: gradle-${{ runner.os }}-jdk21-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties', '*.gradle.kts', 'gradle/libs.versions.toml') }}
+          restore-keys: gradle-${{ runner.os }}-jdk21-
       - name: Set version from inputs
         run: |
           echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_ENV
@@ -127,7 +122,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          name: release-apks-${{ needs.build-release.outputs.run_id }}
+          name: release-apks-${{ github.run_id }}
           path: release-apks
       - name: Write provenance.json
         id: prov
@@ -157,7 +152,7 @@ jobs:
             },
             "catalogueVersion": "qa/onedoc/testcases.csv @ ${{ github.sha }}",
             "toolVersions": {
-              "jdk": "17",
+              "jdk": "21",
               "compileSdk": "36",
               "buildTools": "36.0.0",
               "minSdk": "26",
@@ -185,11 +180,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          name: release-apks-${{ needs.build-release.outputs.run_id }}
+          name: release-apks-${{ github.run_id }}
           path: release-apks
       - uses: actions/download-artifact@v4
         with:
-          name: provenance-${{ needs.build-release.outputs.run_id }}
+          name: provenance-${{ github.run_id }}
           path: .
       - name: Create release notes
         run: |

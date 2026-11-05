@@ -148,7 +148,12 @@ jobs:
           echo "keystore_restored=false" >> $GITHUB_OUTPUT
       - name: Create debug keystore if not restored
         if: steps.restore-keystore-same-run.outcome != 'success' && steps.restore-keystore-cross-run.outputs.keystore_restored != 'true'
-        run: keytool -genkeypair -v -keystore debug.keystore -storepass android -keypass android -alias androiddebugkey -dname "CN=OneDoc Debug,O=OneDoc,C=US" -keyalg RSA -keysize 2048 -validity 10000
+        run: |
+          if [ ! -f debug.keystore ]; then
+            keytool -genkeypair -v -keystore debug.keystore -storepass android -keypass android -alias androiddebugkey -dname "CN=OneDoc Debug,O=OneDoc,C=US" -keyalg RSA -keysize 2048 -validity 10000
+          else
+            echo "debug.keystore already present from repo checkout — preserving same-app signing key"
+          fi
       - name: Gradle version
         run: |
           echo "::notice::GRADLE_VERSION: $(gradle --version 2>&1 | grep 'Gradle ' | head -1)"
