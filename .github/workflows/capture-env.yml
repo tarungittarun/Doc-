@@ -1,0 +1,122 @@
+name: Capture CI Environment
+
+on:
+  push:
+    branches: ["arena/db667982-doc"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  capture-runner-env:
+    name: Capture runner environment
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Setup log directory
+        run: mkdir -p ci-logs/capture-env
+      - name: Capture Java version
+        run: |
+          echo "=== Java ===" | tee ci-logs/capture-env/java-version.txt
+          java -version 2>&1 | tee -a ci-logs/capture-env/java-version.txt
+          which java | tee -a ci-logs/capture-env/java-version.txt
+          readlink -f $(which java) | tee -a ci-logs/capture-env/java-version.txt
+      - name: Capture keytool
+        run: |
+          echo "=== keytool ===" | tee ci-logs/capture-env/keytool-version.txt
+          keytool -version 2>&1 | tee -a ci-logs/capture-env/keytool-version.txt
+          which keytool | tee -a ci-logs/capture-env/keytool-version.txt
+      - name: Capture Android SDK
+        run: |
+          echo "=== Android SDK ===" | tee ci-logs/capture-env/android-sdk.txt
+          echo "ANDROID_HOME=$ANDROID_HOME" | tee -a ci-logs/capture-env/android-sdk.txt
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" | tee -a ci-logs/capture-env/android-sdk.txt
+          ls -la "$ANDROID_HOME" 2>&1 | tee -a ci-logs/capture-env/android-sdk.txt
+          ls -la "$ANDROID_HOME/platforms" 2>&1 | tee -a ci-logs/capture-env/android-sdk.txt
+          ls -la "$ANDROID_HOME/build-tools" 2>&1 | tee -a ci-logs/capture-env/android-sdk.txt
+          ls -la "$ANDROID_HOME/cmdline-tools" 2>&1 | tee -a ci-logs/capture-env/android-sdk.txt
+      - name: Capture Gradle
+        run: |
+          echo "=== Gradle ===" | tee ci-logs/capture-env/gradle-version.txt
+          curl -fsSL https://services.gradle.org/distributions/gradle-8.10.2-bin.zip -o /tmp/gradle.zip 2>&1 | tee ci-logs/capture-env/gradle-download.log
+          unzip -q /tmp/gradle.zip -d /opt 2>&1 | tee -a ci-logs/capture-env/gradle-download.log
+          /opt/gradle-8.10.2/bin/gradle --version 2>&1 | tee ci-logs/capture-env/gradle-version.txt
+      - name: Generate local setup script
+        run: |
+          cat > scripts/local-setup.md <<'EOF'
+          # OneDoc Local Development Setup
+
+          This file is auto-generated from CI runner environment.
+          Use it to install the same toolchain locally for building and testing OneDoc.
+
+          ## Required Tools
+
+          ### Java (JDK 17)
+          - Version: See ci-logs/capture-env/java-version.txt
+          - Install: https://adoptium.net/ (Temurin JDK 17)
+          - Or: sudo apt-get install openjdk-17-jdk
+
+          ### keytool
+          - Comes with JDK 17
+          - Path: See ci-logs/capture-env/keytool-version.txt
+
+          ### Android SDK
+          - Version: See ci-logs/capture-env/android-sdk.txt
+          - Install: Android Studio or command-line tools
+          - URL: https://developer.android.com/studio
+          - Required packages:
+            - platform-tools
+            - platforms;android-34
+            - build-tools;34.0.0
+          - Set environment variables:
+            export ANDROID_HOME=$HOME/Android/Sdk
+            export ANDROID_SDK_ROOT=$ANDROID_HOME
+            export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin
+            export PATH=$PATH:$ANDROID_HOME/platform-tools
+
+          ### Gradle 8.10.2
+          - Version: See ci-logs/capture-env/gradle-version.txt
+          - Install: https://gradle.org/releases/
+          - Or: sudo apt-get install gradle
+
+          ## Build Commands
+
+          # Debug APK
+          ./gradlew assembleDebug
+
+          # Release APK (signed with committed debug.keystore)
+          ./gradlew assembleRelease
+
+          ## Notes
+
+          - debug.keystore is committed to the repo for same-app updates
+          - appId: app.onedoc
+          - versionCode: 6, versionName: 1.0.5
+          EOF
+          echo "Local setup script generated" | tee ci-logs/capture-env/setup-generated.log
+      - name: Commit environment capture to repo
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git add scripts/local-setup.md ci-logs/capture-env/ 2>&1 | tee ci-logs/capture-env/commit.log
+          git commit -m "chore: Capture CI runner environment for local setup [skip ci]" 2>&1 | tee -a ci-logs/capture-env/commit.log
+          git push 2>&1 | tee -a ci-logs/capture-env/commit.log
+          echo "Environment capture committed to repo" | tee -a ci-logs/capture-env/commit.log
+      - name: Upload capture logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ci-logs-capture-env
+          path: ci-logs/capture-env/
+          retention-days: 30
+          if-no-files-found: warn
