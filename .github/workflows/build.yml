@@ -261,6 +261,25 @@ jobs:
           path: app/build/outputs/apk/**/release/*.apk
           retention-days: 30
           if-no-files-found: warn
+      - name: Commit release APK to repo for local pull
+        if: always()
+        run: |
+          APK_PATH=$(find app/build/outputs/apk -name "*release*.apk" | head -1)
+          echo "Found APK: $APK_PATH" | tee ci-logs/build-release/apk-commit.log
+          if [ -z "$APK_PATH" ]; then
+            echo "::warning::No release APK found to commit" | tee -a ci-logs/build-release/apk-commit.log
+            exit 0
+          fi
+          cp "$APK_PATH" OneDoc-release.apk
+          ls -l OneDoc-release.apk | tee -a ci-logs/build-release/apk-commit.log
+          sha256sum OneDoc-release.apk | tee -a ci-logs/build-release/apk-commit.log
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git add -f OneDoc-release.apk 2>&1 | tee -a ci-logs/build-release/apk-commit.log
+          git commit -m "chore: Add OneDoc-release.apk (versionCode 6, versionName 1.0.5) [skip ci]" 2>&1 | tee -a ci-logs/build-release/apk-commit.log
+          git push 2>&1 | tee -a ci-logs/build-release/apk-commit.log
+          echo "APK committed and pushed to repo" | tee -a ci-logs/build-release/apk-commit.log
       - name: Upload build-release logs
         uses: actions/upload-artifact@v4
         if: always()
