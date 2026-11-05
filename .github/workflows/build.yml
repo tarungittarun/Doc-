@@ -52,12 +52,12 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
-      - name: Validate JDK 21
+      - name: Validate JDK 17
         run: |
           java -version 2>&1 | tee ci-logs/build-debug/jdk-version.log
           java_version=$(java -version 2>&1 | head -1)
-          echo "$java_version" | grep -q "21" || { echo "::error::JDK 21 not found: $java_version"; exit 1; }
-          echo "JDK 21 validated" | tee -a ci-logs/build-debug/jdk-version.log
+          echo "$java_version" | grep -q "17" || { echo "::error::JDK 17 not found: $java_version"; exit 1; }
+          echo "JDK 17 validated" | tee -a ci-logs/build-debug/jdk-version.log
       - name: List SDK platforms
         run: |
           echo "::notice::PLATFORMS:$(ls $ANDROID_HOME/platforms/ 2>/dev/null | tr '\n' ',' | sed 's/,$//')" | tee ci-logs/build-debug/sdk-platforms.log
@@ -172,12 +172,12 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
-      - name: Validate JDK 21
+      - name: Validate JDK 17
         run: |
           java -version 2>&1 | tee ci-logs/build-release/jdk-version.log
           java_version=$(java -version 2>&1 | head -1)
-          echo "$java_version" | grep -q "21" || { echo "::error::JDK 21 not found: $java_version"; exit 1; }
-          echo "JDK 21 validated" | tee -a ci-logs/build-release/jdk-version.log
+          echo "$java_version" | grep -q "17" || { echo "::error::JDK 17 not found: $java_version"; exit 1; }
+          echo "JDK 17 validated" | tee -a ci-logs/build-release/jdk-version.log
       - name: List SDK platforms
         run: |
           echo "::notice::PLATFORMS:$(ls $ANDROID_HOME/platforms/ 2>/dev/null | tr '\n' ',' | sed 's/,$//')" | tee ci-logs/build-release/sdk-platforms.log
@@ -555,11 +555,11 @@ jobs:
               echo "=============================" >> onedoc-screenshot-report.txt
               echo "" >> onedoc-screenshot-report.txt
               echo "Captured $SCREENSHOT_COUNT screenshot(s):" >> onedoc-screenshot-report.txt
-              ls screenshots/combined/*.png >> onedoc-screenshot-report.txt
+              ls screenshots/combined/*.png >> onedoc-screenshot-report.txt 2>/dev/null || true
             }
             cd ../.. 2>/dev/null || true
           fi
-          echo "=== PDF report generation finished ===" | tee -a ci-logs/screenshots-pdf/pdf-report.log
+          echo "=== PDF report generation finished ===" | tee -a ci-logs/screenshots-pdf/pdf-report.log || true
       - name: Upload screenshot PDF
         uses: actions/upload-artifact@v4
         if: always()
