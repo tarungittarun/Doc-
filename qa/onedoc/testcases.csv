@@ -76,7 +76,7 @@ TC-AI-WR-003,F-074,P0,Verify F-074: On-device AI: writing assistant Continue,aut
 TC-AI-WR-004,F-075,P0,Verify F-075: On-device AI: writing assistant Fix,auto,not-run
 TC-AI-L10-001,F-076,P0,Verify F-076: AI output via preview card + explicit insert (Law L10),auto,not-run
 TC-AI-TIER-001,F-077,P0,Verify F-077: AI fallback ladder (tier A/B/C),auto,not-run
-no fetch),F-078,P0,Verify F-078: Missing AI pack degrades gracefully (no crash,auto,not-run
+TC-AI-PACK-001,F-078,P0,"Verify F-078: Missing AI pack degrades gracefully (no crash, no fetch)",auto,not-run
 TC-AI-SEM-001,F-079,P2,Verify F-079: Semantic search (embeddings MiniLM-L6),auto,not-run
 TC-AI-TIER-002,F-080,P2,Verify F-080: Device tier detection (A/B/C),auto,not-run
 TC-SEC-P-001,F-081,P0,Verify F-081: No INTERNET permission in manifest,auto,not-run
@@ -88,4 +88,4 @@ TC-ENV-002,F-086,P0,Verify F-086: Cold start < 1.2 s,auto,not-run
 TC-ENV-003,F-087,P0,Verify F-087: Typing P95 < 50 ms,auto,not-run
 TC-ENV-004,F-088,P0,Verify F-088: Search < 300 ms,auto,not-run
 TC-ENV-005,F-089,P0,Verify F-089: minSdk 26 (Android 8.0+) support,auto,not-run
-portrait + landscape,F-090,P0,Verify F-090: Phones + tablets,auto,not-run
+TC-ENV-006,F-090,P0,"Verify F-090: Phones + tablets, portrait + landscape",auto,not-run

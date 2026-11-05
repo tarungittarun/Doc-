@@ -76,7 +76,7 @@ F-074,P0,On-device AI: writing assistant Continue,TC-AI-WR-003
 F-075,P0,On-device AI: writing assistant Fix,TC-AI-WR-004
 F-076,P0,AI output via preview card + explicit insert (Law L10),TC-AI-L10-001
 F-077,P0,AI fallback ladder (tier A/B/C),TC-AI-TIER-001
-F-078,P0,Missing AI pack degrades gracefully (no crash, no fetch),TC-AI-PACK-001
+F-078,P0,"Missing AI pack degrades gracefully (no crash, no fetch)",TC-AI-PACK-001
 F-079,P2,Semantic search (embeddings MiniLM-L6),TC-AI-SEM-001
 F-080,P2,Device tier detection (A/B/C),TC-AI-TIER-002
 F-081,P0,No INTERNET permission in manifest,TC-SEC-P-001
@@ -88,4 +88,4 @@ F-086,P0,Cold start < 1.2 s,TC-ENV-002
 F-087,P0,Typing P95 < 50 ms,TC-ENV-003
 F-088,P0,Search < 300 ms,TC-ENV-004
 F-089,P0,minSdk 26 (Android 8.0+) support,TC-ENV-005
-F-090,P0,Phones + tablets, portrait + landscape,TC-ENV-006
+F-090,P0,"Phones + tablets, portrait + landscape",TC-ENV-006
