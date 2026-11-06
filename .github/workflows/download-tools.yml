@@ -23,6 +23,13 @@ jobs:
           mkdir -p tools/chunks/java17 tools/chunks/gradle tools/chunks/android-sdk tools/scripts
           echo "Directories created"
 
+      - name: Download Java 17 tarball
+        run: |
+          cd /tmp
+          curl -fsSL --max-time 120 -L -o openjdk-17.tar.gz "https://api.adoptium.net/v3/binary/version/17.0.11%2B9/linux/x64/jdk/hotspot/normal/eclipse"
+          ls -la openjdk-17.tar.gz
+          file openjdk-17.tar.gz
+
       - name: Download Gradle 8.10.2
         run: |
           cd /tmp
