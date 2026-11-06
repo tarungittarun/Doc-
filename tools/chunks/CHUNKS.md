@@ -1,29 +1,32 @@
 # OneDoc Tool Chunks
 
-Build tools are split into 48MB chunks for git storage.
+All build tools are split into 48MB chunks for git storage.
 Reassemble with: bash tools/scripts/reassemble-tools.sh
 
 | Tool | Chunks | Approx Size |
 |------|--------|-------------|
+| Java 17 (OpenJDK) | 7 | ~190MB |
 | Gradle 8.10.2 | 4 | ~200MB |
+| Android SDK 34 | 4 | ~500MB+ |
 
 ## Reassembly
 
-=== OneDoc Tool Reassembly ===
-Reassembling Gradle 8.10.2...
-=== Reassembly Complete ===
-export GRADLE_HOME=/home/runner/onedoc-tools/gradle/gradle-8.10.2
-export PATH=${GRADLE_HOME}/bin:${PATH}
-
-Also install Android SDK 34 via: tools/scripts/install-tools.sh
-Then: export ANDROID_HOME=$HOME/onedoc-tools/android-sdk
+```bash
+bash tools/scripts/reassemble-tools.sh
+```
 
 Then set environment variables and build:
 
+```bash
+export JAVA_HOME=~/onedoc-tools/java17
+export GRADLE_HOME=~/onedoc-tools/gradle/gradle-8.10.2
+export ANDROID_HOME=~/onedoc-tools/android-sdk
+export PATH=$JAVA_HOME/bin:$GRADLE_HOME/bin:$ANDROID_HOME/platform-tools:$PATH
 
-
-Android SDK 34 can be installed separately via tools/scripts/install-tools.sh.
+cd /path/to/Doc-
+./gradlew assembleRelease
+```
 
 ## Pre-built APK
 
-OneDoc-release.apk is committed to repo root.
+OneDoc-release.apk is committed to repo root. Install it directly without building.
