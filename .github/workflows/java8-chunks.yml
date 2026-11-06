@@ -1,4 +1,4 @@
-name: Java 8 Chunks (glibc 2.36 compatible)
+name: Java 8 Chunks
 
 on:
   push:
@@ -21,36 +21,22 @@ jobs:
         run: |
           mkdir -p tools/chunks/java8 tools/scripts
 
-      - name: Add Debian 10 buster sources (glibc 2.28 compatible)
+      - name: Install Java 8 JDK via apt
         run: |
-          echo "deb http://deb.debian.org/debian buster main" | sudo tee /etc/apt/sources.list.d/buster.list
-          echo "deb http://security.debian.org/debian-security buster/updates main" | sudo tee -a /etc/apt/sources.list.d/buster.list
           sudo apt-get update -qq
-
-      - name: Download Java 8 JDK .deb from Debian 10 buster
-        run: |
-          cd /tmp
-          sudo apt-get download openjdk-8-jdk 2>/dev/null || true
-          ls -la *.deb
-
-      - name: Extract Java 8
-        run: |
-          cd /tmp
-          DEB=$(ls *.deb | head -1)
-          echo "Extracting: $DEB"
-          dpkg-deb -x "$DEB" java8-extract
-          JAVA_DIR=$(find java8-extract/usr/lib/jvm -maxdepth 1 -type d -name 'java-8*' | head -1)
-          echo "Java dir: $JAVA_DIR"
-          mkdir -p java8-flat
-          cp -a "$JAVA_DIR"/* java8-flat/
-          ls java8-flat/bin/java
+          sudo apt-get install -y -qq openjdk-8-jdk
+          java -version 2>&1
+          ls -la /usr/lib/jvm/
 
       - name: Chunk Java 8
         run: |
-          cd /tmp/java8-flat
+          JAVA_DIR=$(ls -d /usr/lib/jvm/java-8-openjdk-* | head -1)
+          echo "Java dir: $JAVA_DIR"
+          cd "$JAVA_DIR"
           tar -cf /tmp/java8.tar .
           split -b 48M -d /tmp/java8.tar $GITHUB_WORKSPACE/tools/chunks/java8/java8.tar.part.
           echo "Java 8 chunks: $(ls $GITHUB_WORKSPACE/tools/chunks/java8/ | wc -l)"
+          ls -la $GITHUB_WORKSPACE/tools/chunks/java8/
 
       - name: Commit chunks
         run: |
@@ -58,5 +44,5 @@ jobs:
           git config user.email "actions@github.com"
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git add tools/chunks/java8/
-          git commit -m "chore: Commit Java 8 chunks (glibc 2.36 compatible) [skip ci]"
+          git commit -m "chore: Commit Java 8 chunks [skip ci]"
           git push
