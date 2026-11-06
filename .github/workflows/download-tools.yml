@@ -45,27 +45,10 @@ jobs:
           echo "Chunk count: $(ls $GITHUB_WORKSPACE/tools/chunks/gradle/ | wc -l)"
           sha256sum $GITHUB_WORKSPACE/tools/chunks/gradle/* > $GITHUB_WORKSPACE/tools/chunks/gradle.sha256
 
-      - name: Download Android SDK cmdline-tools
+      - name: Test step after Gradle
         run: |
-          cd /tmp
-          curl -fsSL --max-time 120 -o cmdline-tools.zip "https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip" || echo "Android SDK download failed - skipping SDK chunks"
-
-      - name: Extract and chunk Android SDK
-        run: |
-          cd /tmp
-          if [ -f cmdline-tools.zip ]; then
-            mkdir -p android-sdk-extract
-            unzip -q cmdline-tools.zip -d android-sdk-extract
-            cd android-sdk-extract
-            tar -cf /tmp/android-sdk.tar .
-            ls -la /tmp/android-sdk.tar
-            split -b 48M -d android-sdk.tar $GITHUB_WORKSPACE/tools/chunks/android-sdk/android-sdk.tar.part.
-            ls -la $GITHUB_WORKSPACE/tools/chunks/android-sdk/
-            echo "Android SDK chunk count: $(ls $GITHUB_WORKSPACE/tools/chunks/android-sdk/ | wc -l)"
-            sha256sum $GITHUB_WORKSPACE/tools/chunks/android-sdk/* > $GITHUB_WORKSPACE/tools/chunks/android-sdk.sha256
-          else
-            echo "No Android SDK file downloaded - skipping SDK chunks"
-          fi
+          echo "This is a test step"
+          ls -la tools/chunks/gradle/
 
       - name: Generate reassembly script
         run: |
