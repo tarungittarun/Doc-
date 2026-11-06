@@ -20,7 +20,7 @@ jobs:
 
       - name: Create directories
         run: |
-          mkdir -p tools/chunks/gradle tools/chunks/android-sdk tools/scripts
+          mkdir -p tools/chunks/gradle tools/scripts
 
       - name: Download Gradle 8.10.2
         run: |
@@ -45,32 +45,6 @@ jobs:
           echo "Chunk count: $(ls $GITHUB_WORKSPACE/tools/chunks/gradle/ | wc -l)"
           sha256sum $GITHUB_WORKSPACE/tools/chunks/gradle/* > $GITHUB_WORKSPACE/tools/chunks/gradle.sha256
 
-      - name: Download and setup Android SDK
-        run: |
-          cd /tmp
-          curl -fsSL --max-time 120 -o cmdline-tools.zip "https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip"
-          ls -la cmdline-tools.zip
-          mkdir -p android-sdk-extract/cmdline-tools
-          unzip -q cmdline-tools.zip -d android-sdk-extract/cmdline-tools
-          mkdir -p android-sdk-extract/cmdline-tools/latest
-          mv android-sdk-extract/cmdline-tools/bin android-sdk-extract/cmdline-tools/latest/ 2>/dev/null || true
-          mv android-sdk-extract/cmdline-tools/lib android-sdk-extract/cmdline-tools/latest/ 2>/dev/null || true
-          export ANDROID_HOME=/tmp/android-sdk-extract
-          echo "y" | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$ANDROID_HOME" --licenses > /dev/null 2>&1 || true
-          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$ANDROID_HOME" "platform-tools" "platforms;android-34" "build-tools;34.0.0"
-          ls "$ANDROID_HOME/"
-          cd "$ANDROID_HOME"
-          tar -cf /tmp/android-sdk.tar .
-          ls -la /tmp/android-sdk.tar
-
-      - name: Split Android SDK into chunks
-        run: |
-          cd /tmp
-          split -b 48M -d android-sdk.tar $GITHUB_WORKSPACE/tools/chunks/android-sdk/android-sdk.tar.part.
-          ls -la $GITHUB_WORKSPACE/tools/chunks/android-sdk/
-          echo "Chunk count: $(ls $GITHUB_WORKSPACE/tools/chunks/android-sdk/ | wc -l)"
-          sha256sum $GITHUB_WORKSPACE/tools/chunks/android-sdk/* > $GITHUB_WORKSPACE/tools/chunks/android-sdk.sha256
-
       - name: Generate reassembly script
         run: |
           cat > tools/scripts/reassemble-tools.sh <<'REASSEMBLE_SCRIPT'
@@ -85,22 +59,15 @@ jobs:
           cat "${CHUNKS_DIR}/gradle/"gradle.tar.part.* > /tmp/gradle.tar
           tar -xf /tmp/gradle.tar -C "${INSTALL_DIR}/gradle" --strip-components=1
           rm -f /tmp/gradle.tar
-          echo "[2/2] Reassembling Android SDK..."
-          mkdir -p "${INSTALL_DIR}/android-sdk"
-          cat "${CHUNKS_DIR}/android-sdk/"android-sdk.tar.part.* > /tmp/android-sdk.tar
-          tar -xf /tmp/android-sdk.tar -C "${INSTALL_DIR}/android-sdk" --strip-components=1
-          rm -f /tmp/android-sdk.tar
           echo "=== Reassembly Complete ==="
-          echo "export ANDROID_HOME=${INSTALL_DIR}/android-sdk"
           echo "export GRADLE_HOME=${INSTALL_DIR}/gradle/gradle-8.10.2"
-          echo "export PATH=\${GRADLE_HOME}/bin:\${ANDROID_HOME}/platform-tools:\${PATH}"
+          echo "export PATH=${GRADLE_HOME}/bin:${PATH}"
           REASSEMBLE_SCRIPT
           chmod +x tools/scripts/reassemble-tools.sh
 
       - name: Create chunk manifest
         run: |
           GRADLE_CHUNKS=$(ls tools/chunks/gradle/ 2>/dev/null | wc -l)
-          ANDROID_CHUNKS=$(ls tools/chunks/android-sdk/ 2>/dev/null | wc -l)
           cat > tools/chunks/CHUNKS.md <<EOF
           # OneDoc Tool Chunks
 
@@ -110,7 +77,6 @@ jobs:
           | Tool | Chunks | Approx Size |
           |------|--------|-------------|
           | Gradle 8.10.2 | ${GRADLE_CHUNKS} | ~200MB |
-          | Android SDK 34 | ${ANDROID_CHUNKS} | ~500MB+ |
 
           ## Reassembly
 
@@ -122,8 +88,7 @@ jobs:
 
           ```bash
           export GRADLE_HOME=~/onedoc-tools/gradle/gradle-8.10.2
-          export ANDROID_HOME=~/onedoc-tools/android-sdk
-          export PATH=\$GRADLE_HOME/bin:\$ANDROID_HOME/platform-tools:\$PATH
+          export PATH=\$GRADLE_HOME/bin:\$PATH
 
           cd /path/to/Doc-
           ./gradlew assembleRelease
