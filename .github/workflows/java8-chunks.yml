@@ -21,16 +21,20 @@ jobs:
         run: |
           mkdir -p tools/chunks/java8 tools/scripts
 
-      - name: Add Debian 10 buster sources
+      - name: Add Debian 10 buster sources and update
         run: |
-          echo "deb http://deb.debian.org/debian buster main" > /tmp/buster.list
-          sudo cp /tmp/buster.list /etc/apt/sources.list.d/buster.list
-          sudo apt-get update -qq 2>&1 | tail -5
+          echo "deb http://deb.debian.org/debian buster main" | sudo tee /etc/apt/sources.list.d/buster.list
+          echo "deb http://security.debian.org/debian-security buster/updates main" | sudo tee -a /etc/apt/sources.list.d/buster.list
+          sudo apt-get update -qq 2>&1 | tail -10
 
-      - name: Download Java 8 JDK from Debian 10
+      - name: Check available Java 8 versions
+        run: |
+          apt-cache policy openjdk-8-jdk 2>&1 | head -20
+
+      - name: Download Java 8 JDK .deb from Debian 10
         run: |
           cd /tmp
-          sudo apt-get download openjdk-8-jdk 2>&1 | tail -5
+          sudo apt-get download openjdk-8-jdk 2>&1 | tail -10
           ls -la *.deb
 
       - name: Extract Java 8
