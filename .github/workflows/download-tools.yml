@@ -23,28 +23,6 @@ jobs:
           mkdir -p tools/chunks/java17 tools/chunks/gradle tools/chunks/android-sdk tools/scripts
           echo "Directories created"
 
-      - name: Download Java 17 tarball
-        run: |
-          cd /tmp
-          curl -sSL --max-time 120 -L -o openjdk-17.tar.gz "https://api.adoptium.net/v3/binary/version/17.0.11%2B9/linux/x64/jdk/hotspot/normal/eclipse" || echo "Java download failed, use local installer"
-          ls -la openjdk-17.tar.gz 2>/dev/null || echo "No Java file downloaded"
-
-      - name: Extract Java 17
-        run: |
-          cd /tmp
-          if [ -f openjdk-17.tar.gz ]; then
-            mkdir -p java17-extract
-            tar -xzf openjdk-17.tar.gz -C java17-extract --strip-components=1
-            cd java17-extract
-            tar -cf /tmp/java17.tar .
-            cd /tmp
-            split -b 48M -d java17.tar $GITHUB_WORKSPACE/tools/chunks/java17/java17.tar.part.
-            echo "Java 17 chunks: $(ls $GITHUB_WORKSPACE/tools/chunks/java17/ 2>/dev/null | wc -l)"
-            sha256sum $GITHUB_WORKSPACE/tools/chunks/java17/* 2>/dev/null > $GITHUB_WORKSPACE/tools/chunks/java17.sha256 || true
-          else
-            echo "Skipping Java chunking - no file downloaded"
-          fi
-
       - name: Download Gradle 8.10.2
         run: |
           cd /tmp
