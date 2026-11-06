@@ -1,0 +1,20 @@
+name: Test Debian Reachability
+
+on:
+  push:
+    branches: ["arena/db667982-doc"]
+  workflow_dispatch:
+
+jobs:
+  test-debian:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Test deb.debian.org
+        run: |
+          echo "=== Testing deb.debian.org ==="
+          wget --no-check-certificate --timeout=30 -O /dev/null "http://deb.debian.org/debian/dists/buster/Release" 2>&1 || echo "HTTP failed"
+          echo "=== Testing apt-get download ==="
+          sudo apt-get update -qq
+          sudo apt-get download openjdk-8-jdk 2>&1 | tail -5
+          ls -la *.deb 2>&1 || echo "No .deb files"
+          java -version 2>&1 || echo "Java not installed yet"
