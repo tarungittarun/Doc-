@@ -1,4 +1,4 @@
-name: Java 17 Chunks (glibc 2.36 compatible)
+name: Java 17 Chunks
 
 on:
   push:
@@ -21,33 +21,23 @@ jobs:
         run: |
           mkdir -p tools/chunks/java17 tools/scripts
 
-      - name: Download Java 17 JDK .deb from Debian 12 bookworm
+      - name: Install Java 17 JDK via apt
         run: |
-          cd /tmp
-          wget --no-check-certificate -q "http://deb.debian.org/debian/pool/main/o/openjdk-17/openjdk-17-jdk_17.0.11+9-1~deb12u1_amd64.deb" || \
-          wget --no-check-certificate -q "https://deb.debian.org/debian/pool/main/o/openjdk-17/openjdk-17-jdk_17.0.11+9-1~deb12u1_amd64.deb" || \
-          echo "Direct download failed, trying apt-get download"
-          sudo apt-get download openjdk-17-jdk 2>/dev/null || true
-          ls -la *.deb
-
-      - name: Extract Java 17
-        run: |
-          cd /tmp
-          DEB=$(ls *.deb | head -1)
-          echo "Extracting: $DEB"
-          dpkg-deb -x "$DEB" java17-extract
-          JAVA_DIR=$(find java17-extract/usr/lib/jvm -maxdepth 1 -type d -name 'java-17*' | head -1)
-          echo "Java dir: $JAVA_DIR"
-          mkdir -p java17-flat
-          cp -a "$JAVA_DIR"/* java17-flat/
-          ls java17-flat/bin/java
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq openjdk-17-jdk
+          java -version 2>&1
+          which java
+          ls -la /usr/lib/jvm/
 
       - name: Chunk Java 17
         run: |
-          cd /tmp/java17-flat
+          JAVA_DIR=$(ls -d /usr/lib/jvm/java-17-openjdk-* | head -1)
+          echo "Java dir: $JAVA_DIR"
+          cd "$JAVA_DIR"
           tar -cf /tmp/java17.tar .
           split -b 48M -d /tmp/java17.tar $GITHUB_WORKSPACE/tools/chunks/java17/java17.tar.part.
           echo "Java chunks: $(ls $GITHUB_WORKSPACE/tools/chunks/java17/ | wc -l)"
+          ls -la $GITHUB_WORKSPACE/tools/chunks/java17/
 
       - name: Commit chunks
         run: |
@@ -55,5 +45,5 @@ jobs:
           git config user.email "actions@github.com"
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git add tools/chunks/java17/
-          git commit -m "chore: Commit Java 17 chunks (glibc 2.36 compatible) [skip ci]"
+          git commit -m "chore: Commit Java 17 chunks [skip ci]"
           git push
