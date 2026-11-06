@@ -24,10 +24,10 @@ jobs:
       - name: Download Java 17 JDK .deb from Debian 12 bookworm
         run: |
           cd /tmp
-          wget --no-check-certificate -q "http://deb.debian.org/debian/pool/main/o/openjdk-17/openjdk-17-jdk-headless_17.0.11+9-1~deb12u1_amd64.deb" || \
-          wget --no-check-certificate -q "https://deb.debian.org/debian/pool/main/o/openjdk-17/openjdk-17-jdk-headless_17.0.11+9-1~deb12u1_amd64.deb" || \
+          wget --no-check-certificate -q "http://deb.debian.org/debian/pool/main/o/openjdk-17/openjdk-17-jdk_17.0.11+9-1~deb12u1_amd64.deb" || \
+          wget --no-check-certificate -q "https://deb.debian.org/debian/pool/main/o/openjdk-17/openjdk-17-jdk_17.0.11+9-1~deb12u1_amd64.deb" || \
           echo "Direct download failed, trying apt-get download"
-          sudo apt-get download openjdk-17-jdk-headless 2>/dev/null || true
+          sudo apt-get download openjdk-17-jdk 2>/dev/null || true
           ls -la *.deb
 
       - name: Extract Java 17
@@ -40,7 +40,7 @@ jobs:
           echo "Java dir: $JAVA_DIR"
           mkdir -p java17-flat
           cp -a "$JAVA_DIR"/* java17-flat/
-          ls java17-flat/bin/
+          ls java17-flat/bin/java
 
       - name: Chunk Java 17
         run: |
