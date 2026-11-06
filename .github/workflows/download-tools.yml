@@ -20,7 +20,29 @@ jobs:
 
       - name: Create directories
         run: |
-          mkdir -p tools/chunks/gradle tools/scripts
+          mkdir -p tools/chunks/java17 tools/chunks/gradle tools/chunks/android-sdk tools/scripts
+
+      - name: Download Java 17 (Temurin)
+        run: |
+          cd /tmp
+          curl -fsSL --max-time 120 -o openjdk-17.tar.gz "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.11%2B9/OpenJDK17U-jdk_x64_linux_hotspot_17.0.11_9.tar.gz" || echo "Java 17 download failed from GitHub"
+          ls -la openjdk-17.tar.gz 2>/dev/null || echo "No Java 17 file"
+
+      - name: Extract and chunk Java 17
+        run: |
+          cd /tmp
+          if [ -f openjdk-17.tar.gz ]; then
+            mkdir -p java17-extract
+            tar -xzf openjdk-17.tar.gz -C java17-extract --strip-components=1
+            cd java17-extract
+            tar -cf /tmp/java17.tar .
+            cd /tmp
+            split -b 48M -d java17.tar $GITHUB_WORKSPACE/tools/chunks/java17/java17.tar.part.
+            echo "Java 17 chunk count: $(ls $GITHUB_WORKSPACE/tools/chunks/java17/ 2>/dev/null | wc -l)"
+            sha256sum $GITHUB_WORKSPACE/tools/chunks/java17/* > $GITHUB_WORKSPACE/tools/chunks/java17.sha256 2>/dev/null || true
+          else
+            echo "Skipping Java 17 chunks - no file downloaded"
+          fi
 
       - name: Download Gradle 8.10.2
         run: |
@@ -41,9 +63,29 @@ jobs:
         run: |
           cd /tmp
           split -b 48M -d gradle.tar $GITHUB_WORKSPACE/tools/chunks/gradle/gradle.tar.part.
-          ls -la $GITHUB_WORKSPACE/tools/chunks/gradle/
-          echo "Chunk count: $(ls $GITHUB_WORKSPACE/tools/chunks/gradle/ | wc -l)"
+          echo "Gradle chunk count: $(ls $GITHUB_WORKSPACE/tools/chunks/gradle/ | wc -l)"
           sha256sum $GITHUB_WORKSPACE/tools/chunks/gradle/* > $GITHUB_WORKSPACE/tools/chunks/gradle.sha256
+
+      - name: Download Android SDK cmdline-tools
+        run: |
+          cd /tmp
+          curl -fsSL --max-time 120 -o cmdline-tools.zip "https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip" || echo "Android SDK download failed"
+          ls -la cmdline-tools.zip 2>/dev/null || echo "No Android SDK file"
+
+      - name: Extract and chunk Android SDK
+        run: |
+          cd /tmp
+          if [ -f cmdline-tools.zip ]; then
+            mkdir -p android-sdk-extract
+            unzip -q cmdline-tools.zip -d android-sdk-extract
+            cd android-sdk-extract
+            tar -cf /tmp/android-sdk.tar .
+            split -b 48M -d android-sdk.tar $GITHUB_WORKSPACE/tools/chunks/android-sdk/android-sdk.tar.part.
+            echo "Android SDK chunk count: $(ls $GITHUB_WORKSPACE/tools/chunks/android-sdk/ 2>/dev/null | wc -l)"
+            sha256sum $GITHUB_WORKSPACE/tools/chunks/android-sdk/* > $GITHUB_WORKSPACE/tools/chunks/android-sdk.sha256 2>/dev/null || true
+          else
+            echo "Skipping Android SDK chunks - no file downloaded"
+          fi
 
       - name: Generate reassembly script
         run: |
@@ -54,32 +96,59 @@ jobs:
           REPO_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
           CHUNKS_DIR="${REPO_DIR}/tools/chunks"
           echo "=== OneDoc Tool Reassembly ==="
-          echo "Reassembling Gradle 8.10.2..."
-          mkdir -p "${INSTALL_DIR}/gradle"
-          cat "${CHUNKS_DIR}/gradle/"gradle.tar.part.* > /tmp/gradle.tar
-          tar -xf /tmp/gradle.tar -C "${INSTALL_DIR}/gradle" --strip-components=1
-          rm -f /tmp/gradle.tar
+          if compgen -G "${CHUNKS_DIR}/java17/java17.tar.part.*" > /dev/null 2>&1; then
+            echo "[1/3] Reassembling Java 17..."
+            mkdir -p "${INSTALL_DIR}/java17"
+            cat "${CHUNKS_DIR}/java17/java17.tar.part.*" > /tmp/java17.tar
+            tar -xf /tmp/java17.tar -C "${INSTALL_DIR}/java17" --strip-components=1
+            rm -f /tmp/java17.tar
+            echo "export JAVA_HOME=${INSTALL_DIR}/java17"
+            echo "export PATH=\${JAVA_HOME}/bin:\${PATH}"
+          else
+            echo "Skipping Java 17 - no chunks found"
+          fi
+          if compgen -G "${CHUNKS_DIR}/gradle/gradle.tar.part.*" > /dev/null 2>&1; then
+            echo "[2/3] Reassembling Gradle 8.10.2..."
+            mkdir -p "${INSTALL_DIR}/gradle"
+            cat "${CHUNKS_DIR}/gradle/gradle.tar.part.*" > /tmp/gradle.tar
+            tar -xf /tmp/gradle.tar -C "${INSTALL_DIR}/gradle" --strip-components=1
+            rm -f /tmp/gradle.tar
+            echo "export GRADLE_HOME=${INSTALL_DIR}/gradle/gradle-8.10.2"
+            echo "export PATH=\${GRADLE_HOME}/bin:\${PATH}"
+          else
+            echo "Skipping Gradle - no chunks found"
+          fi
+          if compgen -G "${CHUNKS_DIR}/android-sdk/android-sdk.tar.part.*" > /dev/null 2>&1; then
+            echo "[3/3] Reassembling Android SDK..."
+            mkdir -p "${INSTALL_DIR}/android-sdk"
+            cat "${CHUNKS_DIR}/android-sdk/android-sdk.tar.part.*" > /tmp/android-sdk.tar
+            tar -xf /tmp/android-sdk.tar -C "${INSTALL_DIR}/android-sdk" --strip-components=1
+            rm -f /tmp/android-sdk.tar
+            echo "export ANDROID_HOME=${INSTALL_DIR}/android-sdk"
+            echo "export PATH=\${ANDROID_HOME}/platform-tools:\${PATH}"
+          else
+            echo "Skipping Android SDK - no chunks found"
+          fi
           echo "=== Reassembly Complete ==="
-          echo "export GRADLE_HOME=${INSTALL_DIR}/gradle/gradle-8.10.2"
-          echo "export PATH=\${GRADLE_HOME}/bin:\${PATH}"
-          echo ""
-          echo "Also install Android SDK 34 via: tools/scripts/install-tools.sh"
-          echo "Then: export ANDROID_HOME=\$HOME/onedoc-tools/android-sdk"
           REASSEMBLE_SCRIPT
           chmod +x tools/scripts/reassemble-tools.sh
 
       - name: Create chunk manifest
         run: |
+          JAVA_CHUNKS=$(ls tools/chunks/java17/ 2>/dev/null | wc -l)
           GRADLE_CHUNKS=$(ls tools/chunks/gradle/ 2>/dev/null | wc -l)
+          ANDROID_CHUNKS=$(ls tools/chunks/android-sdk/ 2>/dev/null | wc -l)
           cat > tools/chunks/CHUNKS.md <<EOF
           # OneDoc Tool Chunks
 
-          Build tools are split into 48MB chunks for git storage.
+          All build tools are split into 48MB chunks for git storage.
           Reassemble with: bash tools/scripts/reassemble-tools.sh
 
           | Tool | Chunks | Approx Size |
           |------|--------|-------------|
+          | Java 17 (Temurin) | ${JAVA_CHUNKS} | ~190MB |
           | Gradle 8.10.2 | ${GRADLE_CHUNKS} | ~200MB |
+          | Android SDK 34 | ${ANDROID_CHUNKS} | ~500MB+ |
 
           ## Reassembly
 
@@ -90,14 +159,14 @@ jobs:
           Then set environment variables and build:
 
           ```bash
+          export JAVA_HOME=~/onedoc-tools/java17
           export GRADLE_HOME=~/onedoc-tools/gradle/gradle-8.10.2
-          export PATH=\$GRADLE_HOME/bin:\$PATH
+          export ANDROID_HOME=~/onedoc-tools/android-sdk
+          export PATH=\$JAVA_HOME/bin:\$GRADLE_HOME/bin:\$ANDROID_HOME/platform-tools:\$PATH
 
           cd /path/to/Doc-
           ./gradlew assembleRelease
           ```
-
-          Android SDK 34 can be installed separately via tools/scripts/install-tools.sh.
 
           ## Pre-built APK
 
