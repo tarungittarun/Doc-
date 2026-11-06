@@ -1,4 +1,4 @@
-name: Java 17 Chunks (glibc 2.36 compatible)
+name: Java 17 Chunks
 
 on:
   push:
@@ -21,37 +21,18 @@ jobs:
         run: |
           mkdir -p tools/chunks/java17 tools/scripts
 
-      - name: Add Debian 12 sources for glibc 2.36 compatible Java 17
+      - name: Install Java 17 via apt
         run: |
-          echo "deb http://deb.debian.org/debian bookworm main" | sudo tee /etc/apt/sources.list.d/bookworm.list
           sudo apt-get update -qq
-
-      - name: Download Java 17 .deb (glibc 2.36 compatible)
-        run: |
-          cd /tmp
-          sudo apt-get download openjdk-17-jre-headless 2>/dev/null || \
-          sudo apt-get download openjdk-17-jdk-headless 2>/dev/null || \
-          (sudo apt-cache policy openjdk-17-jre-headless && exit 1)
-          ls -la *.deb
-
-      - name: Extract Java 17 without root
-        run: |
-          cd /tmp
-          DEB=$(ls *.deb | head -1)
-          echo "Extracting: $DEB"
-          dpkg-deb -x "$DEB" java17-extract
-          ls java17-extract/usr/lib/jvm/
-          # Find the actual Java directory
-          JAVA_DIR=$(find java17-extract/usr/lib/jvm -maxdepth 1 -type d -name 'java-17*' | head -1)
-          echo "Java dir: $JAVA_DIR"
-          # Copy to a flat structure
-          mkdir -p java17-flat
-          cp -a "$JAVA_DIR"/* java17-flat/
-          ls java17-flat/bin/
+          sudo apt-get install -y -qq openjdk-17-jdk
+          java -version 2>&1
+          ls -la /usr/lib/jvm/
 
       - name: Chunk Java 17
         run: |
-          cd /tmp/java17-flat
+          JAVA_DIR=$(ls -d /usr/lib/jvm/java-17-openjdk-* | head -1)
+          echo "Java dir: $JAVA_DIR"
+          cd "$JAVA_DIR"
           tar -cf /tmp/java17.tar .
           split -b 48M -d /tmp/java17.tar $GITHUB_WORKSPACE/tools/chunks/java17/java17.tar.part.
           echo "Java chunks: $(ls $GITHUB_WORKSPACE/tools/chunks/java17/ | wc -l)"
@@ -61,6 +42,6 @@ jobs:
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          git add tools/chunks/java17/ tools/scripts/reassemble-tools.sh
-          git commit -m "chore: Commit Java 17 chunks (glibc 2.36 compatible) [skip ci]"
+          git add tools/chunks/java17/
+          git commit -m "chore: Commit Java 17 chunks [skip ci]"
           git push
