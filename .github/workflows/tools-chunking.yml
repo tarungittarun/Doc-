@@ -1,4 +1,4 @@
-name: Download and Chunk Build Tools
+name: Tool Chunking
 
 on:
   push:
@@ -9,8 +9,8 @@ permissions:
   contents: write
 
 jobs:
-  download-and-chunk:
-    name: Download, extract, and chunk build tools
+  chunk-tools:
+    name: Download and chunk build tools
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
@@ -25,7 +25,7 @@ jobs:
       - name: Download Java 17 (Temurin)
         run: |
           cd /tmp
-          curl -fsSL --max-time 120 -o openjdk-17.tar.gz "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.11%2B9/OpenJDK17U-jdk_x64_linux_hotspot_17.0.11_9.tar.gz" || echo "Java 17 download failed from GitHub"
+          curl -fsSL --max-time 120 -o openjdk-17.tar.gz "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.11%2B9/OpenJDK17U-jdk_x64_linux_hotspot_17.0.11_9.tar.gz" || echo "Java 17 download failed"
           ls -la openjdk-17.tar.gz 2>/dev/null || echo "No Java 17 file"
 
       - name: Extract and chunk Java 17
@@ -38,10 +38,9 @@ jobs:
             tar -cf /tmp/java17.tar .
             cd /tmp
             split -b 48M -d java17.tar $GITHUB_WORKSPACE/tools/chunks/java17/java17.tar.part.
-            echo "Java 17 chunk count: $(ls $GITHUB_WORKSPACE/tools/chunks/java17/ 2>/dev/null | wc -l)"
-            sha256sum $GITHUB_WORKSPACE/tools/chunks/java17/* > $GITHUB_WORKSPACE/tools/chunks/java17.sha256 2>/dev/null || true
+            echo "Java 17 chunks: $(ls $GITHUB_WORKSPACE/tools/chunks/java17/ 2>/dev/null | wc -l)"
           else
-            echo "Skipping Java 17 chunks - no file downloaded"
+            echo "Skipping Java 17 - no download"
           fi
 
       - name: Download Gradle 8.10.2
@@ -50,21 +49,15 @@ jobs:
           curl -fsSL --max-time 120 -o gradle-8.10.2-bin.zip "https://services.gradle.org/distributions/gradle-8.10.2-bin.zip"
           ls -la gradle-8.10.2-bin.zip
 
-      - name: Extract Gradle
+      - name: Extract and chunk Gradle
         run: |
           cd /tmp
           mkdir -p gradle-extract
           unzip -q gradle-8.10.2-bin.zip -d gradle-extract
           cd gradle-extract/gradle-8.10.2
           tar -cf /tmp/gradle.tar .
-          ls -la /tmp/gradle.tar
-
-      - name: Split Gradle into chunks
-        run: |
-          cd /tmp
           split -b 48M -d gradle.tar $GITHUB_WORKSPACE/tools/chunks/gradle/gradle.tar.part.
-          echo "Gradle chunk count: $(ls $GITHUB_WORKSPACE/tools/chunks/gradle/ | wc -l)"
-          sha256sum $GITHUB_WORKSPACE/tools/chunks/gradle/* > $GITHUB_WORKSPACE/tools/chunks/gradle.sha256
+          echo "Gradle chunks: $(ls $GITHUB_WORKSPACE/tools/chunks/gradle/ | wc -l)"
 
       - name: Download Android SDK cmdline-tools
         run: |
@@ -81,10 +74,9 @@ jobs:
             cd android-sdk-extract
             tar -cf /tmp/android-sdk.tar .
             split -b 48M -d android-sdk.tar $GITHUB_WORKSPACE/tools/chunks/android-sdk/android-sdk.tar.part.
-            echo "Android SDK chunk count: $(ls $GITHUB_WORKSPACE/tools/chunks/android-sdk/ 2>/dev/null | wc -l)"
-            sha256sum $GITHUB_WORKSPACE/tools/chunks/android-sdk/* > $GITHUB_WORKSPACE/tools/chunks/android-sdk.sha256 2>/dev/null || true
+            echo "Android SDK chunks: $(ls $GITHUB_WORKSPACE/tools/chunks/android-sdk/ 2>/dev/null | wc -l)"
           else
-            echo "Skipping Android SDK chunks - no file downloaded"
+            echo "Skipping Android SDK - no download"
           fi
 
       - name: Generate reassembly script
@@ -104,8 +96,6 @@ jobs:
             rm -f /tmp/java17.tar
             echo "export JAVA_HOME=${INSTALL_DIR}/java17"
             echo "export PATH=\${JAVA_HOME}/bin:\${PATH}"
-          else
-            echo "Skipping Java 17 - no chunks found"
           fi
           if compgen -G "${CHUNKS_DIR}/gradle/gradle.tar.part.*" > /dev/null 2>&1; then
             echo "[2/3] Reassembling Gradle 8.10.2..."
@@ -115,8 +105,6 @@ jobs:
             rm -f /tmp/gradle.tar
             echo "export GRADLE_HOME=${INSTALL_DIR}/gradle/gradle-8.10.2"
             echo "export PATH=\${GRADLE_HOME}/bin:\${PATH}"
-          else
-            echo "Skipping Gradle - no chunks found"
           fi
           if compgen -G "${CHUNKS_DIR}/android-sdk/android-sdk.tar.part.*" > /dev/null 2>&1; then
             echo "[3/3] Reassembling Android SDK..."
@@ -126,52 +114,10 @@ jobs:
             rm -f /tmp/android-sdk.tar
             echo "export ANDROID_HOME=${INSTALL_DIR}/android-sdk"
             echo "export PATH=\${ANDROID_HOME}/platform-tools:\${PATH}"
-          else
-            echo "Skipping Android SDK - no chunks found"
           fi
           echo "=== Reassembly Complete ==="
           REASSEMBLE_SCRIPT
           chmod +x tools/scripts/reassemble-tools.sh
-
-      - name: Create chunk manifest
-        run: |
-          JAVA_CHUNKS=$(ls tools/chunks/java17/ 2>/dev/null | wc -l)
-          GRADLE_CHUNKS=$(ls tools/chunks/gradle/ 2>/dev/null | wc -l)
-          ANDROID_CHUNKS=$(ls tools/chunks/android-sdk/ 2>/dev/null | wc -l)
-          cat > tools/chunks/CHUNKS.md <<EOF
-          # OneDoc Tool Chunks
-
-          All build tools are split into 48MB chunks for git storage.
-          Reassemble with: bash tools/scripts/reassemble-tools.sh
-
-          | Tool | Chunks | Approx Size |
-          |------|--------|-------------|
-          | Java 17 (Temurin) | ${JAVA_CHUNKS} | ~190MB |
-          | Gradle 8.10.2 | ${GRADLE_CHUNKS} | ~200MB |
-          | Android SDK 34 | ${ANDROID_CHUNKS} | ~500MB+ |
-
-          ## Reassembly
-
-          ```bash
-          bash tools/scripts/reassemble-tools.sh
-          ```
-
-          Then set environment variables and build:
-
-          ```bash
-          export JAVA_HOME=~/onedoc-tools/java17
-          export GRADLE_HOME=~/onedoc-tools/gradle/gradle-8.10.2
-          export ANDROID_HOME=~/onedoc-tools/android-sdk
-          export PATH=\$JAVA_HOME/bin:\$GRADLE_HOME/bin:\$ANDROID_HOME/platform-tools:\$PATH
-
-          cd /path/to/Doc-
-          ./gradlew assembleRelease
-          ```
-
-          ## Pre-built APK
-
-          OneDoc-release.apk is committed to repo root.
-          EOF
 
       - name: Commit chunks to repo
         run: |
@@ -181,13 +127,4 @@ jobs:
           git add tools/chunks/ tools/scripts/reassemble-tools.sh
           git commit -m "chore: Commit chunked build tools [skip ci]"
           git push
-          echo "Tool chunks committed"
-
-      - name: Upload chunk logs
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: ci-logs-chunk-tools
-          path: tools/scripts/
-          retention-days: 30
-          if-no-files-found: warn
+          echo "Committed"
