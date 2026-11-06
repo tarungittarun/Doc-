@@ -1,0 +1,66 @@
+name: Java 17 Chunks (glibc 2.36 compatible)
+
+on:
+  push:
+    branches: ["arena/db667982-doc"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  java-chunks:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup dirs
+        run: |
+          mkdir -p tools/chunks/java17 tools/scripts
+
+      - name: Add Debian 12 sources for glibc 2.36 compatible Java 17
+        run: |
+          echo "deb http://deb.debian.org/debian bookworm main" | sudo tee /etc/apt/sources.list.d/bookworm.list
+          sudo apt-get update -qq
+
+      - name: Download Java 17 .deb (glibc 2.36 compatible)
+        run: |
+          cd /tmp
+          sudo apt-get download openjdk-17-jre-headless 2>/dev/null || \
+          sudo apt-get download openjdk-17-jdk-headless 2>/dev/null || \
+          (sudo apt-cache policy openjdk-17-jre-headless && exit 1)
+          ls -la *.deb
+
+      - name: Extract Java 17 without root
+        run: |
+          cd /tmp
+          DEB=$(ls *.deb | head -1)
+          echo "Extracting: $DEB"
+          dpkg-deb -x "$DEB" java17-extract
+          ls java17-extract/usr/lib/jvm/
+          # Find the actual Java directory
+          JAVA_DIR=$(find java17-extract/usr/lib/jvm -maxdepth 1 -type d -name 'java-17*' | head -1)
+          echo "Java dir: $JAVA_DIR"
+          # Copy to a flat structure
+          mkdir -p java17-flat
+          cp -a "$JAVA_DIR"/* java17-flat/
+          ls java17-flat/bin/
+
+      - name: Chunk Java 17
+        run: |
+          cd /tmp/java17-flat
+          tar -cf /tmp/java17.tar .
+          split -b 48M -d /tmp/java17.tar $GITHUB_WORKSPACE/tools/chunks/java17/java17.tar.part.
+          echo "Java chunks: $(ls $GITHUB_WORKSPACE/tools/chunks/java17/ | wc -l)"
+
+      - name: Commit chunks
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git add tools/chunks/java17/ tools/scripts/reassemble-tools.sh
+          git commit -m "chore: Commit Java 17 chunks (glibc 2.36 compatible) [skip ci]"
+          git push
