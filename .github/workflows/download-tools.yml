@@ -20,7 +20,7 @@ jobs:
 
       - name: Create directories
         run: |
-          mkdir -p tools/chunks/gradle tools/chunks/android-sdk tools/scripts
+          mkdir -p tools/chunks/gradle tools/scripts
 
       - name: Download Gradle 8.10.2
         run: |
@@ -45,11 +45,6 @@ jobs:
           echo "Chunk count: $(ls $GITHUB_WORKSPACE/tools/chunks/gradle/ | wc -l)"
           sha256sum $GITHUB_WORKSPACE/tools/chunks/gradle/* > $GITHUB_WORKSPACE/tools/chunks/gradle.sha256
 
-      - name: Test step after Gradle
-        run: |
-          echo "This is a test step"
-          ls -la tools/chunks/gradle/
-
       - name: Generate reassembly script
         run: |
           cat > tools/scripts/reassemble-tools.sh <<'REASSEMBLE_SCRIPT'
@@ -59,32 +54,23 @@ jobs:
           REPO_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
           CHUNKS_DIR="${REPO_DIR}/tools/chunks"
           echo "=== OneDoc Tool Reassembly ==="
-          echo "[1/2] Reassembling Gradle 8.10.2..."
+          echo "Reassembling Gradle 8.10.2..."
           mkdir -p "${INSTALL_DIR}/gradle"
           cat "${CHUNKS_DIR}/gradle/"gradle.tar.part.* > /tmp/gradle.tar
           tar -xf /tmp/gradle.tar -C "${INSTALL_DIR}/gradle" --strip-components=1
           rm -f /tmp/gradle.tar
-          echo "[2/2] Reassembling Android SDK..."
-          if compgen -G "${CHUNKS_DIR}/android-sdk/"android-sdk.tar.part.* > /dev/null 2>&1; then
-            mkdir -p "${INSTALL_DIR}/android-sdk"
-            cat "${CHUNKS_DIR}/android-sdk/"android-sdk.tar.part.* > /tmp/android-sdk.tar
-            tar -xf /tmp/android-sdk.tar -C "${INSTALL_DIR}/android-sdk" --strip-components=1
-            rm -f /tmp/android-sdk.tar
-            echo "export ANDROID_HOME=${INSTALL_DIR}/android-sdk"
-            echo "export PATH=\${ANDROID_HOME}/platform-tools:\${PATH}"
-          else
-            echo "Skipping Android SDK - no chunks found"
-          fi
           echo "=== Reassembly Complete ==="
           echo "export GRADLE_HOME=${INSTALL_DIR}/gradle/gradle-8.10.2"
           echo "export PATH=\${GRADLE_HOME}/bin:\${PATH}"
+          echo ""
+          echo "Also install Android SDK 34 via: tools/scripts/install-tools.sh"
+          echo "Then: export ANDROID_HOME=\$HOME/onedoc-tools/android-sdk"
           REASSEMBLE_SCRIPT
           chmod +x tools/scripts/reassemble-tools.sh
 
       - name: Create chunk manifest
         run: |
           GRADLE_CHUNKS=$(ls tools/chunks/gradle/ 2>/dev/null | wc -l)
-          ANDROID_CHUNKS=$(ls tools/chunks/android-sdk/ 2>/dev/null | wc -l)
           cat > tools/chunks/CHUNKS.md <<EOF
           # OneDoc Tool Chunks
 
@@ -94,7 +80,6 @@ jobs:
           | Tool | Chunks | Approx Size |
           |------|--------|-------------|
           | Gradle 8.10.2 | ${GRADLE_CHUNKS} | ~200MB |
-          | Android SDK 34 | ${ANDROID_CHUNKS} | ~500MB+ |
 
           ## Reassembly
 
@@ -106,12 +91,13 @@ jobs:
 
           ```bash
           export GRADLE_HOME=~/onedoc-tools/gradle/gradle-8.10.2
-          export ANDROID_HOME=~/onedoc-tools/android-sdk
-          export PATH=\$GRADLE_HOME/bin:\$ANDROID_HOME/platform-tools:\$PATH
+          export PATH=\$GRADLE_HOME/bin:\$PATH
 
           cd /path/to/Doc-
           ./gradlew assembleRelease
           ```
+
+          Android SDK 34 can be installed separately via tools/scripts/install-tools.sh.
 
           ## Pre-built APK
 
@@ -123,7 +109,7 @@ jobs:
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          git add tools/chunks/gradle/ tools/chunks/android-sdk/ tools/chunks/*.sha256 tools/chunks/CHUNKS.md tools/scripts/reassemble-tools.sh 2>/dev/null || true
+          git add tools/chunks/ tools/scripts/reassemble-tools.sh
           git commit -m "chore: Commit chunked build tools [skip ci]"
           git push
           echo "Tool chunks committed"
