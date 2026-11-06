@@ -1,0 +1,23 @@
+name: Test Download
+
+on:
+  push:
+    branches: ["arena/db667982-doc"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    name: Test download
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test curl
+        run: |
+          echo "Testing curl..."
+          curl -fsSL --max-time 30 -o /tmp/test.jar "https://services.gradle.org/distributions/gradle-8.10.2-bin.zip"
+          ls -la /tmp/test.jar
+          file /tmp/test.jar
