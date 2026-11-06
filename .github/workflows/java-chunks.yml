@@ -21,21 +21,16 @@ jobs:
         run: |
           mkdir -p tools/chunks/java17 tools/scripts
 
-      - name: Add Debian 12 bookworm sources for glibc 2.36 Java 17
-        run: |
-          echo "deb http://deb.debian.org/debian bookworm main" | sudo tee /etc/apt/sources.list.d/bookworm.list
-          echo "deb http://security.debian.org/debian-security bookworm-security main" | sudo tee -a /etc/apt/sources.list.d/bookworm.list
-          sudo apt-get update -qq
-
-      - name: Download Java 17 .deb (glibc 2.36 compatible)
+      - name: Download Java 17 JDK .deb from Debian 12 bookworm
         run: |
           cd /tmp
-          sudo apt-get download openjdk-17-jre-headless 2>/dev/null || \
-          wget --no-check-certificate -q "http://deb.debian.org/debian/pool/main/o/openjdk-17/openjdk-17-jre-headless_17.0.11+9-1~deb12u1_amd64.deb" || \
-          wget --no-check-certificate -q "http://deb.debian.org/debian/pool/main/o/openjdk-17/openjdk-17-jdk-headless_17.0.11+9-1~deb12u1_amd64.deb"
+          wget --no-check-certificate -q "http://deb.debian.org/debian/pool/main/o/openjdk-17/openjdk-17-jdk-headless_17.0.11+9-1~deb12u1_amd64.deb" || \
+          wget --no-check-certificate -q "https://deb.debian.org/debian/pool/main/o/openjdk-17/openjdk-17-jdk-headless_17.0.11+9-1~deb12u1_amd64.deb" || \
+          echo "Direct download failed, trying apt-get download"
+          sudo apt-get download openjdk-17-jdk-headless 2>/dev/null || true
           ls -la *.deb
 
-      - name: Extract Java 17 without root
+      - name: Extract Java 17
         run: |
           cd /tmp
           DEB=$(ls *.deb | head -1)
