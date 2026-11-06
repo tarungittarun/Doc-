@@ -23,11 +23,11 @@ jobs:
           mkdir -p tools/chunks/java17 tools/chunks/gradle tools/chunks/android-sdk tools/scripts
           echo "Directories created"
 
-      - name: Download Java 17 tarball
+      - name: Download Gradle 8.10.2
         run: |
           cd /tmp
-          curl -fsSL --max-time 120 -o openjdk-17.tar.gz "https://api.adoptium.net/v3/binary/version/17.0.11+9/linux/x64/jdk/hotspot/normal/eclipse?project=jdk"
-          ls -la openjdk-17.tar.gz
+          curl -fsSL --max-time 120 -o gradle-8.10.2-bin.zip "https://services.gradle.org/distributions/gradle-8.10.2-bin.zip"
+          ls -la gradle-8.10.2-bin.zip
 
       - name: Just echo
         run: echo "hello from chunking workflow"
