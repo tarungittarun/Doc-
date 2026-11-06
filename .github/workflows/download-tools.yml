@@ -1,4 +1,4 @@
-name: Download Build Tools for Local Use
+name: Download and Chunk Build Tools
 
 on:
   push:
@@ -13,95 +13,114 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  download-tools:
-    name: Download Java 17 + Android SDK 34 + Gradle 8.10.2
+  download-and-chunk:
+    name: Download, extract, and chunk build tools
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create scripts directory
-        run: mkdir -p tools/scripts
-
-      - name: Verify Java 17 download URL
+      - name: Create directories
         run: |
-          echo "Java 17 (Eclipse Temurin 17.0.11+9):"
-          curl -fsSI "https://api.adoptium.net/v3/binary/version/17.0.11+9/linux/x64/jdk/hotspot/normal/eclipse?project=jdk" 2>&1 | tee tools/scripts/java-download.log || true
-          echo ""
+          mkdir -p tools/chunks/java17 tools/chunks/gradle tools/chunks/android-sdk tools/scripts
 
-      - name: Verify Android SDK download URL
+      - name: Download and extract Java 17
         run: |
-          echo "Android SDK command-line tools:"
-          curl -fsSI "https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip" 2>&1 | tee tools/scripts/android-sdk-download.log || true
-          echo ""
+          cd /tmp
+          curl -fsSL -o openjdk-17.tar.gz "https://api.adoptium.net/v3/binary/version/17.0.11+9/linux/x64/jdk/hotspot/normal/eclipse?project=jdk"
+          mkdir -p java17-extract
+          tar -xzf openjdk-17.tar.gz -C java17-extract --strip-components=1
+          cd java17-extract
+          tar -cf /tmp/java17.tar .
+          cd /tmp
+          split -b 48M -d java17.tar tools/chunks/java17/java17.tar.part.
+          echo "Java 17 chunks: $(ls tools/chunks/java17/ | wc -l)"
+          du -sh tools/chunks/java17/
+          sha256sum tools/chunks/java17/* > tools/chunks/java17.sha256
 
-      - name: Verify Gradle 8.10.2 download URL
+      - name: Download and extract Gradle 8.10.2
         run: |
-          echo "Gradle 8.10.2:"
-          curl -fsSI "https://services.gradle.org/distributions/gradle-8.10.2-bin.zip" 2>&1 | tee tools/scripts/gradle-download.log || true
-          echo ""
+          cd /tmp
+          curl -fsSL -o gradle-8.10.2-bin.zip "https://services.gradle.org/distributions/gradle-8.10.2-bin.zip"
+          mkdir -p gradle-extract
+          unzip -q gradle-8.10.2-bin.zip -d gradle-extract
+          cd gradle-extract/gradle-8.10.2
+          tar -cf /tmp/gradle.tar .
+          cd /tmp
+          split -b 48M -d gradle.tar tools/chunks/gradle/gradle.tar.part.
+          echo "Gradle chunks: $(ls tools/chunks/gradle/ | wc -l)"
+          du -sh tools/chunks/gradle/
+          sha256sum tools/chunks/gradle/* > tools/chunks/gradle.sha256
 
-      - name: Generate local install script
+      - name: Download and extract Android SDK 34
         run: |
-          cat > tools/scripts/install-tools.sh <<'SCRIPT'
+          cd /tmp
+          curl -fsSL -o cmdline-tools.zip "https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip"
+          mkdir -p android-sdk-extract/cmdline-tools
+          unzip -q cmdline-tools.zip -d android-sdk-extract/cmdline-tools
+          mkdir -p android-sdk-extract/cmdline-tools/latest
+          mv android-sdk-extract/cmdline-tools/bin android-sdk-extract/cmdline-tools/latest/ 2>/dev/null || true
+          mv android-sdk-extract/cmdline-tools/lib android-sdk-extract/cmdline-tools/latest/ 2>/dev/null || true
+          export ANDROID_HOME=/tmp/android-sdk-extract
+          echo "y" | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$ANDROID_HOME" --licenses > /dev/null 2>&1 || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$ANDROID_HOME" "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+          cd "$ANDROID_HOME"
+          tar -cf /tmp/android-sdk.tar .
+          cd /tmp
+          split -b 48M -d android-sdk.tar tools/chunks/android-sdk/android-sdk.tar.part.
+          echo "Android SDK chunks: $(ls tools/chunks/android-sdk/ | wc -l)"
+          du -sh tools/chunks/android-sdk/
+          sha256sum tools/chunks/android-sdk/* > tools/chunks/android-sdk.sha256
+
+      - name: Generate reassembly script
+        run: |
+          cat > tools/scripts/reassemble-tools.sh <<'REASSEMBLE_SCRIPT'
           #!/bin/bash
-          # OneDoc Local Tool Installer
-          # Downloads and sets up Java 17, Android SDK 34, Gradle 8.10.2
-          # Run: bash tools/scripts/install-tools.sh
+          # OneDoc Tool Reassembly Script
+          # Reassembles chunked build tools from repo
+          # Run: bash tools/scripts/reassemble-tools.sh
 
           set -e
 
           INSTALL_DIR="${HOME}/onedoc-tools"
-          mkdir -p "${INSTALL_DIR}"
+          REPO_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
+          CHUNKS_DIR="${REPO_DIR}/tools/chunks"
 
-          echo "=== OneDoc Local Tool Installer ==="
+          echo "=== OneDoc Tool Reassembly ==="
           echo "Install directory: ${INSTALL_DIR}"
           echo ""
 
           # ---------- Java 17 ----------
-          echo "[1/3] Downloading Java 17 (Eclipse Temurin 17.0.11+9)..."
-          JAVA_URL="https://api.adoptium.net/v3/binary/version/17.0.11+9/linux/x64/jdk/hotspot/normal/eclipse?project=jdk"
-          curl -fsSL -o "${INSTALL_DIR}/openjdk-17.tar.gz" "${JAVA_URL}"
-          echo "Extracting Java 17..."
+          echo "[1/3] Reassembling Java 17..."
           mkdir -p "${INSTALL_DIR}/java17"
-          tar -xzf "${INSTALL_DIR}/openjdk-17.tar.gz" -C "${INSTALL_DIR}/java17" --strip-components=1
-          rm -f "${INSTALL_DIR}/openjdk-17.tar.gz"
+          cat "${CHUNKS_DIR}/java17/"java17.tar.part.* > /tmp/java17.tar
+          tar -xf /tmp/java17.tar -C "${INSTALL_DIR}/java17" --strip-components=1
+          rm -f /tmp/java17.tar
           echo "Java 17 installed at: ${INSTALL_DIR}/java17"
           echo ""
 
           # ---------- Gradle 8.10.2 ----------
-          echo "[2/3] Downloading Gradle 8.10.2..."
-          GRADLE_URL="https://services.gradle.org/distributions/gradle-8.10.2-bin.zip"
-          curl -fsSL -o "${INSTALL_DIR}/gradle-8.10.2-bin.zip" "${GRADLE_URL}"
-          echo "Extracting Gradle 8.10.2..."
+          echo "[2/3] Reassembling Gradle 8.10.2..."
           mkdir -p "${INSTALL_DIR}/gradle"
-          unzip -q "${INSTALL_DIR}/gradle-8.10.2-bin.zip" -d "${INSTALL_DIR}/gradle"
-          rm -f "${INSTALL_DIR}/gradle-8.10.2-bin.zip"
+          cat "${CHUNKS_DIR}/gradle/"gradle.tar.part.* > /tmp/gradle.tar
+          tar -xf /tmp/gradle.tar -C "${INSTALL_DIR}/gradle" --strip-components=1
+          rm -f /tmp/gradle.tar
           echo "Gradle 8.10.2 installed at: ${INSTALL_DIR}/gradle"
           echo ""
 
           # ---------- Android SDK ----------
-          echo "[3/3] Downloading Android SDK command-line tools..."
-          SDK_URL="https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip"
-          curl -fsSL -o "${INSTALL_DIR}/cmdline-tools.zip" "${SDK_URL}"
-          echo "Extracting Android SDK command-line tools..."
-          mkdir -p "${INSTALL_DIR}/android-sdk/cmdline-tools"
-          unzip -q "${INSTALL_DIR}/cmdline-tools.zip" -d "${INSTALL_DIR}/android-sdk/cmdline-tools"
-          rm -f "${INSTALL_DIR}/cmdline-tools.zip"
-          # cmdline-tools needs a 'latest' subdirectory for sdkmanager
-          mkdir -p "${INSTALL_DIR}/android-sdk/cmdline-tools/latest"
-          mv "${INSTALL_DIR}/android-sdk/cmdline-tools/bin" "${INSTALL_DIR}/android-sdk/cmdline-tools/latest/" 2>/dev/null || true
-          mv "${INSTALL_DIR}/android-sdk/cmdline-tools/lib" "${INSTALL_DIR}/android-sdk/cmdline-tools/latest/" 2>/dev/null || true
-          # Accept licenses and install SDK 34
-          echo "y" | "${INSTALL_DIR}/android-sdk/cmdline-tools/latest/bin/sdkmanager" --sdk_root="${INSTALL_DIR}/android-sdk" --licenses > /dev/null 2>&1 || true
-          "${INSTALL_DIR}/android-sdk/cmdline-tools/latest/bin/sdkmanager" --sdk_root="${INSTALL_DIR}/android-sdk" "platform-tools" "platforms;android-34" "build-tools;34.0.0"
-          echo "Android SDK 34 installed at: ${INSTALL_DIR}/android-sdk"
+          echo "[3/3] Reassembling Android SDK..."
+          mkdir -p "${INSTALL_DIR}/android-sdk"
+          cat "${CHUNKS_DIR}/android-sdk/"android-sdk.tar.part.* > /tmp/android-sdk.tar
+          tar -xf /tmp/android-sdk.tar -C "${INSTALL_DIR}/android-sdk" --strip-components=1
+          rm -f /tmp/android-sdk.tar
+          echo "Android SDK installed at: ${INSTALL_DIR}/android-sdk"
           echo ""
 
-          echo "=== Installation Complete ==="
+          echo "=== Reassembly Complete ==="
           echo "Add these to your ~/.bashrc or ~/.profile:"
           echo "export JAVA_HOME=${INSTALL_DIR}/java17"
           echo "export ANDROID_HOME=${INSTALL_DIR}/android-sdk"
@@ -112,40 +131,47 @@ jobs:
           echo "Then build OneDoc:"
           echo "  cd /path/to/Doc-"
           echo "  ./gradlew assembleRelease"
-          SCRIPT
-          chmod +x tools/scripts/install-tools.sh
-          echo "Local install script generated: tools/scripts/install-tools.sh"
+          REASSEMBLE_SCRIPT
+          chmod +x tools/scripts/reassemble-tools.sh
+          echo "Reassembly script generated"
 
-      - name: Create tool manifest
+      - name: Create chunk manifest
         run: |
-          cat > tools/TOOLS.md <<'EOF'
-          # OneDoc Build Tools
+          JAVA_CHUNKS=$(ls tools/chunks/java17/ 2>/dev/null | wc -l)
+          GRADLE_CHUNKS=$(ls tools/chunks/gradle/ 2>/dev/null | wc -l)
+          ANDROID_CHUNKS=$(ls tools/chunks/android-sdk/ 2>/dev/null | wc -l)
+          cat > tools/chunks/CHUNKS.md <<EOF
+          # OneDoc Tool Chunks
 
-          Tool versions and download URLs used by CI.
-          Run `tools/scripts/install-tools.sh` to install locally.
+          Build tools are split into 48MB chunks for git storage.
+          Reassemble with: bash tools/scripts/reassemble-tools.sh
 
-          ## Tool Versions
+          ## Chunks
 
-          | Tool | Version | Download URL |
-          |------|---------|--------------|
-          | Java (JDK) | 17.0.11+9 (Eclipse Temurin) | https://api.adoptium.net/v3/binary/version/17.0.11+9/linux/x64/jdk/hotspot/normal/eclipse?project=jdk |
-          | Android SDK | command-line-tools 11076708 | https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip |
-          | Gradle | 8.10.2 | https://services.gradle.org/distributions/gradle-8.10.2-bin.zip |
+          | Tool | Chunks | Approx Size |
+          |------|--------|-------------|
+          | Java 17 (Temurin 17.0.11+9) | ${JAVA_CHUNKS} | ~300MB |
+          | Gradle 8.10.2 | ${GRADLE_CHUNKS} | ~200MB |
+          | Android SDK 34 | ${ANDROID_CHUNKS} | ~500MB+ |
 
-          ## Local Installation
+          ## Reassembly
 
           ```bash
-          bash tools/scripts/install-tools.sh
+          bash tools/scripts/reassemble-tools.sh
           ```
 
-          Then set environment variables (shown at end of installer output) and build:
+          This extracts all chunks and sets up:
+          - ~/onedoc-tools/java17
+          - ~/onedoc-tools/android-sdk
+          - ~/onedoc-tools/gradle/gradle-8.10.2
+
+          Then set environment variables and build:
 
           ```bash
           export JAVA_HOME=~/onedoc-tools/java17
           export ANDROID_HOME=~/onedoc-tools/android-sdk
-          export ANDROID_SDK_ROOT=$ANDROID_HOME
           export GRADLE_HOME=~/onedoc-tools/gradle/gradle-8.10.2
-          export PATH=$JAVA_HOME/bin:$GRADLE_HOME/bin:$ANDROID_HOME/platform-tools:$PATH
+          export PATH=\$JAVA_HOME/bin:\$GRADLE_HOME/bin:\$ANDROID_HOME/platform-tools:\$PATH
 
           cd /path/to/Doc-
           ./gradlew assembleRelease
@@ -154,27 +180,27 @@ jobs:
           ## Pre-built APK
 
           A pre-built release APK is already committed to the repo root:
-          `OneDoc-release.apk` (versionCode 6, versionName 1.0.5)
+          \`OneDoc-release.apk\` (versionCode 6, versionName 1.0.5)
 
           Install it on your device after uninstalling v1.0.4 once.
           EOF
-          echo "Tool manifest created: tools/TOOLS.md"
+          echo "Chunk manifest created"
 
-      - name: Commit scripts to repo
+      - name: Commit chunks to repo
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          git add tools/ 2>&1 | tee tools/scripts/commit.log
-          git commit -m "chore: Add tool download scripts + local installer [skip ci]" 2>&1 | tee -a tools/scripts/commit.log
+          git add tools/chunks/ tools/scripts/reassemble-tools.sh 2>&1 | tee tools/scripts/commit.log
+          git commit -m "chore: Commit chunked build tools (Java 17 + Android SDK 34 + Gradle 8.10.2) [skip ci]" 2>&1 | tee -a tools/scripts/commit.log
           git push 2>&1 | tee -a tools/scripts/commit.log
-          echo "Tool scripts committed to repo" | tee -a tools/scripts/commit.log
+          echo "Tool chunks committed to repo" | tee -a tools/scripts/commit.log
 
-      - name: Upload tools logs
+      - name: Upload chunk logs
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: ci-logs-download-tools
+          name: ci-logs-chunk-tools
           path: tools/scripts/
           retention-days: 30
           if-no-files-found: warn
