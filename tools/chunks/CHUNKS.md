@@ -6,21 +6,23 @@ Reassemble with: bash tools/scripts/reassemble-tools.sh
 | Tool | Chunks | Approx Size |
 |------|--------|-------------|
 | Gradle 8.10.2 | 4 | ~200MB |
-| Android SDK 34 | 0 | ~500MB+ |
 
 ## Reassembly
 
 === OneDoc Tool Reassembly ===
-[1/2] Reassembling Gradle 8.10.2...
-[2/2] Reassembling Android SDK...
-Skipping Android SDK - no chunks found
+Reassembling Gradle 8.10.2...
 === Reassembly Complete ===
 export GRADLE_HOME=/home/runner/onedoc-tools/gradle/gradle-8.10.2
 export PATH=${GRADLE_HOME}/bin:${PATH}
 
+Also install Android SDK 34 via: tools/scripts/install-tools.sh
+Then: export ANDROID_HOME=$HOME/onedoc-tools/android-sdk
+
 Then set environment variables and build:
 
 
+
+Android SDK 34 can be installed separately via tools/scripts/install-tools.sh.
 
 ## Pre-built APK
 
