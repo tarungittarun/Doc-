@@ -23,57 +23,115 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Show environment
+        run: |
+          echo "Runner: $(uname -a)"
+          echo "Disk space: $(df -h / | tail -1)"
+          echo "Tools: $(which curl tar split unzip sha256sum git)"
+
       - name: Create directories
         run: |
           mkdir -p tools/chunks/java17 tools/chunks/gradle tools/chunks/android-sdk tools/scripts
+          echo "Directories created"
+          ls -la tools/chunks/
 
-      - name: Download and extract Java 17
+      - name: Download Java 17 tarball
         run: |
           cd /tmp
-          curl -fsSL -o openjdk-17.tar.gz "https://api.adoptium.net/v3/binary/version/17.0.11+9/linux/x64/jdk/hotspot/normal/eclipse?project=jdk"
+          echo "Downloading Java 17..."
+          curl -fsSL --max-time 120 -o openjdk-17.tar.gz "https://api.adoptium.net/v3/binary/version/17.0.11+9/linux/x64/jdk/hotspot/normal/eclipse?project=jdk"
+          echo "Download complete, file size:"
+          ls -la openjdk-17.tar.gz
+          file openjdk-17.tar.gz
+
+      - name: Extract Java 17
+        run: |
+          cd /tmp
           mkdir -p java17-extract
           tar -xzf openjdk-17.tar.gz -C java17-extract --strip-components=1
+          echo "Java 17 extracted, contents:"
+          ls java17-extract/ | head -10
           cd java17-extract
           tar -cf /tmp/java17.tar .
-          cd /tmp
-          split -b 48M -d java17.tar tools/chunks/java17/java17.tar.part.
-          echo "Java 17 chunks: $(ls tools/chunks/java17/ | wc -l)"
-          du -sh tools/chunks/java17/
-          sha256sum tools/chunks/java17/* > tools/chunks/java17.sha256
+          echo "Java 17 tar size:"
+          ls -la /tmp/java17.tar
 
-      - name: Download and extract Gradle 8.10.2
+      - name: Split Java 17 into chunks
         run: |
           cd /tmp
-          curl -fsSL -o gradle-8.10.2-bin.zip "https://services.gradle.org/distributions/gradle-8.10.2-bin.zip"
+          split -b 48M -d java17.tar $GITHUB_WORKSPACE/tools/chunks/java17/java17.tar.part.
+          echo "Java 17 chunks:"
+          ls -la $GITHUB_WORKSPACE/tools/chunks/java17/
+          echo "Chunk count: $(ls $GITHUB_WORKSPACE/tools/chunks/java17/ | wc -l)"
+          sha256sum $GITHUB_WORKSPACE/tools/chunks/java17/* > $GITHUB_WORKSPACE/tools/chunks/java17.sha256
+
+      - name: Download Gradle 8.10.2
+        run: |
+          cd /tmp
+          echo "Downloading Gradle 8.10.2..."
+          curl -fsSL --max-time 120 -o gradle-8.10.2-bin.zip "https://services.gradle.org/distributions/gradle-8.10.2-bin.zip"
+          echo "Download complete:"
+          ls -la gradle-8.10.2-bin.zip
+          file gradle-8.10.2-bin.zip
+
+      - name: Extract Gradle
+        run: |
+          cd /tmp
           mkdir -p gradle-extract
           unzip -q gradle-8.10.2-bin.zip -d gradle-extract
+          echo "Gradle extracted:"
+          ls gradle-extract/
           cd gradle-extract/gradle-8.10.2
           tar -cf /tmp/gradle.tar .
-          cd /tmp
-          split -b 48M -d gradle.tar tools/chunks/gradle/gradle.tar.part.
-          echo "Gradle chunks: $(ls tools/chunks/gradle/ | wc -l)"
-          du -sh tools/chunks/gradle/
-          sha256sum tools/chunks/gradle/* > tools/chunks/gradle.sha256
+          echo "Gradle tar size:"
+          ls -la /tmp/gradle.tar
 
-      - name: Download and extract Android SDK 34
+      - name: Split Gradle into chunks
         run: |
           cd /tmp
-          curl -fsSL -o cmdline-tools.zip "https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip"
+          split -b 48M -d gradle.tar $GITHUB_WORKSPACE/tools/chunks/gradle/gradle.tar.part.
+          echo "Gradle chunks:"
+          ls -la $GITHUB_WORKSPACE/tools/chunks/gradle/
+          echo "Chunk count: $(ls $GITHUB_WORKSPACE/tools/chunks/gradle/ | wc -l)"
+          sha256sum $GITHUB_WORKSPACE/tools/chunks/gradle/* > $GITHUB_WORKSPACE/tools/chunks/gradle.sha256
+
+      - name: Download Android SDK cmdline-tools
+        run: |
+          cd /tmp
+          echo "Downloading Android SDK cmdline-tools..."
+          curl -fsSL --max-time 120 -o cmdline-tools.zip "https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip"
+          echo "Download complete:"
+          ls -la cmdline-tools.zip
+          file cmdline-tools.zip
+
+      - name: Extract and setup Android SDK
+        run: |
+          cd /tmp
           mkdir -p android-sdk-extract/cmdline-tools
           unzip -q cmdline-tools.zip -d android-sdk-extract/cmdline-tools
           mkdir -p android-sdk-extract/cmdline-tools/latest
           mv android-sdk-extract/cmdline-tools/bin android-sdk-extract/cmdline-tools/latest/ 2>/dev/null || true
           mv android-sdk-extract/cmdline-tools/lib android-sdk-extract/cmdline-tools/latest/ 2>/dev/null || true
           export ANDROID_HOME=/tmp/android-sdk-extract
+          echo "Accepting licenses..."
           echo "y" | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$ANDROID_HOME" --licenses > /dev/null 2>&1 || true
+          echo "Installing SDK 34 packages..."
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$ANDROID_HOME" "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+          echo "SDK installed, contents:"
+          ls "$ANDROID_HOME/"
           cd "$ANDROID_HOME"
           tar -cf /tmp/android-sdk.tar .
+          echo "Android SDK tar size:"
+          ls -la /tmp/android-sdk.tar
+
+      - name: Split Android SDK into chunks
+        run: |
           cd /tmp
-          split -b 48M -d android-sdk.tar tools/chunks/android-sdk/android-sdk.tar.part.
-          echo "Android SDK chunks: $(ls tools/chunks/android-sdk/ | wc -l)"
-          du -sh tools/chunks/android-sdk/
-          sha256sum tools/chunks/android-sdk/* > tools/chunks/android-sdk.sha256
+          split -b 48M -d android-sdk.tar $GITHUB_WORKSPACE/tools/chunks/android-sdk/android-sdk.tar.part.
+          echo "Android SDK chunks:"
+          ls -la $GITHUB_WORKSPACE/tools/chunks/android-sdk/
+          echo "Chunk count: $(ls $GITHUB_WORKSPACE/tools/chunks/android-sdk/ | wc -l)"
+          sha256sum $GITHUB_WORKSPACE/tools/chunks/android-sdk/* > $GITHUB_WORKSPACE/tools/chunks/android-sdk.sha256
 
       - name: Generate reassembly script
         run: |
@@ -160,11 +218,6 @@ jobs:
           bash tools/scripts/reassemble-tools.sh
           ```
 
-          This extracts all chunks and sets up:
-          - ~/onedoc-tools/java17
-          - ~/onedoc-tools/android-sdk
-          - ~/onedoc-tools/gradle/gradle-8.10.2
-
           Then set environment variables and build:
 
           ```bash
@@ -181,8 +234,6 @@ jobs:
 
           A pre-built release APK is already committed to the repo root:
           \`OneDoc-release.apk\` (versionCode 6, versionName 1.0.5)
-
-          Install it on your device after uninstalling v1.0.4 once.
           EOF
           echo "Chunk manifest created"
 
