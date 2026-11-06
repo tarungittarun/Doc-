@@ -21,18 +21,22 @@ jobs:
         run: |
           mkdir -p tools/chunks/java8 tools/scripts
 
-      - name: Install Java 8 JDK via apt (Ubuntu 22.04 = glibc 2.35, compatible with sandbox glibc 2.36)
+      - name: Install Java 8 JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '8'
+          cache: false
+
+      - name: Locate Java 8 installation
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq openjdk-8-jdk
-          java -version 2>&1
-          ls -la /usr/lib/jvm/
+          echo "JAVA_HOME=$JAVA_HOME"
+          ls -la "$JAVA_HOME"
+          ls -la "$JAVA_HOME/bin/java"
 
       - name: Chunk Java 8
         run: |
-          JAVA_DIR=$(ls -d /usr/lib/jvm/java-8-openjdk-* | head -1)
-          echo "Java dir: $JAVA_DIR"
-          cd "$JAVA_DIR"
+          cd "$JAVA_HOME"
           tar -cf /tmp/java8.tar .
           split -b 48M -d /tmp/java8.tar $GITHUB_WORKSPACE/tools/chunks/java8/java8.tar.part.
           echo "Java 8 chunks: $(ls $GITHUB_WORKSPACE/tools/chunks/java8/ | wc -l)"
@@ -43,5 +47,5 @@ jobs:
           git config user.email "actions@github.com"
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git add tools/chunks/java8/
-          git commit -m "chore: Commit Java 8 chunks (glibc 2.36 compatible via Ubuntu 22.04) [skip ci]"
+          git commit -m "chore: Commit Java 8 chunks (glibc 2.36 compatible via Ubuntu 22.04 + Zulu) [skip ci]"
           git push
