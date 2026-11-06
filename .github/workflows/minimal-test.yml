@@ -1,0 +1,12 @@
+name: Minimal Test
+
+on:
+  push:
+    branches: ["arena/db667982-doc"]
+  workflow_dispatch:
+
+jobs:
+  minimal:
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo "hello"
