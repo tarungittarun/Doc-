@@ -30,11 +30,5 @@ jobs:
           ls -la openjdk-17.tar.gz
           file openjdk-17.tar.gz
 
-      - name: Download Gradle 8.10.2
-        run: |
-          cd /tmp
-          curl -fsSL --max-time 120 -o gradle-8.10.2-bin.zip "https://services.gradle.org/distributions/gradle-8.10.2-bin.zip"
-          ls -la gradle-8.10.2-bin.zip
-
       - name: Just echo
         run: echo "hello from chunking workflow"
