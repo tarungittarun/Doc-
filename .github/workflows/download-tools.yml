@@ -54,16 +54,9 @@ jobs:
         run: |
           cd /tmp
           if [ -f cmdline-tools.zip ]; then
-            mkdir -p android-sdk-extract/cmdline-tools
-            unzip -q cmdline-tools.zip -d android-sdk-extract/cmdline-tools
-            mkdir -p android-sdk-extract/cmdline-tools/latest
-            mv android-sdk-extract/cmdline-tools/bin android-sdk-extract/cmdline-tools/latest/ 2>/dev/null || true
-            mv android-sdk-extract/cmdline-tools/lib android-sdk-extract/cmdline-tools/latest/ 2>/dev/null || true
-            export ANDROID_HOME=/tmp/android-sdk-extract
-            echo "y" | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$ANDROID_HOME" --licenses > /dev/null 2>&1 || true
-            "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$ANDROID_HOME" "platform-tools" "platforms;android-34" "build-tools;34.0.0"
-            ls "$ANDROID_HOME/"
-            cd "$ANDROID_HOME"
+            mkdir -p android-sdk-extract
+            unzip -q cmdline-tools.zip -d android-sdk-extract
+            cd android-sdk-extract
             tar -cf /tmp/android-sdk.tar .
             ls -la /tmp/android-sdk.tar
             split -b 48M -d android-sdk.tar $GITHUB_WORKSPACE/tools/chunks/android-sdk/android-sdk.tar.part.
