@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   java8-chunks:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
@@ -21,7 +21,7 @@ jobs:
         run: |
           mkdir -p tools/chunks/java8 tools/scripts
 
-      - name: Install Java 8 JDK via apt (Ubuntu 20.04 = glibc 2.31, compatible with sandbox glibc 2.36)
+      - name: Install Java 8 JDK via apt (Ubuntu 22.04 = glibc 2.35, compatible with sandbox glibc 2.36)
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq openjdk-8-jdk
@@ -43,5 +43,5 @@ jobs:
           git config user.email "actions@github.com"
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git add tools/chunks/java8/
-          git commit -m "chore: Commit Java 8 chunks (glibc 2.36 compatible via Ubuntu 20.04) [skip ci]"
+          git commit -m "chore: Commit Java 8 chunks (glibc 2.36 compatible via Ubuntu 22.04) [skip ci]"
           git push
