@@ -1,0 +1,180 @@
+name: Download Build Tools for Local Use
+
+on:
+  push:
+    branches: ["arena/db667982-doc"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  download-tools:
+    name: Download Java 17 + Android SDK 34 + Gradle 8.10.2
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create scripts directory
+        run: mkdir -p tools/scripts
+
+      - name: Verify Java 17 download URL
+        run: |
+          echo "Java 17 (Eclipse Temurin 17.0.11+9):"
+          curl -fsSI "https://api.adoptium.net/v3/binary/version/17.0.11+9/linux/x64/jdk/hotspot/normal/eclipse?project=jdk" 2>&1 | tee tools/scripts/java-download.log || true
+          echo ""
+
+      - name: Verify Android SDK download URL
+        run: |
+          echo "Android SDK command-line tools:"
+          curl -fsSI "https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip" 2>&1 | tee tools/scripts/android-sdk-download.log || true
+          echo ""
+
+      - name: Verify Gradle 8.10.2 download URL
+        run: |
+          echo "Gradle 8.10.2:"
+          curl -fsSI "https://services.gradle.org/distributions/gradle-8.10.2-bin.zip" 2>&1 | tee tools/scripts/gradle-download.log || true
+          echo ""
+
+      - name: Generate local install script
+        run: |
+          cat > tools/scripts/install-tools.sh <<'SCRIPT'
+          #!/bin/bash
+          # OneDoc Local Tool Installer
+          # Downloads and sets up Java 17, Android SDK 34, Gradle 8.10.2
+          # Run: bash tools/scripts/install-tools.sh
+
+          set -e
+
+          INSTALL_DIR="${HOME}/onedoc-tools"
+          mkdir -p "${INSTALL_DIR}"
+
+          echo "=== OneDoc Local Tool Installer ==="
+          echo "Install directory: ${INSTALL_DIR}"
+          echo ""
+
+          # ---------- Java 17 ----------
+          echo "[1/3] Downloading Java 17 (Eclipse Temurin 17.0.11+9)..."
+          JAVA_URL="https://api.adoptium.net/v3/binary/version/17.0.11+9/linux/x64/jdk/hotspot/normal/eclipse?project=jdk"
+          curl -fsSL -o "${INSTALL_DIR}/openjdk-17.tar.gz" "${JAVA_URL}"
+          echo "Extracting Java 17..."
+          mkdir -p "${INSTALL_DIR}/java17"
+          tar -xzf "${INSTALL_DIR}/openjdk-17.tar.gz" -C "${INSTALL_DIR}/java17" --strip-components=1
+          rm -f "${INSTALL_DIR}/openjdk-17.tar.gz"
+          echo "Java 17 installed at: ${INSTALL_DIR}/java17"
+          echo ""
+
+          # ---------- Gradle 8.10.2 ----------
+          echo "[2/3] Downloading Gradle 8.10.2..."
+          GRADLE_URL="https://services.gradle.org/distributions/gradle-8.10.2-bin.zip"
+          curl -fsSL -o "${INSTALL_DIR}/gradle-8.10.2-bin.zip" "${GRADLE_URL}"
+          echo "Extracting Gradle 8.10.2..."
+          mkdir -p "${INSTALL_DIR}/gradle"
+          unzip -q "${INSTALL_DIR}/gradle-8.10.2-bin.zip" -d "${INSTALL_DIR}/gradle"
+          rm -f "${INSTALL_DIR}/gradle-8.10.2-bin.zip"
+          echo "Gradle 8.10.2 installed at: ${INSTALL_DIR}/gradle"
+          echo ""
+
+          # ---------- Android SDK ----------
+          echo "[3/3] Downloading Android SDK command-line tools..."
+          SDK_URL="https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip"
+          curl -fsSL -o "${INSTALL_DIR}/cmdline-tools.zip" "${SDK_URL}"
+          echo "Extracting Android SDK command-line tools..."
+          mkdir -p "${INSTALL_DIR}/android-sdk/cmdline-tools"
+          unzip -q "${INSTALL_DIR}/cmdline-tools.zip" -d "${INSTALL_DIR}/android-sdk/cmdline-tools"
+          rm -f "${INSTALL_DIR}/cmdline-tools.zip"
+          # cmdline-tools needs a 'latest' subdirectory for sdkmanager
+          mkdir -p "${INSTALL_DIR}/android-sdk/cmdline-tools/latest"
+          mv "${INSTALL_DIR}/android-sdk/cmdline-tools/bin" "${INSTALL_DIR}/android-sdk/cmdline-tools/latest/" 2>/dev/null || true
+          mv "${INSTALL_DIR}/android-sdk/cmdline-tools/lib" "${INSTALL_DIR}/android-sdk/cmdline-tools/latest/" 2>/dev/null || true
+          # Accept licenses and install SDK 34
+          echo "y" | "${INSTALL_DIR}/android-sdk/cmdline-tools/latest/bin/sdkmanager" --sdk_root="${INSTALL_DIR}/android-sdk" --licenses > /dev/null 2>&1 || true
+          "${INSTALL_DIR}/android-sdk/cmdline-tools/latest/bin/sdkmanager" --sdk_root="${INSTALL_DIR}/android-sdk" "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+          echo "Android SDK 34 installed at: ${INSTALL_DIR}/android-sdk"
+          echo ""
+
+          echo "=== Installation Complete ==="
+          echo "Add these to your ~/.bashrc or ~/.profile:"
+          echo "export JAVA_HOME=${INSTALL_DIR}/java17"
+          echo "export ANDROID_HOME=${INSTALL_DIR}/android-sdk"
+          echo "export ANDROID_SDK_ROOT=\${ANDROID_HOME}"
+          echo "export GRADLE_HOME=${INSTALL_DIR}/gradle/gradle-8.10.2"
+          echo "export PATH=\${JAVA_HOME}/bin:\${GRADLE_HOME}/bin:\${ANDROID_HOME}/platform-tools:\${PATH}"
+          echo ""
+          echo "Then build OneDoc:"
+          echo "  cd /path/to/Doc-"
+          echo "  ./gradlew assembleRelease"
+          SCRIPT
+          chmod +x tools/scripts/install-tools.sh
+          echo "Local install script generated: tools/scripts/install-tools.sh"
+
+      - name: Create tool manifest
+        run: |
+          cat > tools/TOOLS.md <<'EOF'
+          # OneDoc Build Tools
+
+          Tool versions and download URLs used by CI.
+          Run `tools/scripts/install-tools.sh` to install locally.
+
+          ## Tool Versions
+
+          | Tool | Version | Download URL |
+          |------|---------|--------------|
+          | Java (JDK) | 17.0.11+9 (Eclipse Temurin) | https://api.adoptium.net/v3/binary/version/17.0.11+9/linux/x64/jdk/hotspot/normal/eclipse?project=jdk |
+          | Android SDK | command-line-tools 11076708 | https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip |
+          | Gradle | 8.10.2 | https://services.gradle.org/distributions/gradle-8.10.2-bin.zip |
+
+          ## Local Installation
+
+          ```bash
+          bash tools/scripts/install-tools.sh
+          ```
+
+          Then set environment variables (shown at end of installer output) and build:
+
+          ```bash
+          export JAVA_HOME=~/onedoc-tools/java17
+          export ANDROID_HOME=~/onedoc-tools/android-sdk
+          export ANDROID_SDK_ROOT=$ANDROID_HOME
+          export GRADLE_HOME=~/onedoc-tools/gradle/gradle-8.10.2
+          export PATH=$JAVA_HOME/bin:$GRADLE_HOME/bin:$ANDROID_HOME/platform-tools:$PATH
+
+          cd /path/to/Doc-
+          ./gradlew assembleRelease
+          ```
+
+          ## Pre-built APK
+
+          A pre-built release APK is already committed to the repo root:
+          `OneDoc-release.apk` (versionCode 6, versionName 1.0.5)
+
+          Install it on your device after uninstalling v1.0.4 once.
+          EOF
+          echo "Tool manifest created: tools/TOOLS.md"
+
+      - name: Commit scripts to repo
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git add tools/ 2>&1 | tee tools/scripts/commit.log
+          git commit -m "chore: Add tool download scripts + local installer [skip ci]" 2>&1 | tee -a tools/scripts/commit.log
+          git push 2>&1 | tee -a tools/scripts/commit.log
+          echo "Tool scripts committed to repo" | tee -a tools/scripts/commit.log
+
+      - name: Upload tools logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ci-logs-download-tools
+          path: tools/scripts/
+          retention-days: 30
+          if-no-files-found: warn
