@@ -21,31 +21,29 @@ jobs:
         run: |
           mkdir -p tools/chunks/java8 tools/scripts
 
-      - name: Install debootstrap
+      - name: Add Debian 10 buster sources
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq debootstrap
+          echo "deb http://deb.debian.org/debian buster main" > /tmp/buster.list
+          sudo cp /tmp/buster.list /etc/apt/sources.list.d/buster.list
+          sudo apt-get update -qq 2>&1 | tail -5
 
-      - name: Create Debian 10 buster chroot (glibc 2.28)
+      - name: Download Java 8 JDK from Debian 10
         run: |
-          sudo debootstrap --arch=amd64 buster /tmp/debian10 http://deb.debian.org/debian/
-          echo "Debootstrap complete"
+          cd /tmp
+          sudo apt-get download openjdk-8-jdk 2>&1 | tail -5
+          ls -la *.deb
 
-      - name: Install Java 8 in Debian 10 chroot
+      - name: Extract Java 8
         run: |
-          sudo chroot /tmp/debian10 apt-get update -qq
-          sudo chroot /tmp/debian10 apt-get install -y -qq openjdk-8-jdk
-          echo "Java 8 installed in chroot"
-          sudo chroot /tmp/debian10 java -version 2>&1
-
-      - name: Extract Java 8 from chroot
-        run: |
-          JAVA_DIR=$(sudo chroot /tmp/debian10 ls -d /usr/lib/jvm/java-8-openjdk-* | head -1)
-          echo "Java dir in chroot: $JAVA_DIR"
-          mkdir -p /tmp/java8-flat
-          sudo cp -a /tmp/debian10/$JAVA_DIR/* /tmp/java8-flat/
-          sudo chown -R $(whoami):$(whoami) /tmp/java8-flat
-          ls /tmp/java8-flat/bin/java
+          cd /tmp
+          DEB=$(ls *.deb | head -1)
+          echo "Extracting: $DEB"
+          dpkg-deb -x "$DEB" java8-extract
+          JAVA_DIR=$(find java8-extract/usr/lib/jvm -maxdepth 1 -type d -name 'java-8*' | head -1)
+          echo "Java dir: $JAVA_DIR"
+          mkdir -p java8-flat
+          cp -a "$JAVA_DIR"/* java8-flat/
+          ls java8-flat/bin/java
 
       - name: Chunk Java 8
         run: |
@@ -60,5 +58,5 @@ jobs:
           git config user.email "actions@github.com"
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git add tools/chunks/java8/
-          git commit -m "chore: Commit Java 8 chunks (glibc 2.36 compatible via Debian 10) [skip ci]"
+          git commit -m "chore: Commit Java 8 chunks (glibc 2.36 compatible) [skip ci]"
           git push
