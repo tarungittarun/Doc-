@@ -21,25 +21,21 @@ jobs:
         run: |
           mkdir -p tools/chunks/java17 tools/chunks/gradle tools/chunks/android-sdk tools/scripts
 
-      - name: Download Java 17
+      - name: Install Java 17 via apt
         run: |
-          cd /tmp
-          curl -fsSL --max-time 300 -o jdk.tar.gz "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.11%2B9/OpenJDK17U-jdk_x64_linux_hotspot_17.0.11_9.tar.gz" || echo "Java download failed"
-          ls -la jdk.tar.gz 2>/dev/null || echo "No Java file"
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq openjdk-17-jdk
+          java -version 2>&1
+          ls -la /usr/lib/jvm/
 
       - name: Chunk Java 17
         run: |
-          cd /tmp
-          if [ -f jdk.tar.gz ]; then
-            mkdir -p jdk-extract
-            tar -xzf jdk.tar.gz -C jdk-extract --strip-components=1
-            cd jdk-extract
-            tar -cf /tmp/java17.tar .
-            split -b 48M -d /tmp/java17.tar $GITHUB_WORKSPACE/tools/chunks/java17/java17.tar.part.
-            echo "Java chunks: $(ls $GITHUB_WORKSPACE/tools/chunks/java17/ 2>/dev/null | wc -l)"
-          else
-            echo "No Java file to chunk"
-          fi
+          JAVA_DIR=$(ls -d /usr/lib/jvm/java-17-openjdk-* | head -1)
+          echo "Java dir: $JAVA_DIR"
+          cd "$JAVA_DIR"
+          tar -cf /tmp/java17.tar .
+          split -b 48M -d /tmp/java17.tar $GITHUB_WORKSPACE/tools/chunks/java17/java17.tar.part.
+          echo "Java chunks: $(ls $GITHUB_WORKSPACE/tools/chunks/java17/ 2>/dev/null | wc -l)"
 
       - name: Download Gradle
         run: |
@@ -57,7 +53,7 @@ jobs:
           split -b 48M -d /tmp/gradle.tar $GITHUB_WORKSPACE/tools/chunks/gradle/gradle.tar.part.
           echo "Gradle chunks: $(ls $GITHUB_WORKSPACE/tools/chunks/gradle/ | wc -l)"
 
-      - name: Download Android SDK
+      - name: Download Android SDK cmdline-tools
         run: |
           cd /tmp
           curl -fsSL --max-time 300 -o sdk.zip "https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip" || echo "SDK download failed"
