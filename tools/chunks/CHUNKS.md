@@ -1,13 +1,16 @@
 # OneDoc Tool Chunks
 
-All build tools are split into 48MB chunks for git storage.
-Reassemble with: bash tools/scripts/reassemble-tools.sh
+Build tools are split into 48MB chunks for git storage.
 
-| Tool | Chunks | Approx Size |
-|------|--------|-------------|
-| Java 17 (OpenJDK) | 7 | ~190MB |
-| Gradle 8.10.2 | 4 | ~200MB |
-| Android SDK 34 | 4 | ~500MB+ |
+## Important: Sandbox Compatibility
+
+| Tool | Version | Chunks | Works in Sandbox? | Reason |
+|------|---------|--------|-------------------|--------|
+| Java 17 | 17.0.11+9 | 7 | ❌ No | Needs glibc 2.38+, sandbox has 2.36 |
+| Gradle 8.10.2 | 8.10.2 | 4 | ❌ No | Requires Java |
+| Android SDK 34 | 34 | 4 | ❌ No | Requires Java |
+
+Use CI (GitHub Actions) to build APKs. The sandbox is for code editing and validation only.
 
 ## Reassembly
 
@@ -15,18 +18,14 @@ Reassemble with: bash tools/scripts/reassemble-tools.sh
 bash tools/scripts/reassemble-tools.sh
 ```
 
-Then set environment variables and build:
+Extracted tools need Java to function. For sandbox development, use the Python tools:
 
 ```bash
-export JAVA_HOME=~/onedoc-tools/java17
-export GRADLE_HOME=~/onedoc-tools/gradle/gradle-8.10.2
-export ANDROID_HOME=~/onedoc-tools/android-sdk
-export PATH=$JAVA_HOME/bin:$GRADLE_HOME/bin:$ANDROID_HOME/platform-tools:$PATH
-
-cd /path/to/Doc-
-./gradlew assembleRelease
+python3 tools/scripts/validate_project.py
+python3 tools/scripts/apk_info.py OneDoc-release.apk
+python3 tools/scripts/diagnostics_server.py 8765
 ```
 
 ## Pre-built APK
 
-OneDoc-release.apk is committed to repo root. Install it directly without building.
+`OneDoc-release.apk` is committed to repo root. Install directly on device without building.
