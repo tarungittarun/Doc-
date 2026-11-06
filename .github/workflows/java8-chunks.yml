@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   java8-chunks:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-20.04
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
@@ -21,15 +21,10 @@ jobs:
         run: |
           mkdir -p tools/chunks/java8 tools/scripts
 
-      - name: Add Debian 10 buster sources
+      - name: Install Java 8 JDK via apt (Ubuntu 20.04 = glibc 2.31, compatible with sandbox glibc 2.36)
         run: |
-          echo "deb http://deb.debian.org/debian buster main" | sudo tee /etc/apt/sources.list.d/buster.list
-          echo "deb http://security.debian.org/debian-security buster/updates main" | sudo tee -a /etc/apt/sources.list.d/buster.list
-          sudo apt-get update -qq 2>&1 | tail -3
-
-      - name: Install Java 8 JDK from Debian 10
-        run: |
-          sudo apt-get install -y -qq openjdk-8-jdk 2>&1 | tail -5
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq openjdk-8-jdk
           java -version 2>&1
           ls -la /usr/lib/jvm/
 
@@ -48,5 +43,5 @@ jobs:
           git config user.email "actions@github.com"
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git add tools/chunks/java8/
-          git commit -m "chore: Commit Java 8 chunks (glibc 2.36 compatible) [skip ci]"
+          git commit -m "chore: Commit Java 8 chunks (glibc 2.36 compatible via Ubuntu 20.04) [skip ci]"
           git push
