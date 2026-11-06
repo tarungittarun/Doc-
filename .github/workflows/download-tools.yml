@@ -45,15 +45,11 @@ jobs:
           echo "Chunk count: $(ls $GITHUB_WORKSPACE/tools/chunks/gradle/ | wc -l)"
           sha256sum $GITHUB_WORKSPACE/tools/chunks/gradle/* > $GITHUB_WORKSPACE/tools/chunks/gradle.sha256
 
-      - name: Download Android SDK cmdline-tools
+      - name: Download and setup Android SDK
         run: |
           cd /tmp
           curl -fsSL --max-time 120 -o cmdline-tools.zip "https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip"
           ls -la cmdline-tools.zip
-
-      - name: Extract and setup Android SDK
-        run: |
-          cd /tmp
           mkdir -p android-sdk-extract/cmdline-tools
           unzip -q cmdline-tools.zip -d android-sdk-extract/cmdline-tools
           mkdir -p android-sdk-extract/cmdline-tools/latest
