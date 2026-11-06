@@ -1,0 +1,6 @@
+=== Java ===
+openjdk version "17.0.21" 2026-10-20
+OpenJDK Runtime Environment Temurin-17.0.21+9 (build 17.0.21+9)
+OpenJDK 64-Bit Server VM Temurin-17.0.21+9 (build 17.0.21+9, mixed mode, sharing)
+/usr/bin/java
+/usr/lib/jvm/temurin-17-jdk-amd64/bin/java

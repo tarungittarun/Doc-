@@ -1,0 +1,51 @@
+=== Android SDK ===
+ANDROID_HOME=/usr/local/lib/android/sdk
+ANDROID_SDK_ROOT=/usr/local/lib/android/sdk
+total 72
+drwxrwxrwx 11 root root  4096 Nov  1 21:34 .
+drwxr-xr-x  3 root root  4096 Nov  1 21:30 ..
+-rw-r--r--  1 root root    16 Nov  1 21:34 .knownPackages
+drwxrwxrwx  2 root root  4096 Nov  1 21:34 .temp
+drwxrwxrwx  8 root root  4096 Nov  1 21:30 build-tools
+drwxrwxrwx  4 root root  4096 Nov  1 21:33 cmake
+drwxrwxrwx  3 root root  4096 Nov  1 21:30 cmdline-tools
+drwxrwxrwx  4 root root  4096 Nov  1 21:33 extras
+drwxrwxrwx  2 root root  4096 Nov  1 21:30 licenses
+drwxrwxrwx  5 root root  4096 Nov  1 21:33 ndk
+-rw-r--r--  1 root root 22796 Nov  1 21:34 packages-list.txt
+drwxrwxrwx  3 root root  4096 Nov  1 21:30 platform-tools
+drwxrwxrwx 20 root root  4096 Nov  1 21:31 platforms
+total 80
+drwxrwxrwx 20 root root 4096 Nov  1 21:31 .
+drwxrwxrwx 11 root root 4096 Nov  1 21:34 ..
+drwxrwxrwx  6 root root 4096 Nov  1 21:31 android-34
+drwxrwxrwx  6 root root 4096 Nov  1 21:31 android-34-ext10
+drwxrwxrwx  6 root root 4096 Nov  1 21:31 android-34-ext11
+drwxrwxrwx  6 root root 4096 Nov  1 21:31 android-34-ext12
+drwxrwxrwx  6 root root 4096 Nov  1 21:31 android-34-ext8
+drwxrwxrwx  6 root root 4096 Nov  1 21:31 android-35
+drwxrwxrwx  6 root root 4096 Nov  1 21:31 android-35-ext14
+drwxrwxrwx  6 root root 4096 Nov  1 21:31 android-35-ext15
+drwxrwxrwx  6 root root 4096 Nov  1 21:31 android-36
+drwxrwxrwx  6 root root 4096 Nov  1 21:31 android-36-ext18
+drwxrwxrwx  6 root root 4096 Nov  1 21:31 android-36-ext19
+drwxrwxrwx  6 root root 4096 Nov  1 21:30 android-36.1
+drwxrwxrwx  6 root root 4096 Nov  1 21:30 android-37.0
+drwxrwxrwx  6 root root 4096 Nov  1 21:30 android-37.1
+drwxrwxrwx  6 root root 4096 Nov  1 21:30 android-37.2
+drwxrwxrwx  6 root root 4096 Nov  1 21:30 android-37.2-beta1
+drwxrwxrwx  6 root root 4096 Nov  1 21:30 android-37.2-beta2
+drwxrwxrwx  6 root root 4096 Nov  1 21:30 android-37.2-beta3
+total 32
+drwxrwxrwx  8 root root 4096 Nov  1 21:30 .
+drwxrwxrwx 11 root root 4096 Nov  1 21:34 ..
+drwxrwxrwx  6 root root 4096 Nov  1 21:30 34.0.0
+drwxrwxrwx  6 root root 4096 Nov  1 21:30 35.0.0
+drwxrwxrwx  6 root root 4096 Nov  1 21:30 35.0.1
+drwxrwxrwx  6 root root 4096 Nov  1 21:30 36.0.0
+drwxrwxrwx  6 root root 4096 Nov  1 21:30 36.1.0
+drwxrwxrwx  6 root root 4096 Nov  1 21:30 37.0.0
+total 12
+drwxrwxrwx  3 root root 4096 Nov  1 21:30 .
+drwxrwxrwx 11 root root 4096 Nov  1 21:34 ..
+drwxrwxrwx  4 root root 4096 Nov  1 21:30 latest
