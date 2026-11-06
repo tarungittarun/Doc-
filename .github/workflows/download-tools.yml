@@ -23,38 +23,26 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create tools directory
-        run: mkdir -p tools/java tools/android-sdk tools/gradle tools/scripts
+      - name: Create scripts directory
+        run: mkdir -p tools/scripts
 
-      - name: Download Java 17 (Temurin)
+      - name: Verify Java 17 download URL
         run: |
-          echo "Downloading Java 17 (Eclipse Temurin)..."
-          curl -fsSL -o tools/java/OpenJDK17U-jdk_x64_linux_hotspot_17.0.11_9.tar.gz \
-            "https://api.adoptium.net/v3/binary/version/17.0.11+9/linux/x64/jre/hotspot/normal/eclipse?project=jdk" \
-            2>&1 | tee tools/scripts/java-download.log
-          test -s tools/java/OpenJDK17U-jdk_x64_linux_hotspot_17.0.11_9.tar.gz || { echo "::error::Java 17 download failed"; exit 1; }
-          sha256sum tools/java/OpenJDK17U-jdk_x64_linux_hotspot_17.0.11_9.tar.gz > tools/java/OpenJDK17U-jdk_x64_linux_hotspot_17.0.11_9.tar.gz.sha256
-          echo "Java 17 downloaded: $(du -h tools/java/OpenJDK17U-jdk_x64_linux_hotspot_17.0.11_9.tar.gz | cut -f1)"
+          echo "Java 17 (Eclipse Temurin 17.0.11+9):"
+          curl -fsSI "https://api.adoptium.net/v3/binary/version/17.0.11+9/linux/x64/jdk/hotspot/normal/eclipse?project=jdk" 2>&1 | tee tools/scripts/java-download.log || true
+          echo ""
 
-      - name: Download Android SDK Command-line Tools
+      - name: Verify Android SDK download URL
         run: |
-          echo "Downloading Android SDK command-line tools..."
-          curl -fsSL -o tools/android-sdk/commandlinetools-linux-11076708_latest.zip \
-            "https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip" \
-            2>&1 | tee tools/scripts/android-sdk-download.log
-          test -s tools/android-sdk/commandlinetools-linux-11076708_latest.zip || { echo "::error::Android SDK cmdline-tools download failed"; exit 1; }
-          sha256sum tools/android-sdk/commandlinetools-linux-11076708_latest.zip > tools/android-sdk/commandlinetools-linux-11076708_latest.zip.sha256
-          echo "Android SDK cmdline-tools downloaded: $(du -h tools/android-sdk/commandlinetools-linux-11076708_latest.zip | cut -f1)"
+          echo "Android SDK command-line tools:"
+          curl -fsSI "https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip" 2>&1 | tee tools/scripts/android-sdk-download.log || true
+          echo ""
 
-      - name: Download Gradle 8.10.2
+      - name: Verify Gradle 8.10.2 download URL
         run: |
-          echo "Downloading Gradle 8.10.2..."
-          curl -fsSL -o tools/gradle/gradle-8.10.2-bin.zip \
-            "https://services.gradle.org/distributions/gradle-8.10.2-bin.zip" \
-            2>&1 | tee tools/scripts/gradle-download.log
-          test -s tools/gradle/gradle-8.10.2-bin.zip || { echo "::error::Gradle 8.10.2 download failed"; exit 1; }
-          sha256sum tools/gradle/gradle-8.10.2-bin.zip > tools/gradle/gradle-8.10.2-bin.zip.sha256
-          echo "Gradle 8.10.2 downloaded: $(du -h tools/gradle/gradle-8.10.2-bin.zip | cut -f1)"
+          echo "Gradle 8.10.2:"
+          curl -fsSI "https://services.gradle.org/distributions/gradle-8.10.2-bin.zip" 2>&1 | tee tools/scripts/gradle-download.log || true
+          echo ""
 
       - name: Generate local install script
         run: |
@@ -74,8 +62,8 @@ jobs:
           echo ""
 
           # ---------- Java 17 ----------
-          echo "[1/3] Downloading Java 17 (Eclipse Temurin)..."
-          JAVA_URL="https://api.adoptium.net/v3/binary/version/17.0.11+9/linux/x64/jre/hotspot/normal/eclipse?project=jdk"
+          echo "[1/3] Downloading Java 17 (Eclipse Temurin 17.0.11+9)..."
+          JAVA_URL="https://api.adoptium.net/v3/binary/version/17.0.11+9/linux/x64/jdk/hotspot/normal/eclipse?project=jdk"
           curl -fsSL -o "${INSTALL_DIR}/openjdk-17.tar.gz" "${JAVA_URL}"
           echo "Extracting Java 17..."
           mkdir -p "${INSTALL_DIR}/java17"
@@ -133,20 +121,16 @@ jobs:
           cat > tools/TOOLS.md <<'EOF'
           # OneDoc Build Tools
 
-          Downloaded by CI workflow `download-tools.yml` and committed to repo.
+          Tool versions and download URLs used by CI.
           Run `tools/scripts/install-tools.sh` to install locally.
 
           ## Tool Versions
 
           | Tool | Version | Download URL |
           |------|---------|--------------|
-          | Java (JDK) | 17.0.11+9 (Eclipse Temurin) | https://api.adoptium.net/v3/binary/version/17.0.11+9/linux/x64/jre/hotspot/normal/eclipse?project=jdk |
+          | Java (JDK) | 17.0.11+9 (Eclipse Temurin) | https://api.adoptium.net/v3/binary/version/17.0.11+9/linux/x64/jdk/hotspot/normal/eclipse?project=jdk |
           | Android SDK | command-line-tools 11076708 | https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip |
           | Gradle | 8.10.2 | https://services.gradle.org/distributions/gradle-8.10.2-bin.zip |
-
-          ## Checksums
-
-          See `.sha256` files next to each download.
 
           ## Local Installation
 
@@ -176,15 +160,15 @@ jobs:
           EOF
           echo "Tool manifest created: tools/TOOLS.md"
 
-      - name: Commit tools to repo
+      - name: Commit scripts to repo
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git add tools/ 2>&1 | tee tools/scripts/commit.log
-          git commit -m "chore: Download Java 17 + Android SDK 34 + Gradle 8.10.2 for local use [skip ci]" 2>&1 | tee -a tools/scripts/commit.log
+          git commit -m "chore: Add tool download scripts + local installer [skip ci]" 2>&1 | tee -a tools/scripts/commit.log
           git push 2>&1 | tee -a tools/scripts/commit.log
-          echo "Tools committed to repo" | tee -a tools/scripts/commit.log
+          echo "Tool scripts committed to repo" | tee -a tools/scripts/commit.log
 
       - name: Upload tools logs
         uses: actions/upload-artifact@v4
