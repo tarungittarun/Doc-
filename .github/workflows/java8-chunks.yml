@@ -1,0 +1,52 @@
+name: Java 8 Chunks (glibc 2.36 compatible)
+
+on:
+  push:
+    branches: ["arena/db667982-doc"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  java8-chunks:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup dirs
+        run: |
+          mkdir -p tools/chunks/java8 tools/scripts
+
+      - name: Add Debian 10 buster sources
+        run: |
+          echo "deb http://deb.debian.org/debian buster main" | sudo tee /etc/apt/sources.list.d/buster.list
+          echo "deb http://security.debian.org/debian-security buster/updates main" | sudo tee -a /etc/apt/sources.list.d/buster.list
+          sudo apt-get update -qq 2>&1 | tail -3
+
+      - name: Install Java 8 JDK from Debian 10
+        run: |
+          sudo apt-get install -y -qq openjdk-8-jdk 2>&1 | tail -5
+          java -version 2>&1
+          ls -la /usr/lib/jvm/
+
+      - name: Chunk Java 8
+        run: |
+          JAVA_DIR=$(ls -d /usr/lib/jvm/java-8-openjdk-* | head -1)
+          echo "Java dir: $JAVA_DIR"
+          cd "$JAVA_DIR"
+          tar -cf /tmp/java8.tar .
+          split -b 48M -d /tmp/java8.tar $GITHUB_WORKSPACE/tools/chunks/java8/java8.tar.part.
+          echo "Java 8 chunks: $(ls $GITHUB_WORKSPACE/tools/chunks/java8/ | wc -l)"
+
+      - name: Commit chunks
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git add tools/chunks/java8/
+          git commit -m "chore: Commit Java 8 chunks (glibc 2.36 compatible) [skip ci]"
+          git push
